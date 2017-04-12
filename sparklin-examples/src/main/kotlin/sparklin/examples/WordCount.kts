@@ -1,5 +1,5 @@
 import scala.Tuple2
-import sparklin.repl.Env.*
+import sparklin.repl.Shared.*
 
 
 val textFile = sc.textFile("examples/text")
