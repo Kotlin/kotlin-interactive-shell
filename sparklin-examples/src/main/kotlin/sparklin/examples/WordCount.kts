@@ -1,11 +1,11 @@
-import scala.Tuple2
+import scala.Tuple2 as T2
 import sparklin.repl.Shared.*
 
 
 val textFile = sc.textFile("examples/text")
 
 val counts = textFile.flatMap { line -> line.split(" ") }.
-        mapToPair { word -> Tuple2(word, 1) }.
+        mapToPair { word -> T2(word, 1) }.
         reduceByKey { x, y -> x + y }
 
 counts.saveAsTextFile("examples/wordcount")

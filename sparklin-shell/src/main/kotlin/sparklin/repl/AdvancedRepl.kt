@@ -82,50 +82,78 @@ open class AdvancedRepl protected constructor(protected val disposable: Disposab
                 stateLock = stateLock) {}
     }
 
-    protected val incompleteLines = arrayListOf<String>()
-    protected var lineNumber = 1
-    protected val reader = ConsoleReader()
+    val incompleteLines = arrayListOf<String>()
+    var lineNumber = 1
+    var resultCounter = 0
+    val reader = ConsoleReader()
+    val commands: MutableList<Command> = mutableListOf()
 
     fun doRun() {
         do {
             printPrompt()
             val line = reader.readLine()
-            if (line == null || line == ":quit") break
-            val source = (incompleteLines + line).joinToString(separator = "\n")
-            val replCodeLine = ReplCodeLine(lineNumber, source)
-            val compileResult = engine.compile(replCodeLine)
-            when (compileResult) {
-                is ReplCompileResult.Incomplete -> {
-                    incompleteLines.add(line)
-                }
-                is ReplCompileResult.CompiledClasses -> {
-                    afterCompile(compileResult)
-                    val evalResult = engine.eval(compileResult)
-                    when (evalResult) {
-                        is ReplEvalResult.ValueResult -> {
-                            handleValueResult(evalResult)
-                            lineNumber += 1
-                        }
-                        is ReplEvalResult.UnitResult -> {
-                            handleUnitResult(evalResult)
-                            lineNumber += 1
-                        }
-                        else -> handleEvalError(evalResult)
-                    }
-                    incompleteLines.clear()
-                }
-                is ReplCompileResult.Error -> {
-                    // recover from compile error
-                    // FIXME: need to handle a multiline case
-                    engine.resetToLine(lineNumber)
-                    handleCompileError(compileResult)
-                    incompleteLines.clear()
-                }
-            }
 
+            // handle :quit specially
+            if (line == null || isQuitCommand(line)) break
+
+            if (incompleteLines.isEmpty() && line.startsWith(":")) {
+                try {
+                    val command = commands.first { cmd -> cmd.match(line) }
+                    command.execute(line)
+                } catch (e: NoSuchElementException) {
+                    reader.println("Unknown command $line")
+                }
+            } else {
+                compileAndEval(line)
+            }
         } while (true)
     }
 
+    fun registerCommand(command: Command): Unit {
+        command.repl = this
+        commands.add(command)
+    }
+
+    private fun isQuitCommand(line: String): Boolean {
+        return incompleteLines.isEmpty() && (line.equals(":quit", ignoreCase = true) || line.equals(":q", ignoreCase = true))
+    }
+
+    fun compileAndEval(line: String): Unit {
+        val source = (incompleteLines + line).joinToString(separator = "\n")
+        val replCodeLine = ReplCodeLine(lineNumber, source)
+        val compileResult = engine.compile(replCodeLine)
+
+        when (compileResult) {
+            is ReplCompileResult.Incomplete -> {
+                incompleteLines.add(line)
+            }
+
+            is ReplCompileResult.CompiledClasses -> {
+                afterCompile(compileResult)
+                val evalResult = engine.eval(compileResult)
+
+                when (evalResult) {
+                    is ReplEvalResult.ValueResult -> {
+                        handleValueResult(evalResult)
+                        lineNumber ++
+                    }
+
+                    is ReplEvalResult.UnitResult -> {
+                        lineNumber ++
+                    }
+
+                    else -> handleEvalError(evalResult)
+                }
+                incompleteLines.clear()
+            }
+
+            is ReplCompileResult.Error -> {
+                engine.resetToLine(lineNumber)
+                handleCompileError(compileResult)
+                incompleteLines.clear()
+            }
+        }
+    }
 
     open fun afterCompile(compiledClasses: ReplCompileResult.CompiledClasses) {
        // do nothing by default
@@ -133,19 +161,24 @@ open class AdvancedRepl protected constructor(protected val disposable: Disposab
 
     fun printPrompt() {
         if (incompleteLines.isEmpty())
-            reader.prompt = ">>> "
+            reader.prompt = "kotlin> "
         else
             reader.prompt = "... "
     }
 
     open fun handleValueResult(result: ReplEvalResult.ValueResult) {
-        reader.println("" + result.value)
-        //println(result.value!!::class.qualifiedName)
+        lineNumber ++
+
+        val name = "res$resultCounter"
+        val clazz = result.value!!::class.qualifiedName
+
+        // store result of computations
+        compileAndEval("val $name = ${result.value}")
+
+        reader.println("$name: $clazz = ${result.value}")
+        resultCounter ++
     }
 
-    open fun handleUnitResult(result: ReplEvalResult.UnitResult) {
-
-    }
 
     open fun handleEvalError(result: ReplEvalResult) {
         // FIXME
@@ -153,7 +186,7 @@ open class AdvancedRepl protected constructor(protected val disposable: Disposab
     }
 
     open fun handleCompileError(result: ReplCompileResult.Error) {
-        reader.println("Message: ${result.message}Location: ${result.location}")
+        reader.println("Message: ${result.message} Location: ${result.location}")
     }
 
     override fun close() {
