@@ -9,23 +9,11 @@
         <version>${sparklin.version}</version>
     </parent>
 
-
-    <artifactId>sparklin-shell</artifactId>
-	<version>${sparklin.version}</version>
-
+    <artifactId>kshell</artifactId>
+	<version>0.1</version>
 
     <dependencies>
-		<dependency>
-			<groupId>sparklin</groupId>
-			<artifactId>sparklin-core</artifactId>
-			<version>${sparklin.version}</version>
-		</dependency>
-        <dependency>
-            <groupId>sparklin</groupId>
-            <artifactId>kshell</artifactId>
-            <version>0.1</version>
-        </dependency>
-        <dependency>
+	<dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
             <version>${kotlin.version}</version>

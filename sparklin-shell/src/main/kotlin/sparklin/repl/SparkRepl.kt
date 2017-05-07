@@ -7,12 +7,13 @@ import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
+import kshell.*
 
 /**
- * Created by vitaly.khudobakhshov on 19/03/17.
+ * Apache Spark extension for Kotlin Shell (KShell).
  */
 class SparkRepl(additionalClasspath: List<File>,
-                val classesOutputDir: File): AdvancedRepl(
+                val classesOutputDir: File): KShell(
                 additionalClasspath = additionalClasspath,
                 sharedHostClassLoader = Utils.getContextOrSparkClassLoader(),
                 scriptDefinition = KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class,
@@ -23,7 +24,7 @@ class SparkRepl(additionalClasspath: List<File>,
     override fun afterCompile(compiledClasses: ReplCompileResult.CompiledClasses) {
         // class must be written down on disk
         // to be visible for Spark executors by class server
-        compiledClasses.classes.forEach { it ->
+        compiledClasses.classes.forEach {
             writeClass(classesOutputDir.absolutePath + File.separator + it.path, it.bytes)
         }
     }

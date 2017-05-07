@@ -15,16 +15,8 @@
 	<packaging>pom</packaging>
 
 	<modules>
-			<module>sparklin-core</module>
-			<module>sparklin-shell</module>
+		<module>kshell</module>
+		<module>sparklin-core</module>
+		<module>sparklin-shell</module>
 	</modules>
-
-	<!--<dependencies>-->
-		<!--<dependency>-->
-			<!--<groupId>org.jetbrains.kotlin</groupId>-->
-			<!--<artifactId>kotlin-runtime</artifactId>-->
-			<!--<version>${kotlin.version}</version>-->
-		<!--</dependency>-->
-	<!--</dependencies>-->
-	
 </project>
