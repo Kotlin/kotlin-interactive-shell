@@ -94,8 +94,10 @@ open class KShell protected constructor(protected val disposable: Disposable,
     }
 
     fun doRun() {
-        reader.addCompleter(ContextDependentCompleter(commands))
-
+        reader.apply {
+            expandEvents = false
+            addCompleter(ContextDependentCompleter(commands))
+        }
         do {
             printPrompt()
             val line = reader.readLine()
