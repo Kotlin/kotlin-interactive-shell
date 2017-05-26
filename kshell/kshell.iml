@@ -42,10 +42,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="library" name="Maven: org.jetbrains.kotlin:kotlin-stdlib:1.1.0" level="project" />
-    <orderEntry type="library" name="Maven: org.jetbrains:annotations:13.0" level="project" />
-    <orderEntry type="library" name="Maven: org.jetbrains.kotlin:kotlin-reflect:1.1.0" level="project" />
-    <orderEntry type="library" name="Maven: org.jetbrains.kotlin:kotlin-compiler:1.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.jetbrains.kotlin:kotlin-stdlib:SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: org.jetbrains.kotlin:kotlin-reflect:SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: org.jetbrains.kotlin:kotlin-compiler:SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: org.jetbrains.kotlin:kotlin-script-runtime:SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-core_2.10:1.6.3" level="project" />
     <orderEntry type="library" name="Maven: org.apache.avro:avro-mapred:hadoop2:1.7.7" level="project" />
     <orderEntry type="library" name="Maven: org.apache.avro:avro-ipc:1.7.7" level="project" />

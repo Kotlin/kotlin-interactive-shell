@@ -2,10 +2,9 @@ package kshell
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes
-import org.jetbrains.kotlin.cli.common.repl.ScriptTemplateEmptyArgsProvider
 import org.jetbrains.kotlin.script.KotlinScriptDefinition
-import org.jetbrains.kotlin.script.KotlinScriptExternalDependencies
 import kotlin.reflect.KClass
+import kotlin.script.dependencies.KotlinScriptExternalDependencies
 
 /**
  * Eventually adopted from https://github.com/kohesive/keplin
@@ -24,4 +23,8 @@ open class KotlinScriptDefinitionEx(template: KClass<out Any>,
         return if (previousDependencies == null && defaultImports.isNotEmpty()) DefaultImports(defaultImports, base ?: EmptyDependencies())
         else base
     }
+}
+
+interface ScriptTemplateEmptyArgsProvider {
+    val defaultEmptyArgs: org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes?
 }

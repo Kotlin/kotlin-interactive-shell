@@ -13,17 +13,21 @@ import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.repl.GenericRepl
+import org.jetbrains.kotlin.cli.jvm.repl.GenericReplCompiler
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.script.KotlinScriptDefinition
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.Closeable
 import java.io.File
+import java.io.FileOutputStream
 import java.net.URLClassLoader
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.reflect.KClass
+import org.jetbrains.kotlin.types.expressions.typeInfoFactory.LastInferredTypeHolder
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 val EMPTY_SCRIPT_ARGS: Array<out Any?> = arrayOf(emptyArray<String>())
@@ -49,12 +53,12 @@ open class KShell protected constructor(protected val disposable: Disposable,
                 repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE,
                 sharedHostClassLoader: ClassLoader? = null) : this(disposable,
             compilerConfiguration = CompilerConfiguration().apply {
-                addJvmClasspathRoots(PathUtil.getJdkClassesRoots())
+                addJvmClasspathRoots(PathUtil.getJdkClassesRoots(File(System.getProperty("java.home"))))
                 // do not include stdlib and runtime implicitly
                 addJvmClasspathRoots(findRequiredScriptingJarFiles(scriptDefinition.template,
                         includeScriptEngine = false,
                         includeKotlinCompiler = false,
-                        includeStdLib = false,
+                        includeStdLib = true,
                         includeRuntime = false))
                 addJvmClasspathRoots(additionalClasspath)
                 put(CommonConfigurationKeys.MODULE_NAME, moduleName)
@@ -79,13 +83,15 @@ open class KShell protected constructor(protected val disposable: Disposable,
                 messageCollector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false),
                 baseClassloader = baseClassloader,
                 fallbackScriptArgs = fallbackArgs,
-                repeatingMode = repeatingMode,
-                stateLock = stateLock) {}
+                repeatingMode = repeatingMode) {}
     }
 
+    private val state = engine.createState(stateLock)
+
     val incompleteLines = arrayListOf<String>()
-    var lineNumber = 1
-    var resultCounter = 0
+    val nextLine: AtomicInteger = AtomicInteger(REPL_CODE_LINE_FIRST_NO)
+    val resultCounter: AtomicInteger = AtomicInteger(1)
+
     val reader = ConsoleReader()
     val commands: MutableList<Command> = mutableListOf(FakeQuit())
 
@@ -98,6 +104,7 @@ open class KShell protected constructor(protected val disposable: Disposable,
             expandEvents = false
             addCompleter(ContextDependentCompleter(commands))
         }
+        //PathUtil.getJdkClassesRoots(File(System.getProperty("java.home"))).forEach(::println)
         do {
             printPrompt()
             val line = reader.readLine()
@@ -130,38 +137,51 @@ open class KShell protected constructor(protected val disposable: Disposable,
     }
 
     fun compileAndEval(line: String): Unit {
-        val source = (incompleteLines + line).joinToString(separator = "\n")
-        val replCodeLine = ReplCodeLine(lineNumber, source)
-        val compileResult = engine.compile(replCodeLine)
+        state.lock.write {
+            val source = (incompleteLines + line).joinToString(separator = "\n")
+            val replCodeLine = ReplCodeLine(nextLine.incrementAndGet(), state.currentGeneration, source)
+            val compileResult = engine.compile(state, replCodeLine)
 
-        when (compileResult) {
-            is ReplCompileResult.Incomplete -> {
-                incompleteLines.add(line)
-            }
-
-            is ReplCompileResult.CompiledClasses -> {
-                afterCompile(compileResult)
-                val evalResult = engine.eval(compileResult)
-
-                when (evalResult) {
-                    is ReplEvalResult.ValueResult -> {
-                        valueResult(evalResult)
-                        lineNumber ++
-                    }
-
-                    is ReplEvalResult.UnitResult -> {
-                        lineNumber ++
-                    }
-
-                    else -> evalError(evalResult)
+            when (compileResult) {
+                is ReplCompileResult.Incomplete -> {
+                    incompleteLines.add(line)
                 }
-                incompleteLines.clear()
-            }
+                is ReplCompileResult.Error -> {
+                    compileError(compileResult)
+                    alterState(state)
+                    incompleteLines.clear()
+                }
+                is ReplCompileResult.CompiledClasses -> {
+                    afterCompile(compileResult)
+                    val evalResult = engine.eval(state, compileResult)
 
-            is ReplCompileResult.Error -> {
-                engine.resetToLine(lineNumber)
-                compileError(compileResult)
-                incompleteLines.clear()
+                    when (evalResult) {
+                        is ReplEvalResult.ValueResult -> valueResult(evalResult)
+                        is ReplEvalResult.UnitResult -> { }
+                        is ReplEvalResult.Error,
+                        is ReplEvalResult.HistoryMismatch -> evalError(evalResult)
+                    }
+                    incompleteLines.clear()
+                }
+            }
+        }
+    }
+
+    fun alterState(state: IReplStageState<*>) {
+        val aggregatedState = state.asState(AggregatedReplStageState::class.java)
+        aggregatedState.apply {
+            lock.write {
+                if (state1.history.size > state2.history.size) {
+                    if (state2.history.size == 0) {
+                        state1.history.reset()
+                    }
+                    else {
+                        state2.history.peek()?.let {
+                            state1.history.resetTo(it.id)
+                        }
+                    }
+                    assert(state1.history.size == state2.history.size)
+                }
             }
         }
     }
@@ -178,17 +198,12 @@ open class KShell protected constructor(protected val disposable: Disposable,
     }
 
     open fun valueResult(result: ReplEvalResult.ValueResult) {
-        lineNumber ++
-
-        val name = "res$resultCounter"
-        val clazz = result.value!!::class.qualifiedName
+        val name = "res${resultCounter.getAndIncrement()}"
 
         // store result of computations
         Shared.__res = result.value
-        compileAndEval("val $name: $clazz = __res as $clazz")
-
-        reader.println("$name: $clazz = ${result.value}")
-        resultCounter ++
+        compileAndEval("val $name = __res as ${result.type}")
+        reader.println("$name: ${result.type} = ${result.value}")
     }
 
 
