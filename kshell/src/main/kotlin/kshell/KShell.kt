@@ -3,9 +3,7 @@ package kshell
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import lib.jline.console.ConsoleReader
-import lib.jline.console.completer.FileNameCompleter
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
 import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
@@ -13,21 +11,18 @@ import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.repl.GenericRepl
-import org.jetbrains.kotlin.cli.jvm.repl.GenericReplCompiler
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.script.KotlinScriptDefinition
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.Closeable
 import java.io.File
-import java.io.FileOutputStream
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.reflect.KClass
-import org.jetbrains.kotlin.types.expressions.typeInfoFactory.LastInferredTypeHolder
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 val EMPTY_SCRIPT_ARGS: Array<out Any?> = arrayOf(emptyArray<String>())
@@ -86,7 +81,7 @@ open class KShell protected constructor(protected val disposable: Disposable,
                 repeatingMode = repeatingMode) {}
     }
 
-    private val state = engine.createState(stateLock)
+    val state = engine.createState(stateLock)
 
     val incompleteLines = arrayListOf<String>()
     val nextLine: AtomicInteger = AtomicInteger(REPL_CODE_LINE_FIRST_NO)
@@ -104,7 +99,6 @@ open class KShell protected constructor(protected val disposable: Disposable,
             expandEvents = false
             addCompleter(ContextDependentCompleter(commands))
         }
-        //PathUtil.getJdkClassesRoots(File(System.getProperty("java.home"))).forEach(::println)
         do {
             printPrompt()
             val line = reader.readLine()

@@ -2,6 +2,7 @@ package kshell
 
 import kshell.command.Help
 import kshell.command.Load
+import kshell.command.Type
 import org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
@@ -21,6 +22,7 @@ object KotlinShell {
                 scriptDefinition = defs)
         repl.registerCommand(Help())
         repl.registerCommand(Load())
+        repl.registerCommand(Type())
 
         repl.doRun()
     }
