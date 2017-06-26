@@ -3,6 +3,9 @@ package kshell
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import lib.jline.console.ConsoleReader
+import lib.jline.console.history.History
+import lib.jline.console.history.MemoryHistory
+import lib.jline.console.history.PersistentHistory
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
@@ -38,7 +41,8 @@ open class KShell protected constructor(protected val disposable: Disposable,
                                         protected val repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE,
                                         protected val sharedHostClassLoader: ClassLoader? = null,
                                         protected val emptyArgsProvider: ScriptTemplateEmptyArgsProvider,
-                                        protected val stateLock: ReentrantReadWriteLock = ReentrantReadWriteLock()) : Closeable {
+                                        protected val stateLock: ReentrantReadWriteLock = ReentrantReadWriteLock(),
+                                        protected val shellHistory: PersistentHistory = DefaultHistory()) : Closeable {
 
     constructor(disposable: Disposable = Disposer.newDisposable(),
                 moduleName: String = "kotlin-script-module-${System.currentTimeMillis()}",
@@ -46,10 +50,10 @@ open class KShell protected constructor(protected val disposable: Disposable,
                 scriptDefinition: KotlinScriptDefinitionEx = KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class, ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES)),
                 messageCollector: MessageCollector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false),
                 repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE,
-                sharedHostClassLoader: ClassLoader? = null) : this(disposable,
+                sharedHostClassLoader: ClassLoader? = null,
+                shellHistory: PersistentHistory = DefaultHistory()) : this(disposable,
             compilerConfiguration = CompilerConfiguration().apply {
                 addJvmClasspathRoots(PathUtil.getJdkClassesRoots(File(System.getProperty("java.home"))))
-                // do not include stdlib and runtime implicitly
                 addJvmClasspathRoots(findRequiredScriptingJarFiles(scriptDefinition.template,
                         includeScriptEngine = false,
                         includeKotlinCompiler = false,
@@ -62,7 +66,8 @@ open class KShell protected constructor(protected val disposable: Disposable,
             repeatingMode = repeatingMode,
             sharedHostClassLoader = sharedHostClassLoader,
             scriptDefinition = scriptDefinition,
-            emptyArgsProvider = scriptDefinition)
+            emptyArgsProvider = scriptDefinition,
+            shellHistory = shellHistory)
 
     var fallbackArgs: ScriptArgsWithTypes? = emptyArgsProvider.defaultEmptyArgs
         get() = stateLock.read { field }
@@ -97,13 +102,13 @@ open class KShell protected constructor(protected val disposable: Disposable,
     fun doRun() {
         reader.apply {
             expandEvents = false
+            history = shellHistory
             addCompleter(ContextDependentCompleter(commands))
         }
         do {
             printPrompt()
             val line = reader.readLine()
 
-            // handle :quit specially
             if (line == null || isQuitCommand(line)) break
 
             if (incompleteLines.isEmpty() && line.startsWith(":")) {
@@ -119,6 +124,8 @@ open class KShell protected constructor(protected val disposable: Disposable,
                 compileAndEval(line)
             }
         } while (true)
+
+        cleanUp()
     }
 
     fun registerCommand(command: Command): Unit {
@@ -216,5 +223,21 @@ open class KShell protected constructor(protected val disposable: Disposable,
 
     override fun close() {
         disposable.dispose()
+    }
+
+    open fun cleanUp() {
+        shellHistory.flush()
+    }
+
+}
+
+
+class DefaultHistory: MemoryHistory(), PersistentHistory {
+    override fun flush() {
+        // do nothing
+    }
+
+    override fun purge() {
+        // do nothing
     }
 }
