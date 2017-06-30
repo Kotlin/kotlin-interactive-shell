@@ -20,7 +20,7 @@ class Type : Command("type", "t", "display the type of an expression without eva
                     is ReplCompileResult.Error ->
                         compileError(compileResult)
                     is ReplCompileResult.CompiledClasses -> {
-                        reader.println(compileResult.type.toString())
+                        reader.println(clarifyType(compileResult.type))
                     }
                 }
                 alterState(state)

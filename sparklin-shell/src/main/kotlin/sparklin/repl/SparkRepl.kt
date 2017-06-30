@@ -8,17 +8,20 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 import kshell.*
+import lib.jline.console.history.PersistentHistory
 
 /**
  * Apache Spark extension for Kotlin Shell (KShell).
  */
 class SparkRepl(additionalClasspath: List<File>,
-                val classesOutputDir: File): KShell(
+                val classesOutputDir: File,
+                history: PersistentHistory): KShell(
                 additionalClasspath = additionalClasspath,
                 sharedHostClassLoader = Utils.getContextOrSparkClassLoader(),
                 scriptDefinition = KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class,
                         ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES),
-                        listOf("sparklin.repl.Shared.*"))
+                        listOf("sparklin.repl.Shared.*")),
+                shellHistory = history
         ) {
 
     override fun afterCompile(compiledClasses: ReplCompileResult.CompiledClasses) {

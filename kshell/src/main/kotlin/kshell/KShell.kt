@@ -203,10 +203,18 @@ open class KShell protected constructor(protected val disposable: Disposable,
 
         // store result of computations
         Shared.__res = result.value
-        compileAndEval("val $name = __res as ${result.type}")
-        reader.println("$name: ${result.type} = ${result.value}")
+
+        val type = clarifyType(result.type)
+        compileAndEval("val $name = __res as? $type")
+        reader.println("$name: $type = ${result.value}")
     }
 
+    /**
+     * @see org.jetbrains.kotlin.renderer.DescriptorRendererImpl::renderFlexibleType()
+     */
+    fun clarifyType(rawType: String?) = rawType?.let {
+        rawType.replace("(Mutable)", "Mutable").replace("!", "?")
+    }
 
     open fun evalError(result: ReplEvalResult) {
         reader.println(result.toString())

@@ -1,5 +1,9 @@
 package sparklin.repl
 
+import kshell.command.Help
+import kshell.command.Load
+import kshell.command.Type
+import lib.jline.console.history.FileHistory
 import org.apache.spark.HttpServer
 import org.apache.spark.SecurityManager
 import org.apache.spark.SparkConf
@@ -32,8 +36,20 @@ object Main: Logging() {
         sc = createSparkContext(conf, classServer)
         sqlc = createSQLContext(sc)
         val replJars = replJars(jars)
-        val repl = SparkRepl(additionalClasspath = replJars, classesOutputDir = outputDir)
-        repl.doRun()
+        val historyPath = System.getProperty("user.home") + File.separator + ".sparklin.history"
+
+        val hist = FileHistory(File(historyPath))
+        val repl = SparkRepl(additionalClasspath = replJars, classesOutputDir = outputDir, history = hist)
+        Runtime.getRuntime().addShutdownHook(Thread({
+            println("\nBye!")
+            repl.cleanUp()
+        }))
+        repl.apply {
+            registerCommand(Help())
+            registerCommand(Load())
+            registerCommand(Type())
+            doRun()
+        }
         classServer.stop()
     }
 
