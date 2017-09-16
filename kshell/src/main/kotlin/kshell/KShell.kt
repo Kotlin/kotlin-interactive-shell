@@ -3,7 +3,6 @@ package kshell
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import lib.jline.console.ConsoleReader
-import lib.jline.console.history.History
 import lib.jline.console.history.MemoryHistory
 import lib.jline.console.history.PersistentHistory
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
@@ -13,13 +12,16 @@ import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
 import org.jetbrains.kotlin.cli.common.repl.*
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
-import org.jetbrains.kotlin.cli.jvm.repl.GenericRepl
+import org.jetbrains.kotlin.cli.jvm.repl.GenericReplCompiler
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.script.KotlinScriptDefinition
+import org.jetbrains.kotlin.script.StandardScriptDefinition
 import org.jetbrains.kotlin.utils.PathUtil
+import java.io.BufferedOutputStream
 import java.io.Closeable
 import java.io.File
+import java.io.FileOutputStream
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -36,7 +38,7 @@ val EMPTY_SCRIPT_ARGS_TYPES: Array<out KClass<out Any>> = arrayOf(Array<String>:
  * Contains some stuff from https://github.com/kohesive/keplin
  */
 open class KShell protected constructor(protected val disposable: Disposable,
-                                        protected val scriptDefinition: KotlinScriptDefinition,
+                                        protected val scriptDefinition: KotlinScriptDefinitionEx,
                                         protected val compilerConfiguration: CompilerConfiguration,
                                         protected val repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE,
                                         protected val sharedHostClassLoader: ClassLoader? = null,
@@ -76,8 +78,35 @@ open class KShell protected constructor(protected val disposable: Disposable,
     private val baseClassloader = URLClassLoader(compilerConfiguration.jvmClasspathRoots.map { it.toURI().toURL() }
             .toTypedArray(), sharedHostClassLoader)
 
+    open class GenericRepl protected constructor(
+            disposable: Disposable,
+            scriptDefinition: KotlinScriptDefinition,
+            compilerConfiguration: CompilerConfiguration,
+            messageCollector: MessageCollector,
+            baseClassloader: ClassLoader?,
+            protected val fallbackScriptArgs: ScriptArgsWithTypes? = null,
+            protected val repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE
+    ) : ReplCompiler, ReplEvaluator, ReplAtomicEvaluator {
+
+        protected val compiler: ReplCompiler by lazy { GenericReplCompiler(disposable, scriptDefinition, compilerConfiguration, messageCollector) }
+        protected val evaluator: ReplFullEvaluator by lazy { GenericReplCompilingEvaluator(compiler, compilerConfiguration.jvmClasspathRoots, baseClassloader, fallbackScriptArgs, repeatingMode) }
+
+        override fun createState(lock: ReentrantReadWriteLock): IReplStageState<*> = evaluator.createState(lock)
+
+        override fun check(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCheckResult = compiler.check(state, codeLine)
+
+        override fun compile(state: IReplStageState<*>, codeLine: ReplCodeLine): ReplCompileResult = compiler.compile(state, codeLine)
+
+        override fun eval(state: IReplStageState<*>, compileResult: ReplCompileResult.CompiledClasses, scriptArgs: ScriptArgsWithTypes?, invokeWrapper: InvokeWrapper?): ReplEvalResult =
+                evaluator.eval(state, compileResult, scriptArgs, invokeWrapper)
+
+        override fun compileAndEval(state: IReplStageState<*>, codeLine: ReplCodeLine, scriptArgs: ScriptArgsWithTypes?, invokeWrapper: InvokeWrapper?): ReplEvalResult =
+                evaluator.compileAndEval(state, codeLine, scriptArgs, invokeWrapper)
+    }
+
+
     val engine: GenericRepl by lazy {
-        object : GenericRepl(disposable = disposable,
+        object: GenericRepl(disposable = disposable,
                 scriptDefinition = scriptDefinition,
                 compilerConfiguration = compilerConfiguration,
                 messageCollector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false),
@@ -105,6 +134,7 @@ open class KShell protected constructor(protected val disposable: Disposable,
             history = shellHistory
             addCompleter(ContextDependentCompleter(commands))
         }
+        initImports()
         do {
             printPrompt()
             val line = reader.readLine()
@@ -126,6 +156,10 @@ open class KShell protected constructor(protected val disposable: Disposable,
         } while (true)
 
         cleanUp()
+    }
+
+    fun initImports() {
+        scriptDefinition.defaultImports.forEach { compileAndEval("import $it") }
     }
 
     fun registerCommand(command: Command): Unit {
@@ -154,15 +188,15 @@ open class KShell protected constructor(protected val disposable: Disposable,
                 }
                 is ReplCompileResult.CompiledClasses -> {
                     afterCompile(compileResult)
-                    val evalResult = engine.eval(state, compileResult)
-
+                    val evalResult = engine.eval(state, compileResult, fallbackArgs)
+                    incompleteLines.clear()
                     when (evalResult) {
+                        is ReplEvalResult.Incomplete -> throw IllegalStateException("Should never happen")
                         is ReplEvalResult.ValueResult -> valueResult(evalResult)
                         is ReplEvalResult.UnitResult -> { }
                         is ReplEvalResult.Error,
                         is ReplEvalResult.HistoryMismatch -> evalError(evalResult)
                     }
-                    incompleteLines.clear()
                 }
             }
         }
@@ -188,7 +222,16 @@ open class KShell protected constructor(protected val disposable: Disposable,
     }
 
     open fun afterCompile(compiledClasses: ReplCompileResult.CompiledClasses) {
-       // do nothing by default
+        compiledClasses.classes.forEach {
+            writeClass("/Users/vitaly.khudobakhshov/Documents/research_projects/sparklin/temp" + File.separator + it.path, it.bytes)
+        }
+    }
+
+    fun writeClass(path: String, bytes: ByteArray) {
+        val out = BufferedOutputStream(FileOutputStream(path))
+        out.write(bytes)
+        out.flush()
+        out.close()
     }
 
     fun printPrompt() {
@@ -205,7 +248,7 @@ open class KShell protected constructor(protected val disposable: Disposable,
         Shared.__res = result.value
 
         val type = clarifyType(result.type)
-        compileAndEval("val $name = __res as? $type")
+        compileAndEval("val $name = __res as $type")
         reader.println("$name: $type = ${result.value}")
     }
 

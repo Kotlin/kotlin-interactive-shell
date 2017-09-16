@@ -5,6 +5,7 @@ import kshell.command.Load
 import kshell.command.Type
 import lib.jline.console.history.FileHistory
 import org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes
+import org.jetbrains.kotlin.script.StandardScriptDefinition
 import java.io.File
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
@@ -15,7 +16,8 @@ import kotlin.script.templates.standard.ScriptTemplateWithArgs
 object KotlinShell {
     @JvmStatic
     fun main(args: Array<String>) {
-        val defs = KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class,
+        val defs =  //StandardScriptDefinition
+                KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class,
                 ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES),
                 listOf("kshell.Shared.*"))
 
