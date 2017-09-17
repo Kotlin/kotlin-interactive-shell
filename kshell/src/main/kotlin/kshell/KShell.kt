@@ -221,18 +221,7 @@ open class KShell protected constructor(protected val disposable: Disposable,
         }
     }
 
-    open fun afterCompile(compiledClasses: ReplCompileResult.CompiledClasses) {
-        compiledClasses.classes.forEach {
-            writeClass("/Users/vitaly.khudobakhshov/Documents/research_projects/sparklin/temp" + File.separator + it.path, it.bytes)
-        }
-    }
-
-    fun writeClass(path: String, bytes: ByteArray) {
-        val out = BufferedOutputStream(FileOutputStream(path))
-        out.write(bytes)
-        out.flush()
-        out.close()
-    }
+    open fun afterCompile(compiledClasses: ReplCompileResult.CompiledClasses) { }
 
     fun printPrompt() {
         if (incompleteLines.isEmpty())
