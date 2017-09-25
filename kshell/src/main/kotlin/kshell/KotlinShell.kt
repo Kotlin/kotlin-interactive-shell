@@ -1,11 +1,11 @@
 package kshell
 
 import kshell.command.Help
+import kshell.command.Symbols
 import kshell.command.Load
 import kshell.command.Type
 import lib.jline.console.history.FileHistory
 import org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes
-import org.jetbrains.kotlin.script.StandardScriptDefinition
 import java.io.File
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
@@ -39,6 +39,7 @@ object KotlinShell {
             registerCommand(Help())
             registerCommand(Load())
             registerCommand(Type())
+            registerCommand(Symbols())
             doRun()
         }
 

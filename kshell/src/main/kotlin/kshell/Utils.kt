@@ -3,6 +3,7 @@ package kshell
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.cli.jvm.repl.GenericReplCompiler
 import java.io.File
+import java.lang.instrument.Instrumentation
 import kotlin.reflect.KClass
 
 /**
@@ -87,3 +88,5 @@ internal fun <T : Any> KClass<T>.containingClasspath(filterJarName: Regex = ".*"
             }
             ?.let { File(it) }
 }
+
+internal fun getInstrumentation(): Instrumentation? = null

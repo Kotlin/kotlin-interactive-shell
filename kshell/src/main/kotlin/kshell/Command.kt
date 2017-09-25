@@ -10,7 +10,11 @@ abstract class Command(val cmd: String,
                        val description: String,
                        val params: String = "",
                        val ignoreCase: Boolean = true) {
-    var repl: KShell? = null
+    lateinit var repl: KShell
+
+    open fun init(repl: KShell) {
+        this.repl = repl
+    }
 
     internal fun match(line: String): Boolean {
         val ind = line.indexOf(' ')

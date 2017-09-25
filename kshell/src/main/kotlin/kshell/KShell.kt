@@ -17,8 +17,10 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.script.KotlinScriptDefinition
 import org.jetbrains.kotlin.utils.PathUtil
+import java.io.BufferedOutputStream
 import java.io.Closeable
 import java.io.File
+import java.io.FileOutputStream
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -101,7 +103,6 @@ open class KShell protected constructor(protected val disposable: Disposable,
                 evaluator.compileAndEval(state, codeLine, scriptArgs, invokeWrapper)
     }
 
-
     val engine: GenericRepl by lazy {
         object: GenericRepl(disposable = disposable,
                 scriptDefinition = scriptDefinition,
@@ -121,8 +122,16 @@ open class KShell protected constructor(protected val disposable: Disposable,
     val reader = ConsoleReader()
     val commands: MutableList<Command> = mutableListOf(FakeQuit())
 
+    var lastCompiledClasses: ReplCompileResult.CompiledClasses? = null
+
     private class FakeQuit: Command("quit", "q", "exit the interpreter") {
         override fun execute(line: String) {}
+    }
+
+    var wrapper: InvokeWrapper = object: InvokeWrapper {
+        override fun <T> invoke(body: () -> T): T {
+            return body()
+        }
     }
 
     fun doRun() {
@@ -160,7 +169,7 @@ open class KShell protected constructor(protected val disposable: Disposable,
     }
 
     fun registerCommand(command: Command): Unit {
-        command.repl = this
+        command.init(this)
         commands.add(command)
     }
 
@@ -185,12 +194,12 @@ open class KShell protected constructor(protected val disposable: Disposable,
                 }
                 is ReplCompileResult.CompiledClasses -> {
                     afterCompile(compileResult)
-                    val evalResult = engine.eval(state, compileResult, fallbackArgs)
+                    val evalResult = engine.eval(state, compileResult, fallbackArgs, wrapper)
                     incompleteLines.clear()
                     when (evalResult) {
                         is ReplEvalResult.Incomplete -> throw IllegalStateException("Should never happen")
                         is ReplEvalResult.ValueResult -> valueResult(evalResult)
-                        is ReplEvalResult.UnitResult -> { }
+                        is ReplEvalResult.UnitResult -> { lastCompiledClasses = compileResult }
                         is ReplEvalResult.Error,
                         is ReplEvalResult.HistoryMismatch -> evalError(evalResult)
                     }
@@ -218,7 +227,18 @@ open class KShell protected constructor(protected val disposable: Disposable,
         }
     }
 
-    open fun afterCompile(compiledClasses: ReplCompileResult.CompiledClasses) { }
+    open fun afterCompile(compiledClasses: ReplCompileResult.CompiledClasses) {
+        compiledClasses.classes.forEach {
+            wClass("/Users/vitaly.khudobakhshov/Documents/research_projects/sparklin/temp" + File.separator + it.path, it.bytes)
+        }
+    }
+
+    fun wClass(path: String, bytes: ByteArray) {
+        val out = BufferedOutputStream(FileOutputStream(path))
+        out.write(bytes)
+        out.flush()
+        out.close()
+    }
 
     fun printPrompt() {
         if (incompleteLines.isEmpty())

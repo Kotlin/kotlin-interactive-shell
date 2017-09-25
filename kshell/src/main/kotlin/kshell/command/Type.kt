@@ -10,7 +10,7 @@ class Type : Command("type", "t", "display the type of an expression without eva
         val p = line.indexOf(' ')
         val expr = line.substring(p + 1).trim()
 
-        repl!!.apply {
+        repl.apply {
             state.lock.write {
                 val replCodeLine = ReplCodeLine(nextLine.incrementAndGet(), state.currentGeneration, expr)
                 val compileResult = engine.compile(state, replCodeLine)

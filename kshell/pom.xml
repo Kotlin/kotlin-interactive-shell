@@ -6,7 +6,7 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>${sparklin.version}</version>
+        <version>0.1_spark_1.6</version>
     </parent>
 
     <artifactId>kshell</artifactId>

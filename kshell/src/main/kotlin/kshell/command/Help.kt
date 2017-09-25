@@ -6,7 +6,7 @@ open class Help : Command("help", "h", "print this summary or command-specific h
     override fun execute(line: String) {
         val args = line.split(' ')
 
-        repl!!.apply {
+        repl.apply {
             if (args.size == 1) {
                 val help = commands.map(Command::toString).joinToString(separator = "\n")
                 reader.println(help)
