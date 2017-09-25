@@ -47,8 +47,12 @@ class InstanceSymbol(name: String, private val obj: Any?, private val prop: KPro
                 VerboseLevel.HIGH -> {
                     val instrumentation = getInstrumentation()
                     if (instrumentation != null) {
-                        val size = human(instrumentation.getObjectSize(obj))
-                        "${signature()} ($size)"
+                        if (obj != null) {
+                            val size = human(instrumentation.getObjectSize(obj))
+                            "${signature()} ($size)"
+                        } else {
+                            "${signature()} (null)"
+                        }
                     } else signature()
                 }
             }
