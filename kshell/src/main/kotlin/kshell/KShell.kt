@@ -2,6 +2,8 @@ package kshell
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import kshell.completion.CodeCompleter
+import kshell.completion.KotlinCompletion
 import lib.jline.console.ConsoleReader
 import lib.jline.console.history.MemoryHistory
 import lib.jline.console.history.PersistentHistory
@@ -36,9 +38,9 @@ val EMPTY_SCRIPT_ARGS_TYPES: Array<out KClass<out Any>> = arrayOf(Array<String>:
  * Basic class for Kotlin powered REPL.
  * Contains some stuff from https://github.com/kohesive/keplin
  */
-open class KShell protected constructor(protected val disposable: Disposable,
-                                        protected val scriptDefinition: KotlinScriptDefinitionEx,
-                                        protected val compilerConfiguration: CompilerConfiguration,
+open class KShell protected constructor(val disposable: Disposable,
+                                        val scriptDefinition: KotlinScriptDefinitionEx,
+                                        val compilerConfiguration: CompilerConfiguration,
                                         protected val repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE,
                                         protected val sharedHostClassLoader: ClassLoader? = null,
                                         protected val emptyArgsProvider: ScriptTemplateEmptyArgsProvider,
@@ -123,6 +125,7 @@ open class KShell protected constructor(protected val disposable: Disposable,
     val commands: MutableList<Command> = mutableListOf(FakeQuit())
 
     var lastCompiledClasses: ReplCompileResult.CompiledClasses? = null
+    val kotlinCompletion = KotlinCompletion(this)
 
     private class FakeQuit: Command("quit", "q", "exit the interpreter") {
         override fun execute(line: String) {}
@@ -138,7 +141,7 @@ open class KShell protected constructor(protected val disposable: Disposable,
         reader.apply {
             expandEvents = false
             history = shellHistory
-            addCompleter(ContextDependentCompleter(commands))
+            addCompleter(ContextDependentCompleter(commands, CodeCompleter(kotlinCompletion)))
         }
         initImports()
         do {

@@ -4,6 +4,7 @@ import kshell.command.Help
 import kshell.command.Symbols
 import kshell.command.Load
 import kshell.command.Type
+import kshell.completion.TestComplCmd
 import lib.jline.console.history.FileHistory
 import org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes
 import java.io.File
@@ -40,6 +41,7 @@ object KotlinShell {
             registerCommand(Load())
             registerCommand(Type())
             registerCommand(Symbols())
+            registerCommand(TestComplCmd())
             doRun()
         }
 

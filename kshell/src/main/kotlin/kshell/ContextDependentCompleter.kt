@@ -5,7 +5,8 @@ import lib.jline.console.completer.Completer
 /**
  * Created by vitaly.khudobakhshov on 18/04/17.
  */
-class ContextDependentCompleter(val commands: List<Command>): Completer {
+class ContextDependentCompleter(private val commands: List<Command>,
+                                private val codeCompleter: Completer): Completer {
     override fun complete(buffer: String?, cursor: Int, candidates: MutableList<CharSequence>?): Int {
         if (buffer != null) {
             if (buffer.startsWith(":")) {
@@ -14,7 +15,9 @@ class ContextDependentCompleter(val commands: List<Command>): Completer {
                     return command[0].completer().complete(buffer, cursor, candidates)
                 } else
                     return -1
-            } else return -1 // code completer can be here
+            } else {
+                return codeCompleter.complete(buffer, cursor, candidates)
+            }
         } else {
             return -1
         }
