@@ -12,11 +12,16 @@ class CodeCompleter(val kotlinCompletion: KotlinCompletion): Completer {
         }
 
         val proposals = kotlinCompletion.generateCompletionProposals(buffer, cursor)
-//        println("***** s = " + proposals.size)
 
         if (proposals.isNotEmpty()) {
             candidates!!.addAll(proposals.map { it.completion })
-            return cursor
+            return buffer.skipFromRight() + 1
         } else return -1
     }
+}
+
+fun String.skipFromRight(): Int {
+    var i = this.length - 1
+    while (i >= 0 && (this[i].isJavaIdentifierPart() || this[i].isJavaIdentifierStart())) i--
+    return maxOf(i, 0)
 }
