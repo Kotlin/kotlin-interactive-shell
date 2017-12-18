@@ -89,8 +89,8 @@ open class KShell protected constructor(val disposable: Disposable,
             protected val repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE
     ) : ReplCompiler, ReplEvaluator, ReplAtomicEvaluator {
 
-        protected val compiler: ReplCompiler by lazy { GenericReplCompiler(disposable, scriptDefinition, compilerConfiguration, messageCollector) }
-        protected val evaluator: ReplFullEvaluator by lazy { GenericReplCompilingEvaluator(compiler, compilerConfiguration.jvmClasspathRoots, baseClassloader, fallbackScriptArgs, repeatingMode) }
+        private val compiler: ReplCompiler by lazy { GenericReplCompiler(disposable, scriptDefinition, compilerConfiguration, messageCollector) }
+        private val evaluator: ReplFullEvaluator by lazy { GenericReplCompilingEvaluator(compiler, compilerConfiguration.jvmClasspathRoots, baseClassloader, fallbackScriptArgs, repeatingMode) }
 
         override fun createState(lock: ReentrantReadWriteLock): IReplStageState<*> = evaluator.createState(lock)
 
@@ -160,7 +160,12 @@ open class KShell protected constructor(val disposable: Disposable,
                     commandError(e)
                 }
             } else {
-                compileAndEval(line)
+                if (line.trim().isBlank() && incompleteLines.last().trim().isBlank()) {
+                    incompleteLines.clear()
+                    reader.println("You typed two blank lines.  Starting a new command.")
+                } else {
+                    compileAndEval(line)
+                }
             }
         } while (true)
 
@@ -231,16 +236,7 @@ open class KShell protected constructor(val disposable: Disposable,
     }
 
     open fun afterCompile(compiledClasses: ReplCompileResult.CompiledClasses) {
-        compiledClasses.classes.forEach {
-            wClass("/Users/vitaly.khudobakhshov/Documents/research_projects/sparklin/temp" + File.separator + it.path, it.bytes)
-        }
-    }
-
-    fun wClass(path: String, bytes: ByteArray) {
-        val out = BufferedOutputStream(FileOutputStream(path))
-        out.write(bytes)
-        out.flush()
-        out.close()
+        // do nothing
     }
 
     fun printPrompt() {
@@ -288,7 +284,6 @@ open class KShell protected constructor(val disposable: Disposable,
     open fun cleanUp() {
         shellHistory.flush()
     }
-
 }
 
 
