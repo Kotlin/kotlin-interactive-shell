@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>kshell</artifactId>
-	<version>0.1</version>
+	<version>SNAPSHOT</version>
 
     <properties>
         <kotlin.version>1.2.0</kotlin.version>

@@ -6,16 +6,12 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>0.1_spark_1.6</version>
+        <version>SNAPSHOT-spark-1.6</version>
     </parent>
 
 
     <artifactId>sparklin-examples</artifactId>
 	<version>${sparklin.version}</version>
-
-    <properties>
-        <kotlin.version>1.1.60</kotlin.version>
-    </properties>
 
 
     <dependencies>
