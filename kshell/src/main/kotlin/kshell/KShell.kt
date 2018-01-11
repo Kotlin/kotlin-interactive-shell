@@ -2,8 +2,6 @@ package kshell
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import kshell.completion.CodeCompleter
-import kshell.completion.KotlinCompletion
 import lib.jline.console.ConsoleReader
 import lib.jline.console.history.MemoryHistory
 import lib.jline.console.history.PersistentHistory
@@ -19,10 +17,8 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.script.KotlinScriptDefinition
 import org.jetbrains.kotlin.utils.PathUtil
-import java.io.BufferedOutputStream
 import java.io.Closeable
 import java.io.File
-import java.io.FileOutputStream
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -125,7 +121,6 @@ open class KShell protected constructor(val disposable: Disposable,
     val commands: MutableList<Command> = mutableListOf(FakeQuit())
 
     var lastCompiledClasses: ReplCompileResult.CompiledClasses? = null
-    val kotlinCompletion = KotlinCompletion(this)
 
     private class FakeQuit: Command("quit", "q", "exit the interpreter") {
         override fun execute(line: String) {}
@@ -141,7 +136,7 @@ open class KShell protected constructor(val disposable: Disposable,
         reader.apply {
             expandEvents = false
             history = shellHistory
-            addCompleter(ContextDependentCompleter(commands, CodeCompleter(kotlinCompletion)))
+            addCompleter(ContextDependentCompleter(commands))
         }
         initImports()
         do {
@@ -160,7 +155,7 @@ open class KShell protected constructor(val disposable: Disposable,
                     commandError(e)
                 }
             } else {
-                if (line.trim().isBlank() && incompleteLines.last().trim().isBlank()) {
+                if (line.trim().isBlank() && (incompleteLines.isNotEmpty() && incompleteLines.last().trim().isBlank())) {
                     incompleteLines.clear()
                     reader.println("You typed two blank lines.  Starting a new command.")
                 } else {
