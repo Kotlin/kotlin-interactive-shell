@@ -1,4 +1,4 @@
-package kshell.completion
+package completion
 
 import lib.jline.console.completer.Completer
 

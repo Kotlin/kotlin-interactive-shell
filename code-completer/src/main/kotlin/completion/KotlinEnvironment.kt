@@ -1,4 +1,4 @@
-package kshell.completion
+package completion
 
 import kshell.KShell
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles

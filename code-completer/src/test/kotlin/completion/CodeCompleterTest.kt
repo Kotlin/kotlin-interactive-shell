@@ -1,4 +1,4 @@
-package kshell.completion
+package completion
 
 import org.junit.Assert.*
 import org.junit.Test

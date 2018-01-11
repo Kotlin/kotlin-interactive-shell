@@ -1,4 +1,4 @@
-package kshell.completion
+package completion
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt

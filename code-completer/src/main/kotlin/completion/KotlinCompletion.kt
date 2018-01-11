@@ -1,4 +1,4 @@
-package kshell.completion
+package completion
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile

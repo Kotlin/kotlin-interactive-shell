@@ -1,4 +1,4 @@
-package kshell.completion
+package completion
 
 import kshell.Command
 import kshell.KShell
