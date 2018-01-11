@@ -23,5 +23,5 @@ class CodeCompleter(val kotlinCompletion: KotlinCompletion): Completer {
 fun String.skipFromRight(): Int {
     var i = this.length - 1
     while (i >= 0 && (this[i].isJavaIdentifierPart() || this[i].isJavaIdentifierStart())) i--
-    return maxOf(i, 0)
+    return i //maxOf(i, 0)
 }

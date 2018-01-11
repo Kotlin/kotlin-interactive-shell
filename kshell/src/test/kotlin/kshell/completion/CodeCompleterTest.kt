@@ -8,6 +8,6 @@ class CodeCompleterTest {
     fun skipFromRight() {
         assertEquals(1, "1.to".skipFromRight())
         assertEquals("1.toString(".length - 1, "1.toString(".skipFromRight())
-        assertEquals(0, "println".skipFromRight())
+        assertEquals(-1, "println".skipFromRight())
     }
 }

@@ -6,15 +6,13 @@ import com.intellij.psi.util.PsiTreeUtil
 import kshell.KShell
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 
 class KotlinCompletion(val repl: KShell) {
-        fun generateCompletionProposals(text: String, offset: Int): List<CompletionProposal> {
+    fun generateCompletionProposals(text: String, offset: Int): List<CompletionProposal> {
         val (identifierPart, identifierStart) = getIdentifierInfo(text, offset)
         val psiElement = KotlinCompletionUtils.getPsiElement(repl, text, identifierStart)
         val simpleNameExpression = PsiTreeUtil.getParentOfType(psiElement, KtSimpleNameExpression::class.java)

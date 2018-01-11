@@ -1,7 +1,5 @@
 package kshell.completion
 
-import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
-
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import kshell.KShell
@@ -16,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-public class KotlinResolutionFacade(
+class KotlinResolutionFacade(
         val repl: KShell,
         val componentProvider: ComponentProvider,
         override val moduleDescriptor: ModuleDescriptor) : ResolutionFacade {
@@ -34,6 +32,7 @@ public class KotlinResolutionFacade(
     override fun analyze(element: KtElement, bodyResolveMode: BodyResolveMode): BindingContext {
         throw UnsupportedOperationException()
     }
+
     override fun analyze(elements: Collection<KtElement>, bodyResolveMode: BodyResolveMode): BindingContext {
         throw UnsupportedOperationException()
     }
