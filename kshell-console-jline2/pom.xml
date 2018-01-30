@@ -9,15 +9,10 @@
         <version>0.1_spark_1.6</version>
     </parent>
 
-    <artifactId>kshell</artifactId>
+    <artifactId>kshell-console-jline2</artifactId>
 	<version>SNAPSHOT</version>
 
-    <!--<properties>-->
-        <!--<kotlin.version>1.2.20</kotlin.version>-->
-    <!--</properties>-->
-
     <dependencies>
-
 	    <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
@@ -33,59 +28,22 @@
             <artifactId>kotlin-reflect</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.fusesource.jansi/jansi -->
         <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-compiler</artifactId>
-            <version>${kotlin.version}</version>
+            <groupId>org.fusesource.jansi</groupId>
+            <artifactId>jansi</artifactId>
+            <version>1.16</version>
         </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-script-runtime</artifactId>
-            <version>${kotlin.version}</version>
-        </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.apache.spark</groupId>-->
-            <!--<artifactId>spark-core_2.10</artifactId>-->
-            <!--<version>1.6.3</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.apache.spark</groupId>-->
-            <!--<artifactId>spark-sql_2.10</artifactId>-->
-            <!--<version>1.6.3</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.jetbrains.kotlin</groupId>-->
-            <!--<artifactId>kotlin-test</artifactId>-->
-            <!--<version>${kotlin.version}</version>-->
-            <!--<scope>test</scope>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.jetbrains.kotlin</groupId>-->
-            <!--<artifactId>kotlin-ide-common</artifactId>-->
-            <!--<version>SNAPSHOT</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>com.squareup.moshi</groupId>-->
-            <!--<artifactId>moshi</artifactId>-->
-            <!--<version>1.5.0</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>com.squareup.moshi</groupId>-->
-            <!--<artifactId>moshi-kotlin</artifactId>-->
-            <!--<version>1.5.0</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.json</groupId>-->
-            <!--<artifactId>json</artifactId>-->
-            <!--<version>20171018</version>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.0</version>
         </dependency>
-
-
+        <dependency>
+            <groupId>sparklin</groupId>
+            <artifactId>kshell</artifactId>
+            <version>SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

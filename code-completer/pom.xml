@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>code-completer</artifactId>
-	<version>${sparklin.version}</version>
+	<version>SNAPSHOT</version>
 
     <dependencies>
 		<dependency>
@@ -43,12 +43,12 @@
             <artifactId>spark-sql_2.10</artifactId>
             <version>1.6.3</version>
         </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test</artifactId>
-            <version>${kotlin.version}</version>
-            <scope>test</scope>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.jetbrains.kotlin</groupId>-->
+            <!--<artifactId>kotlin-test</artifactId>-->
+            <!--<version>${kotlin.version}</version>-->
+            <!--<scope>test</scope>-->
+        <!--</dependency>-->
     </dependencies>
 
     <build>
@@ -60,7 +60,7 @@
                     <jvmTarget>1.8</jvmTarget>
                 </configuration>
                 <groupId>org.jetbrains.kotlin</groupId>
-                <version>${kotlin.version}</version>
+                <version>1.2.10</version>
 
                 <executions>
                     <execution>

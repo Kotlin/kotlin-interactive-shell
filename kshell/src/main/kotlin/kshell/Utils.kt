@@ -90,3 +90,7 @@ internal fun <T : Any> KClass<T>.containingClasspath(filterJarName: Regex = ".*"
 }
 
 internal fun getInstrumentation(): Instrumentation? = null
+
+fun clarifyType(rawType: String?) = rawType?.let {
+    rawType.replace("(Mutable)", "Mutable").replace("!", "?")
+}
