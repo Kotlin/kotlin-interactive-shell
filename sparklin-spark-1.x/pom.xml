@@ -4,19 +4,24 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-	<groupId>sparklin</groupId>
-	<artifactId>sparklin</artifactId>
-	<version>SNAPSHOT-spark-1.6</version>
-	</parent>
+        <groupId>sparklin</groupId>
+        <artifactId>sparklin</artifactId>
+        <version>SNAPSHOT</version>
+    </parent>
 
 
-    <artifactId>sparklin-core</artifactId>
+    <artifactId>sparklin-spark-1.x</artifactId>
 	<version>${sparklin.version}</version>
 
     <dependencies>
         <dependency>
+            <groupId>sparklin</groupId>
+            <artifactId>kshell</artifactId>
+            <version>SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib</artifactId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
         <dependency>
@@ -29,11 +34,6 @@
             <artifactId>kotlin-compiler</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.jetbrains.kotlin</groupId>-->
-            <!--<artifactId>kotlin-runner</artifactId>-->
-            <!--<version>${kotlin.version}</version>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.10</artifactId>
@@ -47,8 +47,13 @@
     </dependencies>
 
     <build>
-        <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
-        <testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
+        </resources>
+        <!--<sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>-->
+        <!--<testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>-->
         <plugins>
             <plugin>
                 <groupId>org.scala-tools</groupId>
@@ -80,8 +85,12 @@
             </plugin>
             <plugin>
                 <artifactId>kotlin-maven-plugin</artifactId>
+                <configuration>
+                    <jvmTarget>1.8</jvmTarget>
+                </configuration>
                 <groupId>org.jetbrains.kotlin</groupId>
-                <version>1.1.0</version>
+                <version>${kotlin.version}</version>
+
                 <executions>
                     <execution>
                         <id>compile</id>
@@ -89,9 +98,8 @@
                         <goals> <goal>compile</goal> </goals>
                         <configuration>
                             <sourceDirs>
-                                <source>src/main/java</source>
                                 <source>src/main/kotlin</source>
-                                <source>src/main/scala</source>
+                                <source>src/main/java</source>
                             </sourceDirs>
                         </configuration>
                     </execution>
@@ -99,16 +107,9 @@
                         <id>test-compile</id>
                         <phase>test-compile</phase>
                         <goals> <goal>test-compile</goal> </goals>
-                        <configuration>
-                            <sourceDirs>
-                                <source>src/test/java</source>
-                                <source>src/test/kotlin</source>
-                            </sourceDirs>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -143,7 +144,8 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <!-- <addClasspath>true</addClasspath> -->
+                            <!-- addClasspath>true</addClasspath> -->
+                            <mainClass>sparklin.shell.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

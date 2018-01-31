@@ -2,8 +2,14 @@ package kshell
 
 import org.jetbrains.kotlin.cli.common.repl.InvokeWrapper
 import org.jetbrains.kotlin.cli.common.repl.ReplCompileResult
+import java.io.File
+import kotlin.reflect.KClass
 
-interface Repl {
+interface Repl : EventManager {
+    fun addClasspathRoots(files: List<File>)
+
+    fun addImports(imports: List<String>)
+
     fun compile(code: String): ReplCompileResult
 
     fun compileAndEval(line: String)
@@ -16,7 +22,23 @@ interface Repl {
 
     var wrapper: InvokeWrapper
 
-    fun getLastCompiledClasses(): ReplCompileResult.CompiledClasses?
-
     fun listCommands(): Iterable<Command>
+}
+
+interface EventManager {
+    fun <E: Any> registerEventHandler(eventType: KClass<E>, handler: EventHandler<E>)
+
+    fun <T> emitEvent(event: Event<T>)
+}
+
+interface EventHandler<E> {
+    fun handle(event: E)
+}
+
+interface Event<T> {
+    fun data(): T
+}
+
+class OnCompile(private val compiledClasses: ReplCompileResult.CompiledClasses) : Event<ReplCompileResult.CompiledClasses> {
+    override fun data(): ReplCompileResult.CompiledClasses = compiledClasses
 }

@@ -20,6 +20,7 @@ class ConfigurationImpl: Configuration {
     override fun load() {
         val path = configPath()
 
+        println("Config " + path)
         if (File(path).exists()) {
             props.load(BufferedReader(FileReader(path)))
         }

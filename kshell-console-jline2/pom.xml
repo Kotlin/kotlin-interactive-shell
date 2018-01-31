@@ -6,7 +6,7 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>0.1_spark_1.6</version>
+        <version>SNAPSHOT</version>
     </parent>
 
     <artifactId>kshell-console-jline2</artifactId>

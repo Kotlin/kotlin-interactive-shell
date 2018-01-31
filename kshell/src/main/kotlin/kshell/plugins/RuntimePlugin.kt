@@ -1,13 +1,9 @@
 package kshell.plugins
 
-import kshell.BaseCommand
-import kshell.Plugin
-import kshell.Repl
-import kshell.clarifyType
+import kshell.*
 import kshell.configuration.Configuration
 import kshell.console.ConsoleReader
 import org.jetbrains.kotlin.cli.common.repl.ReplCompileResult
-import kshell.getInstrumentation
 import org.jetbrains.kotlin.cli.common.repl.InvokeWrapper
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -42,7 +38,7 @@ class RuntimePlugin : Plugin {
 
     inner class PrintSymbols(fullName: String, shortName: String, description: String):
             BaseCommand(fullName, shortName, description) {
-        val table = SymbolsTable()
+        private val table = SymbolsTable()
 
         init {
             repl.wrapper = ExtractSymbols(repl.wrapper, table)
@@ -50,15 +46,16 @@ class RuntimePlugin : Plugin {
 
         override fun execute(line: String) {
             repl.apply {
-                getLastCompiledClasses()?.let {
+                lastCompiledClasses?.let {
                     println(table)
                 }
             }
         }
     }
 
-    lateinit var repl: Repl
-    lateinit var console: ConsoleReader
+    private lateinit var repl: Repl
+    private lateinit var console: ConsoleReader
+    private var lastCompiledClasses: ReplCompileResult.CompiledClasses? = null
 
     override fun init(repl: Repl, config: Configuration) {
         this.repl = repl
@@ -71,6 +68,12 @@ class RuntimePlugin : Plugin {
         val printSymbolsCmdFullName = config.getLocal("printSymbolsCmd", "name", "symbols")
         val printSymbolsCmdShortName = config.getLocal("printSymbolsCmd", "short", "s")
         val printSymbolsCmdDescription = "list defined symbols"
+
+        repl.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
+            override fun handle(event: OnCompile) {
+                lastCompiledClasses = event.data()
+            }
+        })
 
         repl.registerCommand(InferType(inferTypeCmdFullName, inferTypeCmdShortName, inferTypeCmdDescription))
         repl.registerCommand(PrintSymbols(printSymbolsCmdFullName, printSymbolsCmdShortName, printSymbolsCmdDescription))

@@ -42,7 +42,7 @@ open class KShell protected constructor(val disposable: Disposable,
                                         protected val repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE,
                                         protected val sharedHostClassLoader: ClassLoader? = null,
                                         protected val emptyArgsProvider: ScriptTemplateEmptyArgsProvider,
-                                        protected val stateLock: ReentrantReadWriteLock = ReentrantReadWriteLock()) : Closeable, Repl {
+                                        protected val stateLock: ReentrantReadWriteLock = ReentrantReadWriteLock()) : Closeable, Repl, KShellEventManager() {
 
     constructor(disposable: Disposable = Disposer.newDisposable(),
                 moduleName: String = "kotlin-script-module-${System.currentTimeMillis()}",
@@ -100,17 +100,9 @@ open class KShell protected constructor(val disposable: Disposable,
                 evaluator.compileAndEval(state, codeLine, scriptArgs, invokeWrapper)
     }
 
-    val engine: GenericRepl by lazy {
-        object: GenericRepl(disposable = disposable,
-                scriptDefinition = scriptDefinition,
-                compilerConfiguration = compilerConfiguration,
-                messageCollector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false),
-                baseClassloader = baseClassloader,
-                fallbackScriptArgs = fallbackArgs,
-                repeatingMode = repeatingMode) {}
-    }
+    lateinit var engine: GenericRepl
 
-    val state = engine.createState(stateLock)
+    lateinit var state: IReplStageState<*>
 
     val incompleteLines = arrayListOf<String>()
     val nextLine: AtomicInteger = AtomicInteger(REPL_CODE_LINE_FIRST_NO)
@@ -120,9 +112,7 @@ open class KShell protected constructor(val disposable: Disposable,
 
     val commands = mutableListOf<Command>(FakeQuit())
 
-    private var lastCompiledClasses: ReplCompileResult.CompiledClasses? = null
-
-    override fun getLastCompiledClasses(): ReplCompileResult.CompiledClasses?  = lastCompiledClasses
+    val additionalImports = mutableListOf<String>()
 
     private class FakeQuit: BaseCommand("quit", "q", "exit the interpreter") {
         override fun execute(line: String) {}
@@ -154,6 +144,24 @@ open class KShell protected constructor(val disposable: Disposable,
 
     override fun listCommands(): Iterable<Command> = commands.asIterable()
 
+    override fun addClasspathRoots(files: List<File>) = compilerConfiguration.addJvmClasspathRoots(files)
+
+    override fun addImports(imports: List<String>) {
+        additionalImports.addAll(imports)
+    }
+
+    fun initEngine() {
+        engine = object: GenericRepl(disposable = disposable,
+                scriptDefinition = scriptDefinition,
+                compilerConfiguration = compilerConfiguration,
+                messageCollector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false),
+                baseClassloader = baseClassloader,
+                fallbackScriptArgs = fallbackArgs,
+                repeatingMode = repeatingMode) {}
+
+        state = engine.createState(stateLock)
+    }
+
     fun doRun() {
         reader.apply {
             addCompleter(ContextDependentCompleter(commands, incompleteLines::isEmpty, buildDefaultCompleter()))
@@ -164,7 +172,9 @@ open class KShell protected constructor(val disposable: Disposable,
 
         config.plugins().forEach { it.init(this, config) }
 
+        initEngine()
         initImports()
+
         do {
             printPrompt()
             val line = reader.readLine()
@@ -195,6 +205,7 @@ open class KShell protected constructor(val disposable: Disposable,
 
     fun initImports() {
         scriptDefinition.defaultImports.forEach { compileAndEval("import $it") }
+        additionalImports.forEach { compileAndEval("import $it") }
     }
 
     override fun registerCommand(command: Command) {
@@ -234,13 +245,13 @@ open class KShell protected constructor(val disposable: Disposable,
                     incompleteLines.clear()
                 }
                 is ReplCompileResult.CompiledClasses -> {
-                    afterCompile(compileResult)
+                    emitEvent(OnCompile(compileResult))
                     val evalResult = engine.eval(state, compileResult, fallbackArgs, wrapper)
                     incompleteLines.clear()
                     when (evalResult) {
                         is ReplEvalResult.Incomplete -> throw IllegalStateException("Should never happen")
                         is ReplEvalResult.ValueResult -> valueResult(evalResult)
-                        is ReplEvalResult.UnitResult -> { lastCompiledClasses = compileResult }
+                        is ReplEvalResult.UnitResult -> { }
                         is ReplEvalResult.Error,
                         is ReplEvalResult.HistoryMismatch -> evalError(evalResult)
                     }
@@ -268,10 +279,6 @@ open class KShell protected constructor(val disposable: Disposable,
         }
     }
 
-    open fun afterCompile(compiledClasses: ReplCompileResult.CompiledClasses) {
-        // do nothing
-    }
-
     fun printPrompt() {
         if (incompleteLines.isEmpty())
             reader.setPrompt("kotlin> ")
@@ -289,11 +296,6 @@ open class KShell protected constructor(val disposable: Disposable,
         compileAndEval("val $name = __res as $type")
         reader.println("$name: $type = ${result.value}")
     }
-
-    /**
-     * @see org.jetbrains.kotlin.renderer.DescriptorRendererImpl::renderFlexibleType()
-     */
-
 
     open fun evalError(result: ReplEvalResult) {
         reader.println(result.toString())
@@ -317,13 +319,19 @@ open class KShell protected constructor(val disposable: Disposable,
     }
 }
 
+open class KShellEventManager : EventManager {
+    private val eventHandlers = hashMapOf<String, MutableList<EventHandler<Any>>>()
 
-//class DefaultHistory: MemoryHistory(), PersistentHistory {
-//    override fun flush() {
-//        // do nothing
-//    }
-//
-//    override fun purge() {
-//        // do nothing
-//    }
-//}
+    override fun <T> emitEvent(event: Event<T>) {
+        eventHandlers[event.javaClass.kotlin.qualifiedName]?.let {
+            it.forEach {
+                it.handle(event)
+            }
+        }
+    }
+
+    override fun <E : Any> registerEventHandler(eventType: KClass<E>, handler: EventHandler<E>) {
+        @Suppress("UNCHECKED_CAST")
+        eventHandlers.getOrPut(eventType.qualifiedName!!, { mutableListOf(handler as EventHandler<Any>) })
+    }
+}
