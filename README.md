@@ -24,13 +24,15 @@ find in `$SPARKLIN_HOME/conf/spark1x.properties`. Of course you could create `.k
 using separate files for various environment is highly recommended. Please set appropriate `SPARK_HOME` variable in 
 the file `bin/sparklin-spark1x.sh`.
 
+`JavaSparkContext` is available as `sc`, `SQLContext` is available as `sqlContext`. 
  
 # Spark 2.x
 The configuration is completely the same as in the case of Spark 1.x but you need `$SPARKLIN_HOME/conf/spark2x.properties`
 and `bin/sparklin-spark2x.sh` instead. Do not forget set `SPARK_HOME` to your Spark 2.x installation.
 
-`JavaSparkContext` is available as `sc`, `SQLContext` is available as `sqlContext`. At the moment Sparklin do not have
-additional Spark runtime support for Kotlin for both Spark versions. But it has planned to be in version 0.2.
+`SparkSession` is available as `spark`, `JavaSparkContext` is available as `sc`.
+At the moment Sparklin do not have additional Spark runtime support for Kotlin for both Spark versions. 
+But it has planned to be in version 0.2.
 
 # Environment Configuration
 Sparklin version 0.1 is tested in following environment:
