@@ -6,11 +6,11 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>SNAPSHOT</version>
+        <version>0.1</version>
     </parent>
 
     <artifactId>kshell-console-jline2</artifactId>
-	<version>SNAPSHOT</version>
+	<version>${sparklin.version}</version>
 
     <dependencies>
 	    <dependency>

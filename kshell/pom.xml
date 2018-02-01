@@ -6,15 +6,11 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>SNAPSHOT</version>
+        <version>0.1</version>
     </parent>
 
     <artifactId>kshell</artifactId>
-	<version>SNAPSHOT</version>
-
-    <!--<properties>-->
-        <!--<kotlin.version>1.2.21</kotlin.version>-->
-    <!--</properties>-->
+	<version>${sparklin.version}</version>
 
     <dependencies>
         <dependency>
