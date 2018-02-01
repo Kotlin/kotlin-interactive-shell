@@ -31,7 +31,7 @@ The configuration is completely the same as in the case of Spark 1.x but you nee
 and `bin/sparklin-spark2x.sh` instead. Do not forget set `SPARK_HOME` to your Spark 2.x installation.
 
 `SparkSession` is available as `spark`, `JavaSparkContext` is available as `sc`.
-At the moment Sparklin do not have additional Spark runtime support for Kotlin for both Spark versions. 
+At the moment Sparklin does not have additional Spark runtime support for Kotlin for both Spark versions. 
 But it has planned to be in version 0.2.
 
 # Environment Configuration
