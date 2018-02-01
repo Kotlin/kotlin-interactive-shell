@@ -2,9 +2,11 @@ package kshell
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import lib.jline.console.ConsoleReader
-import lib.jline.console.history.MemoryHistory
-import lib.jline.console.history.PersistentHistory
+import javafx.stage.Stage
+import kshell.configuration.CachedInstance
+import kshell.configuration.Configuration
+import kshell.configuration.ConfigurationImpl
+import kshell.console.Completer
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
@@ -40,8 +42,7 @@ open class KShell protected constructor(val disposable: Disposable,
                                         protected val repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE,
                                         protected val sharedHostClassLoader: ClassLoader? = null,
                                         protected val emptyArgsProvider: ScriptTemplateEmptyArgsProvider,
-                                        protected val stateLock: ReentrantReadWriteLock = ReentrantReadWriteLock(),
-                                        protected val shellHistory: PersistentHistory = DefaultHistory()) : Closeable {
+                                        protected val stateLock: ReentrantReadWriteLock = ReentrantReadWriteLock()) : Closeable, Repl, KShellEventManager() {
 
     constructor(disposable: Disposable = Disposer.newDisposable(),
                 moduleName: String = "kotlin-script-module-${System.currentTimeMillis()}",
@@ -49,8 +50,7 @@ open class KShell protected constructor(val disposable: Disposable,
                 scriptDefinition: KotlinScriptDefinitionEx = KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class, ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES)),
                 messageCollector: MessageCollector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false),
                 repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE,
-                sharedHostClassLoader: ClassLoader? = null,
-                shellHistory: PersistentHistory = DefaultHistory()) : this(disposable,
+                sharedHostClassLoader: ClassLoader? = null) : this(disposable,
             compilerConfiguration = CompilerConfiguration().apply {
                 addJvmClasspathRoots(PathUtil.getJdkClassesRoots(File(System.getProperty("java.home"))))
                 addJvmClasspathRoots(findRequiredScriptingJarFiles(scriptDefinition.template,
@@ -65,8 +65,7 @@ open class KShell protected constructor(val disposable: Disposable,
             repeatingMode = repeatingMode,
             sharedHostClassLoader = sharedHostClassLoader,
             scriptDefinition = scriptDefinition,
-            emptyArgsProvider = scriptDefinition,
-            shellHistory = shellHistory)
+            emptyArgsProvider = scriptDefinition)
 
     var fallbackArgs: ScriptArgsWithTypes? = emptyArgsProvider.defaultEmptyArgs
         get() = stateLock.read { field }
@@ -85,8 +84,8 @@ open class KShell protected constructor(val disposable: Disposable,
             protected val repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE
     ) : ReplCompiler, ReplEvaluator, ReplAtomicEvaluator {
 
-        private val compiler: ReplCompiler by lazy { GenericReplCompiler(disposable, scriptDefinition, compilerConfiguration, messageCollector) }
-        private val evaluator: ReplFullEvaluator by lazy { GenericReplCompilingEvaluator(compiler, compilerConfiguration.jvmClasspathRoots, baseClassloader, fallbackScriptArgs, repeatingMode) }
+        val compiler: GenericReplCompiler by lazy { GenericReplCompiler(disposable, scriptDefinition, compilerConfiguration, messageCollector) }
+        val evaluator: ReplFullEvaluator by lazy { GenericReplCompilingEvaluator(compiler, compilerConfiguration.jvmClasspathRoots, baseClassloader, fallbackScriptArgs, repeatingMode) }
 
         override fun createState(lock: ReentrantReadWriteLock): IReplStageState<*> = evaluator.createState(lock)
 
@@ -101,63 +100,100 @@ open class KShell protected constructor(val disposable: Disposable,
                 evaluator.compileAndEval(state, codeLine, scriptArgs, invokeWrapper)
     }
 
-    val engine: GenericRepl by lazy {
-        object: GenericRepl(disposable = disposable,
+    lateinit var engine: GenericRepl
+
+    lateinit var state: IReplStageState<*>
+
+    val incompleteLines = arrayListOf<String>()
+    val nextLine: AtomicInteger = AtomicInteger(REPL_CODE_LINE_FIRST_NO)
+    val resultCounter: AtomicInteger = AtomicInteger(1)
+
+    val reader = configuration().getConsoleReader()
+
+    val commands = mutableListOf<Command>(FakeQuit())
+
+    val additionalImports = mutableListOf<String>()
+
+    private class FakeQuit: BaseCommand("quit", "q", "exit the interpreter") {
+        override fun execute(line: String) {}
+    }
+
+    override var wrapper: InvokeWrapper = object: InvokeWrapper {
+        override fun <T> invoke(body: () -> T): T {
+            return body()
+        }
+    }
+
+    open fun buildDefaultCompleter() = Completer.DEFAULT_COMPLETER
+
+//    fun getReplEnvironment() = engine.compiler.getReplEnvironment()
+
+    companion object {
+        private val instance = CachedInstance<Configuration>()
+
+        fun configuration(): Configuration {
+            val klassName: String? = System.getProperty("config.class")
+
+            return if (klassName != null) {
+                instance.load(klassName, Configuration::class)
+            } else {
+                instance.get { ConfigurationImpl() }
+            }
+        }
+    }
+
+    override fun listCommands(): Iterable<Command> = commands.asIterable()
+
+    override fun addClasspathRoots(files: List<File>) = compilerConfiguration.addJvmClasspathRoots(files)
+
+    override fun addImports(imports: List<String>) {
+        additionalImports.addAll(imports)
+    }
+
+    fun initEngine() {
+        engine = object: GenericRepl(disposable = disposable,
                 scriptDefinition = scriptDefinition,
                 compilerConfiguration = compilerConfiguration,
                 messageCollector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false),
                 baseClassloader = baseClassloader,
                 fallbackScriptArgs = fallbackArgs,
                 repeatingMode = repeatingMode) {}
-    }
 
-    val state = engine.createState(stateLock)
-
-    val incompleteLines = arrayListOf<String>()
-    val nextLine: AtomicInteger = AtomicInteger(REPL_CODE_LINE_FIRST_NO)
-    val resultCounter: AtomicInteger = AtomicInteger(1)
-
-    val reader = ConsoleReader()
-    val commands: MutableList<Command> = mutableListOf(FakeQuit())
-
-    var lastCompiledClasses: ReplCompileResult.CompiledClasses? = null
-
-    private class FakeQuit: Command("quit", "q", "exit the interpreter") {
-        override fun execute(line: String) {}
-    }
-
-    var wrapper: InvokeWrapper = object: InvokeWrapper {
-        override fun <T> invoke(body: () -> T): T {
-            return body()
-        }
+        state = engine.createState(stateLock)
     }
 
     fun doRun() {
         reader.apply {
-            expandEvents = false
-            history = shellHistory
-            addCompleter(ContextDependentCompleter(commands))
+            addCompleter(ContextDependentCompleter(commands, incompleteLines::isEmpty, buildDefaultCompleter()))
         }
+
+        val config = configuration()
+        config.load()
+
+        config.plugins().forEach { it.init(this, config) }
+
+        initEngine()
         initImports()
+
         do {
             printPrompt()
             val line = reader.readLine()
 
-            if (line == null || isQuitCommand(line)) break
+            if (line == null || isQuitAction(line)) break
 
             if (incompleteLines.isEmpty() && line.startsWith(":")) {
                 try {
-                    val command = commands.first { cmd -> cmd.match(line) }
-                    command.execute(line)
-                } catch (e: NoSuchElementException) {
+                    val action = commands.first { it.match(line) }
+                    action.execute(line)
+                } catch (_: NoSuchElementException) {
                     reader.println("Unknown command $line")
                 } catch (e: Exception) {
                     commandError(e)
                 }
             } else {
-                if (line.trim().isBlank() && (incompleteLines.isNotEmpty() && incompleteLines.last().trim().isBlank())) {
+                if (line.isBlank() && (incompleteLines.isNotEmpty() && incompleteLines.last().isBlank())) {
                     incompleteLines.clear()
-                    reader.println("You typed two blank lines.  Starting a new command.")
+                    reader.println("You typed two blank lines. Starting a new command.")
                 } else {
                     compileAndEval(line)
                 }
@@ -169,18 +205,31 @@ open class KShell protected constructor(val disposable: Disposable,
 
     fun initImports() {
         scriptDefinition.defaultImports.forEach { compileAndEval("import $it") }
+        additionalImports.forEach { compileAndEval("import $it") }
     }
 
-    fun registerCommand(command: Command): Unit {
-        command.init(this)
+    override fun registerCommand(command: Command) {
         commands.add(command)
     }
 
-    private fun isQuitCommand(line: String): Boolean {
+    override fun extensionPoint(body: () -> Unit) {
+        state.lock.write {
+            body()
+            alterState(state)
+        }
+    }
+
+    private fun isQuitAction(line: String): Boolean {
         return incompleteLines.isEmpty() && (line.equals(":quit", ignoreCase = true) || line.equals(":q", ignoreCase = true))
     }
 
-    fun compileAndEval(line: String): Unit {
+    override fun compile(code: String): ReplCompileResult {
+        val replCodeLine = ReplCodeLine(nextLine.incrementAndGet(), state.currentGeneration, code)
+        return engine.compile(state, replCodeLine)
+    }
+
+
+    override fun compileAndEval(line: String) {
         state.lock.write {
             val source = (incompleteLines + line).joinToString(separator = "\n")
             val replCodeLine = ReplCodeLine(nextLine.incrementAndGet(), state.currentGeneration, source)
@@ -196,13 +245,13 @@ open class KShell protected constructor(val disposable: Disposable,
                     incompleteLines.clear()
                 }
                 is ReplCompileResult.CompiledClasses -> {
-                    afterCompile(compileResult)
+                    emitEvent(OnCompile(compileResult))
                     val evalResult = engine.eval(state, compileResult, fallbackArgs, wrapper)
                     incompleteLines.clear()
                     when (evalResult) {
                         is ReplEvalResult.Incomplete -> throw IllegalStateException("Should never happen")
                         is ReplEvalResult.ValueResult -> valueResult(evalResult)
-                        is ReplEvalResult.UnitResult -> { lastCompiledClasses = compileResult }
+                        is ReplEvalResult.UnitResult -> { }
                         is ReplEvalResult.Error,
                         is ReplEvalResult.HistoryMismatch -> evalError(evalResult)
                     }
@@ -211,7 +260,7 @@ open class KShell protected constructor(val disposable: Disposable,
         }
     }
 
-    fun alterState(state: IReplStageState<*>) {
+    private fun alterState(state: IReplStageState<*>) {
         val aggregatedState = state.asState(AggregatedReplStageState::class.java)
         aggregatedState.apply {
             lock.write {
@@ -230,15 +279,11 @@ open class KShell protected constructor(val disposable: Disposable,
         }
     }
 
-    open fun afterCompile(compiledClasses: ReplCompileResult.CompiledClasses) {
-        // do nothing
-    }
-
     fun printPrompt() {
         if (incompleteLines.isEmpty())
-            reader.prompt = "kotlin> "
+            reader.setPrompt("kotlin> ")
         else
-            reader.prompt = "... "
+            reader.setPrompt("... ")
     }
 
     open fun valueResult(result: ReplEvalResult.ValueResult) {
@@ -252,18 +297,11 @@ open class KShell protected constructor(val disposable: Disposable,
         reader.println("$name: $type = ${result.value}")
     }
 
-    /**
-     * @see org.jetbrains.kotlin.renderer.DescriptorRendererImpl::renderFlexibleType()
-     */
-    fun clarifyType(rawType: String?) = rawType?.let {
-        rawType.replace("(Mutable)", "Mutable").replace("!", "?")
-    }
-
     open fun evalError(result: ReplEvalResult) {
         reader.println(result.toString())
     }
 
-    open fun compileError(result: ReplCompileResult.Error) {
+    override fun compileError(result: ReplCompileResult.Error) {
         reader.println("Message: ${result.message} Location: ${result.location}")
     }
 
@@ -277,17 +315,23 @@ open class KShell protected constructor(val disposable: Disposable,
     }
 
     open fun cleanUp() {
-        shellHistory.flush()
+        reader.cleanUp()
     }
 }
 
+open class KShellEventManager : EventManager {
+    private val eventHandlers = hashMapOf<String, MutableList<EventHandler<Any>>>()
 
-class DefaultHistory: MemoryHistory(), PersistentHistory {
-    override fun flush() {
-        // do nothing
+    override fun <T> emitEvent(event: Event<T>) {
+        eventHandlers[event.javaClass.kotlin.qualifiedName]?.let {
+            it.forEach {
+                it.handle(event)
+            }
+        }
     }
 
-    override fun purge() {
-        // do nothing
+    override fun <E : Any> registerEventHandler(eventType: KClass<E>, handler: EventHandler<E>) {
+        @Suppress("UNCHECKED_CAST")
+        eventHandlers.getOrPut(eventType.qualifiedName!!, { mutableListOf(handler as EventHandler<Any>) })
     }
 }

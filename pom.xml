@@ -4,19 +4,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 	<properties>
-		<kotlin.version>1.2.0</kotlin.version>
-		<sparklin.version>SNAPSHOT-spark-1.6</sparklin.version>
+        <kotlin.version>1.2.20</kotlin.version>
+		<sparklin.version>0.1</sparklin.version>
 	</properties>
 
 	<groupId>sparklin</groupId>
 	<artifactId>sparklin</artifactId>
-	<version>${sparklin.version}</version>
+	<version>0.1</version>
 	
 	<packaging>pom</packaging>
 
 	<modules>
 		<module>kshell</module>
-		<module>sparklin-core</module>
-		<module>sparklin-shell</module>
+        <module>kshell-console-jline2</module>
+        <module>sparklin-spark-1.x</module>
+        <module>sparklin-spark-2.x</module>
 	</modules>
 </project>
