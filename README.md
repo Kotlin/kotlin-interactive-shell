@@ -20,7 +20,7 @@ bin/kshell.sh
 # Spark 1.x
 By default `KShell` don't need a configuration file, but if you want to try Spark you need to enable plugin.
 It can be done by passing system property `config.path` to JVM. Example of Spark 1.x plugin configuration you may
-found in `$SPARKLIN_HOME/conf/spark1x.properties`. Of course you could create `.kshell` file in your home directory but
+find in `$SPARKLIN_HOME/conf/spark1x.properties`. Of course you could create `.kshell` file in your home directory but
 using separate files for various environment is highly recommended. Please set appropriate `SPARK_HOME` variable in 
 the file `bin/sparklin-spark1x.sh`.
 
