@@ -16,4 +16,4 @@ KSHELL_CONSOLE_JLINE2=$HOME/.m2/repository/sparklin/kshell-console-jline2/SNAPSH
 
 JARS=${KOTLIN_COMPILER}:${KOTLIN_STDLIB}:${KOTLIN_REFLECT}:${KOTLIN_SCRIPT_RUNTIME}:${KSHELL_CONSOLE_JLINE2}
 
-java -classpath ${JARS}:kshell/target/kshell-SNAPSHOT.jar kshell.KotlinShell $@
+java -classpath ${JARS}:kshell/target/kshell-${SPARKLIN_VERSION}.jar kshell.KotlinShell $@

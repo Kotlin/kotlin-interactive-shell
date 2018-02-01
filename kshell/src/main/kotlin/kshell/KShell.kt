@@ -332,6 +332,6 @@ open class KShellEventManager : EventManager {
 
     override fun <E : Any> registerEventHandler(eventType: KClass<E>, handler: EventHandler<E>) {
         @Suppress("UNCHECKED_CAST")
-        eventHandlers.getOrPut(eventType.qualifiedName!!, { mutableListOf(handler as EventHandler<Any>) })
+        eventHandlers.getOrPut(eventType.qualifiedName!!, { mutableListOf() }).add(handler as EventHandler<Any>)
     }
 }
