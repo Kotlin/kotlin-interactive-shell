@@ -19,7 +19,7 @@ abstract class BaseCommand(private val fullName: String,
     override fun help(): String = "(no extended help available)"
 
     override fun desc(): String {
-        val shortPhrase = if (shortName != null) "or $shortName" else ""
+        val shortPhrase = if (shortName != null) "or $shortName " else ""
         return String.format("%-30s %s",  ":$fullName $shortPhrase$params", description)
     }
 
