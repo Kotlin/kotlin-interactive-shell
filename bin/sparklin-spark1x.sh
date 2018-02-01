@@ -17,7 +17,7 @@ SPARKLIN_HOME=$HOME/Documents/research_projects/sparklin
 JARS=$KOTLIN_COMPILER,$KOTLIN_STDLIB,$KOTLIN_REFLECT,$KOTLIN_SCRIPT_RUNTIME,$KOTLIN_IDE_COMMON,$KSHELL_CONSOLE_JLINE2,$SPARKLIN_PLUGIN
 
 echo $JARS
-spark-submit --jars=$JARS --conf "spark.driver.extraJavaOptions=-Dconfig.path=${SPARKLIN_HOME}/conf/sparklin.properties" --master "local[2]" --class "kshell.KotlinShell" \
+spark-submit --jars=$JARS --conf "spark.driver.extraJavaOptions=-Dconfig.path=${SPARKLIN_HOME}/conf/spark1x.properties" --master "local[2]" --class "kshell.KotlinShell" \
 		kshell/target/kshell-SNAPSHOT.jar \
 		$@
-#java -classpath $JARS:kshell/target/kshell-SNAPSHOT.jar -Dconfig.path=${SPARKLIN_HOME}/conf/sparklin.properties kshell.KotlinShell $@
+#java -classpath $JARS:kshell/target/kshell-SNAPSHOT.jar -Dconfig.path=${SPARKLIN_HOME}/conf/spark1x.properties kshell.KotlinShell $@

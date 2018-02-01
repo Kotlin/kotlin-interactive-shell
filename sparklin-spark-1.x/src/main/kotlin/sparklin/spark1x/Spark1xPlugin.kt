@@ -1,4 +1,4 @@
-package sparklin.shell
+package sparklin.spark1x
 
 import kshell.EventHandler
 import kshell.OnCompile
@@ -17,7 +17,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 class Spark1xPlugin : Logging(), Plugin {
-    lateinit var classServer: HttpServer
+    private lateinit var classServer: HttpServer
 
     override fun init(repl: Repl, config: Configuration) {
         val jars = getAddedJars()
@@ -33,7 +33,7 @@ class Spark1xPlugin : Logging(), Plugin {
         classServer = HttpServer(conf, outputDir, SecurityManager(conf), classServerPort, "HTTP class server")
         classServer.start()
         Shared.sc = createSparkContext(conf, classServer)
-        Shared.sqlc = createSQLContext(Shared.sc)
+        Shared.sqlContext = createSQLContext(Shared.sc)
         val replJars = replJars(jars)
 
         repl.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
@@ -45,35 +45,35 @@ class Spark1xPlugin : Logging(), Plugin {
         })
 
         repl.addClasspathRoots(replJars)
-        repl.addImports(listOf("sparklin.shell.Shared.*"))
+        repl.addImports(listOf(Shared::class.qualifiedName!! + ".*"))
     }
 
     override fun cleanUp() {
         classServer.stop()
     }
 
-    fun getAddedJars(): List<String> {
+    private fun getAddedJars(): List<String> {
         val jars = System.getProperty("spark.jars")
         return Utils.resolveURIs(jars).split(",").filter { s -> s.trim() != "" }
     }
 
-    fun replJars(jars: List<String>): List<File> {
+    private fun replJars(jars: List<String>): List<File> {
         // to get Spark related libraries and so on
         val jvmClasspath = System.getProperty("java.class.path")
         val systemJars = jvmClasspath.split(File.pathSeparatorChar).map(::File)
 
         return jars.filter {
-            // exclude all Kotlin stuff from REPL classpath
-            it -> !it.contains(Regex("/kotlin-(runtime|stdlib|compiler|reflect)(-.*)?\\.jar"))
-        }.map {
-                    // remove "file:"
-                    it ->
-                    val p = it.indexOf(':')
-                    File(it.substring(p + 1))
-                } + systemJars
+                // exclude all Kotlin stuff from REPL classpath
+                it -> !it.contains(Regex("/kotlin-(runtime|stdlib|compiler|reflect)(-.*)?\\.jar"))
+            }.map {
+                // remove "file:"
+                it ->
+                val p = it.indexOf(':')
+                File(it.substring(p + 1))
+            } + systemJars
     }
 
-    fun createSparkContext(conf: SparkConf, classServer: HttpServer): JavaSparkContext {
+    private fun createSparkContext(conf: SparkConf, classServer: HttpServer): JavaSparkContext {
         val execUri = System.getenv("SPARK_EXECUTOR_URI")
         conf.set("spark.repl.class.uri", classServer.uri())
                 .setIfMissing("spark.app.name", "Kotlin Spark Shell")
@@ -91,7 +91,7 @@ class Spark1xPlugin : Logging(), Plugin {
         return sparkContext
     }
 
-    fun createSQLContext(sparkContext: JavaSparkContext): SQLContext {
+    private fun createSQLContext(sparkContext: JavaSparkContext): SQLContext {
         val name = "org.apache.spark.sql.hive.HiveContext"
         val loader = Utils.getContextOrSparkClassLoader()
         try {
@@ -112,12 +112,12 @@ class Spark1xPlugin : Logging(), Plugin {
         }
     }
 
-    fun getMaster(): String {
+    private fun getMaster(): String {
         val propMaster = System.getProperty("spark.master")
         return propMaster ?: System.getenv()["MASTER"] ?: "local[*]"
     }
 
-    fun writeClass(path: String, bytes: ByteArray) {
+    private fun writeClass(path: String, bytes: ByteArray) {
         val out = BufferedOutputStream(FileOutputStream(path))
         out.write(bytes)
         out.flush()

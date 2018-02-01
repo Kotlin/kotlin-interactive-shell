@@ -6,24 +6,18 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>SNAPSHOT-spark-1.6</version>
+        <version>SNAPSHOT</version>
     </parent>
 
 
-    <artifactId>sparklin-examples</artifactId>
+    <artifactId>sparklin-spark-2.x</artifactId>
 	<version>${sparklin.version}</version>
 
-
     <dependencies>
-		<dependency>
-			<groupId>sparklin</groupId>
-			<artifactId>sparklin-core</artifactId>
-			<version>${sparklin.version}</version>
-		</dependency>
         <dependency>
             <groupId>sparklin</groupId>
-            <artifactId>sparklin-shell</artifactId>
-            <version>${sparklin.version}</version>
+            <artifactId>kshell</artifactId>
+            <version>SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
@@ -36,26 +30,59 @@
             <version>${kotlin.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.10</artifactId>
-            <version>1.6.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.10</artifactId>
-            <version>1.6.3</version>
-        </dependency>
-        <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test</artifactId>
+            <artifactId>kotlin-compiler</artifactId>
             <version>${kotlin.version}</version>
-            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_2.11</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_2.11</artifactId>
+            <version>2.2.0</version>
         </dependency>
     </dependencies>
 
     <build>
-        <sourceDirectory>src/main/kotlin</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
+        </resources>
+        <!--<sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>-->
+        <!--<testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>-->
         <plugins>
+            <plugin>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>compile</phase>
+                    </execution>
+
+                    <execution>
+                        <id>test-compile</id>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <phase>test-compile</phase>
+                    </execution>
+
+                    <execution>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <configuration>
@@ -69,6 +96,12 @@
                         <id>compile</id>
                         <phase>compile</phase>
                         <goals> <goal>compile</goal> </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <source>src/main/kotlin</source>
+                                <source>src/main/java</source>
+                            </sourceDirs>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>test-compile</id>
@@ -112,7 +145,7 @@
                     <archive>
                         <manifest>
                             <!-- addClasspath>true</addClasspath> -->
-                            <mainClass>sparklin.repl.Main</mainClass>
+                            <mainClass>sparklin.spark1x.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

@@ -17,8 +17,8 @@
 	<modules>
 		<module>kshell</module>
         <module>kshell-console-jline2</module>
-        <module>code-completer</module>
+        <!--<module>code-completer</module>-->
         <module>sparklin-spark-1.x</module>
-		<!--<module>sparklin-shell</module>-->
+        <module>sparklin-spark-2.x</module>
 	</modules>
 </project>
