@@ -1,12 +1,11 @@
-package kshell
+package sparklin.kshell
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import javafx.stage.Stage
-import kshell.configuration.CachedInstance
-import kshell.configuration.Configuration
-import kshell.configuration.ConfigurationImpl
-import kshell.console.Completer
+import sparklin.kshell.configuration.CachedInstance
+import sparklin.kshell.configuration.Configuration
+import sparklin.kshell.configuration.ConfigurationImpl
+import sparklin.kshell.console.Completer
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
@@ -110,11 +109,11 @@ open class KShell protected constructor(val disposable: Disposable,
 
     val reader = configuration().getConsoleReader()
 
-    val commands = mutableListOf<Command>(FakeQuit())
+    val commands = mutableListOf<sparklin.kshell.Command>(FakeQuit())
 
     val additionalImports = mutableListOf<String>()
 
-    private class FakeQuit: BaseCommand("quit", "q", "exit the interpreter") {
+    private class FakeQuit: sparklin.kshell.BaseCommand("quit", "q", "exit the interpreter") {
         override fun execute(line: String) {}
     }
 
@@ -142,7 +141,7 @@ open class KShell protected constructor(val disposable: Disposable,
         }
     }
 
-    override fun listCommands(): Iterable<Command> = commands.asIterable()
+    override fun listCommands(): Iterable<sparklin.kshell.Command> = commands.asIterable()
 
     override fun addClasspathRoots(files: List<File>) = compilerConfiguration.addJvmClasspathRoots(files)
 
@@ -164,7 +163,7 @@ open class KShell protected constructor(val disposable: Disposable,
 
     fun doRun() {
         reader.apply {
-            addCompleter(ContextDependentCompleter(commands, incompleteLines::isEmpty, buildDefaultCompleter()))
+            addCompleter(sparklin.kshell.ContextDependentCompleter(commands, incompleteLines::isEmpty, buildDefaultCompleter()))
         }
 
         val config = configuration()
@@ -208,7 +207,7 @@ open class KShell protected constructor(val disposable: Disposable,
         additionalImports.forEach { compileAndEval("import $it") }
     }
 
-    override fun registerCommand(command: Command) {
+    override fun registerCommand(command: sparklin.kshell.Command) {
         commands.add(command)
     }
 
@@ -290,7 +289,7 @@ open class KShell protected constructor(val disposable: Disposable,
         val name = "res${resultCounter.getAndIncrement()}"
 
         // store result of computations
-        Shared.__res = result.value
+        sparklin.kshell.Shared.__res = result.value
 
         val type = clarifyType(result.type)
         compileAndEval("val $name = __res as $type")

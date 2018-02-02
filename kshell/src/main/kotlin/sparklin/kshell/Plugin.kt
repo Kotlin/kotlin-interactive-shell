@@ -1,6 +1,6 @@
-package kshell
+package sparklin.kshell
 
-import kshell.configuration.Configuration
+import sparklin.kshell.configuration.Configuration
 
 interface Plugin {
     fun init(repl: Repl, config: Configuration)

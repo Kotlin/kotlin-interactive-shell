@@ -1,11 +1,11 @@
-package kshell
+package sparklin.kshell
 
-import kshell.console.Completer
+import sparklin.kshell.console.Completer
 
 abstract class BaseCommand(private val fullName: String,
                            private val shortName: String?,
                            private val description: String,
-                           private val ignoreCase: Boolean = true): Command {
+                           private val ignoreCase: Boolean = true): sparklin.kshell.Command {
 
     open val params = ""
 

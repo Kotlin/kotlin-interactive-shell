@@ -1,4 +1,4 @@
-package kshell.configuration
+package sparklin.kshell.configuration
 
 interface Converter<out T> {
     fun convert(s: String): T
@@ -12,6 +12,10 @@ class ListConverter<out T>(private val itemConverter: Converter<T>):  Converter<
 
 object IdentityConverter: Converter<String> {
     override fun convert(s: String): String = s
+}
+
+object TrimConverter: Converter<String> {
+    override fun convert(s: String): String = s.trim()
 }
 
 object BooleanConverter: Converter<Boolean> {

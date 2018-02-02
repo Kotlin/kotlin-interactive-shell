@@ -1,4 +1,4 @@
-package kshell
+package sparklin.kshell
 
 import org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes
 import org.jetbrains.kotlin.script.KotlinScriptDefinition

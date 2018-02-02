@@ -1,4 +1,4 @@
-package kshell.console
+package sparklin.kshell.console
 
 interface Completer {
     fun complete(buffer: String, cursor: Int, candidates: MutableList<CharSequence>): Int

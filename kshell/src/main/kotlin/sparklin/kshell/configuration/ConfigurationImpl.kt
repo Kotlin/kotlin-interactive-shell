@@ -1,7 +1,10 @@
-package kshell.configuration
+package sparklin.kshell.configuration
 
-import kshell.Plugin
-import kshell.console.ConsoleReader
+import sparklin.kshell.Plugin
+import sparklin.kshell.console.ConsoleReader
+import sparklin.kshell.plugins.HelpPlugin
+import sparklin.kshell.plugins.LoadFilePlugin
+import sparklin.kshell.plugins.RuntimePlugin
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -24,8 +27,10 @@ class ConfigurationImpl: Configuration {
             props.load(BufferedReader(FileReader(path)))
         }
 
-        val pluginClasses = get("plugins", ListConverter(IdentityConverter),
-                listOf("kshell.plugins.LoadFilePlugin", "kshell.plugins.RuntimePlugin", "kshell.plugins.HelpPlugin"))
+        val pluginClasses = get("plugins", ListConverter(TrimConverter),
+                listOf(LoadFilePlugin::class.qualifiedName!!,
+                        RuntimePlugin::class.qualifiedName!!,
+                        HelpPlugin::class.qualifiedName!!))
 
         pluginClasses.forEach { klassName ->
             val instance = CachedInstance<Plugin>()
@@ -42,7 +47,7 @@ class ConfigurationImpl: Configuration {
     override fun plugins(): Iterator<Plugin> = plugins.values.map { it.get()!! }.iterator()
 
     override fun getConsoleReader(): ConsoleReader {
-        val klassName = get("console.class","kshell.console.jline2.ConsoleReaderImpl")
+        val klassName = get("console.class","sparklin.kshell.console.jline2.ConsoleReaderImpl")
         val reader = consoleReader.load(klassName, ConsoleReader::class)
         reader.init(this)
         return reader

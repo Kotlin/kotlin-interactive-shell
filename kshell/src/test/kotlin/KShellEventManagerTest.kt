@@ -1,7 +1,6 @@
-import kshell.Event
-import kshell.EventHandler
-import kshell.KShellEventManager
-import kshell.OnCompile
+import sparklin.kshell.Event
+import sparklin.kshell.EventHandler
+import sparklin.kshell.KShellEventManager
 import org.junit.Test
 
 import org.junit.Assert.*

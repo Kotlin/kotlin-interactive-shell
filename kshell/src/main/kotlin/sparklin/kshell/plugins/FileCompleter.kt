@@ -1,7 +1,7 @@
-package kshell.plugins
+package sparklin.kshell.plugins
 
 import java.io.File
-import kshell.console.Completer
+import sparklin.kshell.console.Completer
 
 
 open class FileCompleter : Completer {
