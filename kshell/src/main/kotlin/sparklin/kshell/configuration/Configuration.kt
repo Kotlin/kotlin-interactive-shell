@@ -1,8 +1,7 @@
-package kshell.configuration
+package sparklin.kshell.configuration
 
-import kshell.Plugin
-import kshell.console.ConsoleReader
-import kotlin.reflect.KClass
+import sparklin.kshell.Plugin
+import sparklin.kshell.console.ConsoleReader
 
 interface Configuration {
     fun <T : Any> get(key: String, converter: Converter<T>, default: () -> T): T

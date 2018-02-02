@@ -1,4 +1,4 @@
-package kshell
+package sparklin.kshell
 
 import org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes
 import java.io.File
@@ -10,9 +10,9 @@ object KotlinShell {
         val defs =  //StandardScriptDefinition
                 KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class,
                 ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES),
-                listOf("kshell.Shared.*"))
+                listOf(Shared::class.qualifiedName + ".*"))
 
-        val repl = KShell(additionalClasspath=findClassJarsOrEmpty(Shared::class),
+        val repl = KShell(additionalClasspath=findClassJarsOrEmpty(sparklin.kshell.Shared::class),
                 sharedHostClassLoader = this.javaClass.classLoader,
                 scriptDefinition = defs//,
                 /*shellHistory = hist*/)

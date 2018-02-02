@@ -1,10 +1,10 @@
 package sparklin.spark1x
 
-import kshell.EventHandler
-import kshell.OnCompile
-import kshell.Plugin
-import kshell.Repl
-import kshell.configuration.Configuration
+import sparklin.kshell.EventHandler
+import sparklin.kshell.OnCompile
+import sparklin.kshell.Plugin
+import sparklin.kshell.Repl
+import sparklin.kshell.configuration.Configuration
 import org.apache.spark.HttpServer
 import org.apache.spark.SecurityManager
 import org.apache.spark.SparkConf

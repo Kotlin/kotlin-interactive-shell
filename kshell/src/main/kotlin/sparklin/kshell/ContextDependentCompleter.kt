@@ -1,8 +1,8 @@
-package kshell
+package sparklin.kshell
 
-import kshell.console.Completer
+import sparklin.kshell.console.Completer
 
-class ContextDependentCompleter(private val commands: List<Command>,
+class ContextDependentCompleter(private val commands: List<sparklin.kshell.Command>,
                                 private val actionModeAvailable: () -> Boolean,
                                 private val defaultCompleter: Completer): Completer {
 

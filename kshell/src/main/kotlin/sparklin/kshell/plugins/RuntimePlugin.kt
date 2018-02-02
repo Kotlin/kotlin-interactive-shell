@@ -1,10 +1,10 @@
-package kshell.plugins
+package sparklin.kshell.plugins
 
-import kshell.*
-import kshell.configuration.Configuration
-import kshell.console.ConsoleReader
+import sparklin.kshell.configuration.Configuration
+import sparklin.kshell.console.ConsoleReader
 import org.jetbrains.kotlin.cli.common.repl.ReplCompileResult
 import org.jetbrains.kotlin.cli.common.repl.InvokeWrapper
+import sparklin.kshell.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
@@ -37,7 +37,7 @@ class RuntimePlugin : Plugin {
     }
 
     inner class PrintSymbols(fullName: String, shortName: String, description: String):
-            BaseCommand(fullName, shortName, description) {
+            sparklin.kshell.BaseCommand(fullName, shortName, description) {
         private val table = SymbolsTable()
 
         init {

@@ -1,4 +1,4 @@
-package kshell
+package sparklin.kshell
 
 import org.jetbrains.kotlin.cli.common.repl.InvokeWrapper
 import org.jetbrains.kotlin.cli.common.repl.ReplCompileResult
@@ -14,7 +14,7 @@ interface Repl : EventManager {
 
     fun compileAndEval(line: String)
 
-    fun registerCommand(command: Command)
+    fun registerCommand(command: sparklin.kshell.Command)
 
     fun extensionPoint(body: () -> Unit)
 
@@ -22,7 +22,7 @@ interface Repl : EventManager {
 
     var wrapper: InvokeWrapper
 
-    fun listCommands(): Iterable<Command>
+    fun listCommands(): Iterable<sparklin.kshell.Command>
 }
 
 interface EventManager {

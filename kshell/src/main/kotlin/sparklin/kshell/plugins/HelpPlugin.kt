@@ -1,10 +1,10 @@
-package kshell.plugins
+package sparklin.kshell.plugins
 
-import kshell.console.ConsoleReader
-import kshell.BaseCommand
-import kshell.Plugin
-import kshell.Repl
-import kshell.configuration.Configuration
+import sparklin.kshell.console.ConsoleReader
+import sparklin.kshell.BaseCommand
+import sparklin.kshell.Plugin
+import sparklin.kshell.Repl
+import sparklin.kshell.configuration.Configuration
 
 class HelpPlugin: Plugin {
     inner class Help(fullName: String, shortName: String, description: String):

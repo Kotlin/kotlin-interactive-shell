@@ -1,6 +1,6 @@
-package kshell
+package sparklin.kshell
 
-import kshell.console.Completer
+import sparklin.kshell.console.Completer
 
 interface Command {
     fun execute(line: String)

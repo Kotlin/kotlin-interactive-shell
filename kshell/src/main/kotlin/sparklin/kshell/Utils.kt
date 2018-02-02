@@ -1,4 +1,4 @@
-package kshell
+package sparklin.kshell
 
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.cli.jvm.repl.GenericReplCompiler

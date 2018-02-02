@@ -1,10 +1,10 @@
-package kshell.console.jline2
+package sparklin.kshell.console.jline2
 
-import kshell.configuration.BooleanConverter
-import kshell.console.Completer
-import kshell.console.ConsoleReader
-import kshell.configuration.Configuration
-import kshell.configuration.IdentityConverter
+import sparklin.kshell.configuration.BooleanConverter
+import sparklin.kshell.console.Completer
+import sparklin.kshell.console.ConsoleReader
+import sparklin.kshell.configuration.Configuration
+import sparklin.kshell.configuration.IdentityConverter
 import lib.jline.console.history.FileHistory
 import java.io.File
 

@@ -1,10 +1,10 @@
-package kshell.plugins
+package sparklin.kshell.plugins
 
-import kshell.BaseCommand
-import kshell.configuration.Configuration
-import kshell.Plugin
-import kshell.Repl
-import kshell.console.Completer
+import sparklin.kshell.BaseCommand
+import sparklin.kshell.configuration.Configuration
+import sparklin.kshell.Plugin
+import sparklin.kshell.Repl
+import sparklin.kshell.console.Completer
 import java.io.File
 
 class LoadFilePlugin: Plugin {

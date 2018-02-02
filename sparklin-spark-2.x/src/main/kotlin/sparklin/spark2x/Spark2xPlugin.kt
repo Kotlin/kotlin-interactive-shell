@@ -1,10 +1,10 @@
 package sparklin.spark2x
 
-import kshell.EventHandler
-import kshell.OnCompile
-import kshell.Plugin
-import kshell.Repl
-import kshell.configuration.Configuration
+import sparklin.kshell.EventHandler
+import sparklin.kshell.OnCompile
+import sparklin.kshell.Plugin
+import sparklin.kshell.Repl
+import sparklin.kshell.configuration.Configuration
 import org.apache.spark.SparkConf
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.SparkSession

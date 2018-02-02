@@ -1,6 +1,6 @@
-package kshell.console
+package sparklin.kshell.console
 
-import kshell.configuration.Configuration
+import sparklin.kshell.configuration.Configuration
 
 interface ConsoleReader {
     fun init(config: Configuration)

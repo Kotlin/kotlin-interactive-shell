@@ -42,7 +42,7 @@
         <dependency>
             <groupId>sparklin</groupId>
             <artifactId>kshell</artifactId>
-            <version>SNAPSHOT</version>
+            <version>${sparklin.version}</version>
         </dependency>
     </dependencies>
 

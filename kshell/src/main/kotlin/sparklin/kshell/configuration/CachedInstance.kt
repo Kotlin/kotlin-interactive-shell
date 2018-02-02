@@ -1,4 +1,4 @@
-package kshell.configuration
+package sparklin.kshell.configuration
 
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KClass
