@@ -4,7 +4,7 @@ new Kotlin REPL (aka `KShell`) which supports extensions and custom commands via
 Spark supported by *separate plugins* for versions 1.x and 2.x.
 
 # Installation
-First please checkout latest master. After that you can build current version from the project directory:
+First please checkout the latest master. After that you can build current version from the project directory:
 ```bash
 git clone https://github.com/khud/sparklin
 cd sparklin
