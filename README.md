@@ -4,13 +4,10 @@ new Kotlin REPL (aka `KShell`) which supports extensions and custom commands via
 Spark supported by *separate plugins* for versions 1.x and 2.x.
 
 # Installation
-Current version of the project is 0.1 and this version should be checked out.
+First please checkout latest master. After that you can build current version from the project directory:
 ```bash
 git clone https://github.com/khud/sparklin
-git checkout 0.1
-```
-Sparkling can be built as usual:
-```bash
+cd sparklin
 mvn clean install
 ```
 One can run `KShell` out of box by following command from sparklin home directory in the terminal:
@@ -32,7 +29,7 @@ and `bin/sparklin-spark2x.sh` instead. Do not forget set `SPARK_HOME` to your Sp
 
 `SparkSession` is available as `spark`, `JavaSparkContext` is available as `sc`.
 At the moment Sparklin does not have additional Spark runtime support for Kotlin for both Spark versions. 
-But it has planned to be in version 0.2.
+But it will be available soon.
 
 # Environment Configuration
 Sparklin version 0.1 is tested in following environment:
