@@ -69,7 +69,7 @@ class RuntimePlugin : Plugin {
         val printSymbolsCmdShortName = config.getLocal("printSymbolsCmd", "short", "s")
         val printSymbolsCmdDescription = "list defined symbols"
 
-        repl.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
+        EventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
             override fun handle(event: OnCompile) {
                 lastCompiledClasses = event.data()
             }

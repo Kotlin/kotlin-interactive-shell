@@ -1,11 +1,10 @@
-import sparklin.kshell.Event
-import sparklin.kshell.EventHandler
-import sparklin.kshell.KShellEventManager
+package sparklin.kshell
+
 import org.junit.Test
 
 import org.junit.Assert.*
 
-class KShellEventManagerTest {
+class EventManagerTest {
     class MyEvent0(private val str: String) : Event<String> {
         override fun data(): String = str
     }
@@ -16,23 +15,22 @@ class KShellEventManagerTest {
 
     @Test
     fun consistencyTest() {
-        val em = KShellEventManager()
         val arr = arrayOf("", "")
 
-        em.registerEventHandler(MyEvent0::class, object : EventHandler<MyEvent0> {
+        EventManager.registerEventHandler(MyEvent0::class, object : EventHandler<MyEvent0> {
             override fun handle(event: MyEvent0) {
                 arr[0] = event.data()
             }
         })
 
-        em.registerEventHandler(MyEvent1::class, object : EventHandler<MyEvent1> {
+        EventManager.registerEventHandler(MyEvent1::class, object : EventHandler<MyEvent1> {
             override fun handle(event: MyEvent1) {
                 arr[1] = event.data()
             }
         })
 
-        em.emitEvent(MyEvent0("hello"))
-        em.emitEvent(MyEvent1("world"))
+        EventManager.emitEvent(MyEvent0("hello"))
+        EventManager.emitEvent(MyEvent1("world"))
 
         assertEquals("hello", arr[0])
         assertEquals("world", arr[1])

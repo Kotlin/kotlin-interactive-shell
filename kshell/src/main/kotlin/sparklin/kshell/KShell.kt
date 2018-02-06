@@ -31,25 +31,23 @@ import kotlin.script.templates.standard.ScriptTemplateWithArgs
 val EMPTY_SCRIPT_ARGS: Array<out Any?> = arrayOf(emptyArray<String>())
 val EMPTY_SCRIPT_ARGS_TYPES: Array<out KClass<out Any>> = arrayOf(Array<String>::class)
 
-/**
- * Basic class for Kotlin powered REPL.
- * Contains some stuff from https://github.com/kohesive/keplin
- */
-open class KShell protected constructor(val disposable: Disposable,
+open class KShell protected constructor(val configuration: Configuration,
+                                        val disposable: Disposable,
                                         val scriptDefinition: KotlinScriptDefinitionEx,
                                         val compilerConfiguration: CompilerConfiguration,
                                         protected val repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE,
                                         protected val sharedHostClassLoader: ClassLoader? = null,
                                         protected val emptyArgsProvider: ScriptTemplateEmptyArgsProvider,
-                                        protected val stateLock: ReentrantReadWriteLock = ReentrantReadWriteLock()) : Closeable, Repl, KShellEventManager() {
+                                        protected val stateLock: ReentrantReadWriteLock = ReentrantReadWriteLock()) : Closeable, Repl {
 
-    constructor(disposable: Disposable = Disposer.newDisposable(),
+    constructor(configuration: Configuration,
+                disposable: Disposable = Disposer.newDisposable(),
                 moduleName: String = "kotlin-script-module-${System.currentTimeMillis()}",
                 additionalClasspath: List<File> = emptyList(),
                 scriptDefinition: KotlinScriptDefinitionEx = KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class, ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES)),
                 messageCollector: MessageCollector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false),
                 repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE,
-                sharedHostClassLoader: ClassLoader? = null) : this(disposable,
+                sharedHostClassLoader: ClassLoader? = null) : this(configuration, disposable,
             compilerConfiguration = CompilerConfiguration().apply {
                 addJvmClasspathRoots(PathUtil.getJdkClassesRoots(File(System.getProperty("java.home"))))
                 addJvmClasspathRoots(findRequiredScriptingJarFiles(scriptDefinition.template,
@@ -107,7 +105,7 @@ open class KShell protected constructor(val disposable: Disposable,
     val nextLine: AtomicInteger = AtomicInteger(REPL_CODE_LINE_FIRST_NO)
     val resultCounter: AtomicInteger = AtomicInteger(1)
 
-    val reader = configuration().getConsoleReader()
+    val reader = configuration.getConsoleReader()
 
     val commands = mutableListOf<sparklin.kshell.Command>(FakeQuit())
 
@@ -127,19 +125,6 @@ open class KShell protected constructor(val disposable: Disposable,
 
 //    fun getReplEnvironment() = engine.compiler.getReplEnvironment()
 
-    companion object {
-        private val instance = CachedInstance<Configuration>()
-
-        fun configuration(): Configuration {
-            val klassName: String? = System.getProperty("config.class")
-
-            return if (klassName != null) {
-                instance.load(klassName, Configuration::class)
-            } else {
-                instance.get { ConfigurationImpl() }
-            }
-        }
-    }
 
     override fun listCommands(): Iterable<sparklin.kshell.Command> = commands.asIterable()
 
@@ -150,6 +135,13 @@ open class KShell protected constructor(val disposable: Disposable,
     }
 
     fun initEngine() {
+        reader.apply {
+            addCompleter(sparklin.kshell.ContextDependentCompleter(commands, incompleteLines::isEmpty, buildDefaultCompleter()))
+        }
+
+        configuration.load()
+        configuration.plugins().forEach { it.init(this, configuration) }
+
         engine = object: GenericRepl(disposable = disposable,
                 scriptDefinition = scriptDefinition,
                 compilerConfiguration = compilerConfiguration,
@@ -162,14 +154,6 @@ open class KShell protected constructor(val disposable: Disposable,
     }
 
     fun doRun() {
-        reader.apply {
-            addCompleter(sparklin.kshell.ContextDependentCompleter(commands, incompleteLines::isEmpty, buildDefaultCompleter()))
-        }
-
-        val config = configuration()
-        config.load()
-
-        config.plugins().forEach { it.init(this, config) }
 
         initEngine()
         initImports()
@@ -244,7 +228,7 @@ open class KShell protected constructor(val disposable: Disposable,
                     incompleteLines.clear()
                 }
                 is ReplCompileResult.CompiledClasses -> {
-                    emitEvent(OnCompile(compileResult))
+                    EventManager.emitEvent(OnCompile(compileResult))
                     val evalResult = engine.eval(state, compileResult, fallbackArgs, wrapper)
                     incompleteLines.clear()
                     when (evalResult) {
@@ -315,22 +299,5 @@ open class KShell protected constructor(val disposable: Disposable,
 
     open fun cleanUp() {
         reader.cleanUp()
-    }
-}
-
-open class KShellEventManager : EventManager {
-    private val eventHandlers = hashMapOf<String, MutableList<EventHandler<Any>>>()
-
-    override fun <T> emitEvent(event: Event<T>) {
-        eventHandlers[event.javaClass.kotlin.qualifiedName]?.let {
-            it.forEach {
-                it.handle(event)
-            }
-        }
-    }
-
-    override fun <E : Any> registerEventHandler(eventType: KClass<E>, handler: EventHandler<E>) {
-        @Suppress("UNCHECKED_CAST")
-        eventHandlers.getOrPut(eventType.qualifiedName!!, { mutableListOf() }).add(handler as EventHandler<Any>)
     }
 }

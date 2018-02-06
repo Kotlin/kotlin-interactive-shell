@@ -5,6 +5,7 @@ import sparklin.kshell.BaseCommand
 import sparklin.kshell.Plugin
 import sparklin.kshell.Repl
 import sparklin.kshell.configuration.Configuration
+import sparklin.kshell.match
 
 class HelpPlugin: Plugin {
     inner class Help(fullName: String, shortName: String, description: String):
@@ -22,11 +23,11 @@ class HelpPlugin: Plugin {
                     console.println(help)
                 } else {
                     val command = args[1]
-                    val res = commands.filter { it.match(":$command") }
-                    if (res.isEmpty()) {
-                        console.println("$command: no such command.  Type :help for help.")
-                    } else {
-                        console.println(res[0].help())
+                    try {
+                        val res = commands.first { it.match(":$command") }
+                        console.println(res.help())
+                    } catch (_: NoSuchElementException) {
+                        console.println("$command: no such command. Type :help for help.")
                     }
                 }
             }

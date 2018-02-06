@@ -8,8 +8,8 @@ import sparklin.kshell.console.Completer
 import java.io.File
 
 class LoadFilePlugin: Plugin {
-    inner class Load(fullName: String, shortName: String, description: String):
-            BaseCommand(fullName, shortName, description) {
+    inner class Load(name: String, short: String, description: String):
+            BaseCommand(name, short, description) {
 
         override val params = "<path>"
 
