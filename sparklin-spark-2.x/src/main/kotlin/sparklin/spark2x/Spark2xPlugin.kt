@@ -1,9 +1,5 @@
 package sparklin.spark2x
 
-import sparklin.kshell.EventHandler
-import sparklin.kshell.OnCompile
-import sparklin.kshell.Plugin
-import sparklin.kshell.Repl
 import sparklin.kshell.configuration.Configuration
 import org.apache.spark.SparkConf
 import org.apache.spark.api.java.JavaSparkContext
@@ -11,6 +7,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.internal.StaticSQLConf.CATALOG_IMPLEMENTATION
 import org.apache.spark.util.Utils
 import sparklin.core.Logging
+import sparklin.kshell.*
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -31,7 +28,7 @@ class Spark2xPlugin : Logging(), Plugin {
         Shared.sc =  JavaSparkContext.fromSparkContext(Shared.spark.sparkContext())
         val replJars = replJars(jars)
 
-        repl.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
+        EventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
             override fun handle(event: OnCompile) {
                 event.data().classes.forEach {
                     writeClass(outputDir.absolutePath + File.separator + it.path, it.bytes)

@@ -1,9 +1,5 @@
 package sparklin.spark1x
 
-import sparklin.kshell.EventHandler
-import sparklin.kshell.OnCompile
-import sparklin.kshell.Plugin
-import sparklin.kshell.Repl
 import sparklin.kshell.configuration.Configuration
 import org.apache.spark.HttpServer
 import org.apache.spark.SecurityManager
@@ -12,6 +8,7 @@ import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.util.Utils
 import sparklin.core.Logging
+import sparklin.kshell.*
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -36,7 +33,7 @@ class Spark1xPlugin : Logging(), Plugin {
         Shared.sqlContext = createSQLContext(Shared.sc)
         val replJars = replJars(jars)
 
-        repl.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
+        EventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
             override fun handle(event: OnCompile) {
                 event.data().classes.forEach {
                     writeClass(outputDir.absolutePath + File.separator + it.path, it.bytes)
