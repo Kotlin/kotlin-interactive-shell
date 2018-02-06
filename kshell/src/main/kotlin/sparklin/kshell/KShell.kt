@@ -215,9 +215,7 @@ open class KShell protected constructor(val configuration: Configuration,
     override fun compileAndEval(line: String) {
         state.lock.write {
             val source = (incompleteLines + line).joinToString(separator = "\n")
-            val replCodeLine = ReplCodeLine(nextLine.incrementAndGet(), state.currentGeneration, source)
-            val compileResult = engine.compile(state, replCodeLine)
-
+            val compileResult = compile(source)
             when (compileResult) {
                 is ReplCompileResult.Incomplete -> {
                     incompleteLines.add(line)
@@ -228,12 +226,17 @@ open class KShell protected constructor(val configuration: Configuration,
                     incompleteLines.clear()
                 }
                 is ReplCompileResult.CompiledClasses -> {
+                    if (compileResult.type != null && compileResult.type != "kotlin.Unit") {
+                        alterState(state)
+                        valueResult(compileResult, line)
+                        return
+                    }
                     EventManager.emitEvent(OnCompile(compileResult))
                     val evalResult = engine.eval(state, compileResult, fallbackArgs, wrapper)
                     incompleteLines.clear()
                     when (evalResult) {
-                        is ReplEvalResult.Incomplete -> throw IllegalStateException("Should never happen")
-                        is ReplEvalResult.ValueResult -> valueResult(evalResult)
+                        is ReplEvalResult.Incomplete,
+                        is ReplEvalResult.ValueResult -> throw IllegalStateException("Should never happen")
                         is ReplEvalResult.UnitResult -> { }
                         is ReplEvalResult.Error,
                         is ReplEvalResult.HistoryMismatch -> evalError(evalResult)
@@ -269,15 +272,10 @@ open class KShell protected constructor(val configuration: Configuration,
             reader.setPrompt("... ")
     }
 
-    open fun valueResult(result: ReplEvalResult.ValueResult) {
+    open fun valueResult(result: ReplCompileResult.CompiledClasses, line: String) {
         val name = "res${resultCounter.getAndIncrement()}"
-
-        // store result of computations
-        sparklin.kshell.Shared.__res = result.value
-
-        val type = clarifyType(result.type)
-        compileAndEval("val $name = __res as $type")
-        reader.println("$name: $type = ${result.value}")
+        compileAndEval("val $name = $line")
+        compileAndEval("println(\"$name: ${result.type} = \" + $name)")
     }
 
     open fun evalError(result: ReplEvalResult) {
@@ -287,7 +285,6 @@ open class KShell protected constructor(val configuration: Configuration,
     override fun compileError(result: ReplCompileResult.Error) {
         reader.println("Message: ${result.message} Location: ${result.location}")
     }
-
 
     open fun commandError(e: Exception) {
         e.printStackTrace()
