@@ -29,7 +29,9 @@ class RuntimePlugin : Plugin {
                     is ReplCompileResult.Error ->
                         repl.compileError(compileResult)
                     is ReplCompileResult.CompiledClasses -> {
-                        console.println(clarifyType(compileResult.type)!!)
+                        compileResult.type?.let {
+                            console.println(it)
+                        }
                     }
                 }
             }
