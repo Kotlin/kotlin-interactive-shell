@@ -24,11 +24,11 @@ class RuntimePlugin : Plugin {
             repl.extensionPoint {
                 val compileResult = repl.compile(expr)
                 when (compileResult) {
-                    is ReplCompileResult.Incomplete ->
+                    is CompileResult.Incomplete ->
                         console.println("Incomplete line")
-                    is ReplCompileResult.Error ->
+                    is CompileResult.Error ->
                         repl.compileError(compileResult)
-                    is ReplCompileResult.CompiledClasses -> {
+                    is CompileResult.CompiledClasses -> {
                         compileResult.type?.let {
                             console.println(it)
                         }
@@ -57,7 +57,7 @@ class RuntimePlugin : Plugin {
 
     private lateinit var repl: Repl
     private lateinit var console: ConsoleReader
-    private var lastCompiledClasses: ReplCompileResult.CompiledClasses? = null
+    private var lastCompiledClasses: CompileResult.CompiledClasses? = null
 
     override fun init(repl: Repl, config: Configuration) {
         this.repl = repl

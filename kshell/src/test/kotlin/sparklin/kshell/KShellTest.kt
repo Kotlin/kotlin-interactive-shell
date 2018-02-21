@@ -45,6 +45,8 @@ class KShellTest {
     fun testResultValues() {
         repl.compileAndEval("1 + 1")
         assertEquals("res1: kotlin.Int = 2", stream.toString())
+        repl.compileAndEval("res1 + res1")
+        assertEquals("res2: kotlin.Int = 4", stream.toString())
     }
 
     @Test
