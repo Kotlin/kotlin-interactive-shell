@@ -308,9 +308,12 @@ class ReplClassData(private val classData: CompiledClassData): CompileResult.Cla
         get() = classData.bytes
 }
 
-fun ReplCompileResult.Error.wrap(): CompileResult.Error = object : CompileResult.Error {
-    override val message: String
-        get() = this.message
+fun ReplCompileResult.Error.wrap(): CompileResult.Error {
+    val that = this
+    return object : CompileResult.Error {
+        override val message: String
+            get() = that.message
+    }
 }
 
 fun ReplCompileResult.Incomplete.wrap(): CompileResult.Incomplete = CompileResult.Incomplete
