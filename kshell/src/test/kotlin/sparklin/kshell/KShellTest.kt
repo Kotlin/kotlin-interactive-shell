@@ -112,7 +112,7 @@ class KShellTest {
         repl.compileAndEval("{")
         repl.compileAndEval("val x = 10")
         repl.compileAndEval("}")
-        // FIXME: need more explanatory result
+        // FIXME: need more informative result
         assertEquals("res1: () -> kotlin.Unit = () -> kotlin.Unit", stream.last())
     }
 
