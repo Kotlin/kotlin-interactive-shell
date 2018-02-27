@@ -9,6 +9,10 @@ interface ConsoleReader {
 
     fun setPrompt(prompt: String)
 
+    fun dropHistory(n: Int)
+
+    fun addHistoryItem(item: String)
+
     fun readLine(): String?
 
     fun println(s: String)

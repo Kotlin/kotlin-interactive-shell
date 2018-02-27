@@ -9,9 +9,9 @@ class SingleLineOutputStreamTest {
     fun testPrintln() {
         val stream = SingleLineOutputStream()
         val out = PrintWriter(stream)
-        assertEquals("", stream.toString())
+        assertEquals("", stream.last())
         out.println("hello")
         out.flush()
-        assertEquals("hello", stream.toString())
+        assertEquals("hello", stream.last())
     }
 }

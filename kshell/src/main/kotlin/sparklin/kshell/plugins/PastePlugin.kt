@@ -11,35 +11,41 @@ class PastePlugin : Plugin {
     inner class Paste(name: String, short: String, description: String):
             BaseCommand(name, short, description) {
         override fun execute(line: String) {
-            console.println("// Entering paste mode (ctrl-D to finish)")
+            println("// Entering paste mode (ctrl-D to finish)")
             val buf = StringBuilder()
+            var lineCount = 0
             while(true) {
-                val s = console.readLine()
+                val s = pasteConsole.readLine()
                 if (s == null) {
                     break
                 } else {
                     buf.append(s)
                     buf.append('\n')
+                    lineCount ++
                 }
             }
-            println(buf.toString())
-            console.println("// Exiting paste mode, now interpreting.")
+            val code = buf.toString()
+            console.addHistoryItem(code)
+            println("// Exiting paste mode, now interpreting.")
+            repl.compileAndEval(code)
         }
     }
 
     lateinit var repl: Repl
     lateinit var console: ConsoleReader
+    lateinit var pasteConsole: ConsoleReader
 
     override fun init(repl: Repl, config: Configuration) {
         this.repl = repl
-        this.console = getConsoleReader(config)
+        this.console = config.getConsoleReader()
+        this.pasteConsole = getPasteConsoleReader(config)
 
         repl.registerCommand(Paste("paste", "p", "enter paste mode"))
     }
 
     override fun cleanUp() { }
 
-    private fun getConsoleReader(config: Configuration): ConsoleReader {
+    private fun getPasteConsoleReader(config: Configuration): ConsoleReader {
         val klassName = config.get("console.class","sparklin.kshell.console.jline2.ConsoleReaderImpl")
         val reader = CachedInstance<ConsoleReader>().
                 load(klassName, ConsoleReader::class)

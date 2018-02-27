@@ -227,9 +227,19 @@ open class KShell protected constructor(val configuration: Configuration,
                     incompleteLines.clear()
                 }
                 is ReplCompileResult.CompiledClasses -> {
-                    if (compileResult.type != null && compileResult.type != "kotlin.Unit") {
+                    val isMultiline = line.contains('\n')
+                    // it is difficult to get the last expression
+                    // which actually produce value, therefore
+                    // we won't create resXXX variable
+                    if (!isMultiline &&
+                            compileResult.type != null &&
+                            compileResult.type != "kotlin.Unit") {
                         alterState(state)
-                        valueResult(compileResult, line)
+                        val code = if (incompleteLines.isNotEmpty()) {
+                            incompleteLines.add(line)
+                            incompleteLines.joinToString(separator = "\n")
+                        } else line
+                        valueResult(compileResult, code)
                         return
                     }
                     EventManager.emitEvent(OnCompile(compileResult.wrap()))
@@ -237,7 +247,12 @@ open class KShell protected constructor(val configuration: Configuration,
                     incompleteLines.clear()
                     when (evalResult) {
                         is ReplEvalResult.Incomplete,
-                        is ReplEvalResult.ValueResult -> throw IllegalStateException("Should never happen")
+                        is ReplEvalResult.ValueResult ->
+                            if (isMultiline) {
+                                reader.println(evalResult.toString())
+                            } else {
+//                                throw IllegalStateException("Should never happen")
+                            }
                         is ReplEvalResult.UnitResult -> { }
                         is ReplEvalResult.Error,
                         is ReplEvalResult.HistoryMismatch -> evalError(evalResult)

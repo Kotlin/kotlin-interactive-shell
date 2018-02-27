@@ -12,8 +12,8 @@ import lib.jline.console.ConsoleReader as JLine2ConsoleReader
 import lib.jline.console.completer.Completer as JLine2Completer
 
 class ConsoleReaderImpl: ConsoleReader {
-    val reader = JLine2ConsoleReader()
-    var history: FileHistory? = null
+    private val reader = JLine2ConsoleReader()
+    private lateinit var history: FileHistory
 
     override fun init(config: Configuration) {
         reader.expandEvents = false
@@ -38,6 +38,14 @@ class ConsoleReaderImpl: ConsoleReader {
 
     override fun setPrompt(prompt: String) {
         reader.prompt = prompt
+    }
+
+    override fun dropHistory(n: Int) {
+        (1..n).forEach { history.removeLast() }
+    }
+
+    override fun addHistoryItem(item: String) {
+        history.add(item)
     }
 
     override fun readLine(): String? = reader.readLine()
