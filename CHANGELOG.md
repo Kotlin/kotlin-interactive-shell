@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 - Additional classes and interfaces to abstract `GenericRepl` results.
 - More unit tests for `KShell`.
 ### Changed
-- Add additional method to `ConsoleReader` to support history changes.
+- Added 2 methods to `ConsoleReader` to support history changes.
 
 ## Fixed
 - Problem with multiline code [#9](https://github.com/khud/sparklin/issues/9)
