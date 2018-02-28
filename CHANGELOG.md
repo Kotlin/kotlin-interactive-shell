@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Minimal unit test for `KShell`.
 ### Fixed 
-- Bad platform-types support [#3](https://github.com/khud/sparklin/issues/3) both for `resXXX` and `:type` command.
+- Bad platform-types support [#3](https://github.com/khud/sparklin/issues/3) for both `resXXX` and `:type` command.
 
 ## [0.1] - 2018-02-02
 ### Added
