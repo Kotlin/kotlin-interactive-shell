@@ -24,7 +24,7 @@ All notable changes to this project will be documented in this file.
 - Plugin management system.
 - Type inference command `:type`.
 - Print symbols by `:symbols`.
-- Spark 1.x and 2.x support via separate plugins.
+- Spark 1.x and 2.x support by separate plugins.
 ### Changed
 - Abstract `ConsoleReader` and `Completer`, jline2 support has moved to separate module.
 - `Command` is a class anymore.
