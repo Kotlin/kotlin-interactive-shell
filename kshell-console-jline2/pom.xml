@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>kshell-console-jline2</artifactId>
-	<version>${sparklin.version}</version>
+	<version>0.1.2</version>
 
     <dependencies>
 	    <dependency>
