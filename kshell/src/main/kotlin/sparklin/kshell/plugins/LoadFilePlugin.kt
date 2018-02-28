@@ -28,11 +28,11 @@ class LoadFilePlugin: Plugin {
     override fun init(repl: Repl, config: Configuration) {
         this.repl = repl
 
-        val fullName = config.getLocal("name", "load")
-        val shortName = config.getLocal("short", "l")
+        val name = config.getLocal("name", "load")
+        val short = config.getLocal("short", "l")
         val description = "load script"
 
-        repl.registerCommand(Load(fullName, shortName, description))
+        repl.registerCommand(Load(name, short, description))
     }
 
     private fun Configuration.getLocal(key: String, default: String) =

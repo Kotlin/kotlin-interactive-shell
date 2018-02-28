@@ -3,17 +3,26 @@ package sparklin.kshell
 import java.io.OutputStream
 
 class SingleLineOutputStream : OutputStream() {
-    private val builder = StringBuilder()
+    private val lineBuilder = StringBuilder()
+    private val buf = StringBuilder()
     private var line: String = ""
 
     override fun write(b: Int) {
         if (b == '\n'.toInt()) {
-            line = builder.toString()
-            builder.setLength(0)
+            line = lineBuilder.toString()
+            buf.append(line)
+            buf.append('\n')
+            lineBuilder.setLength(0)
         } else {
-            builder.append(b.toChar())
+            lineBuilder.append(b.toChar())
         }
     }
 
-    override fun toString(): String = line
+    fun last(): String = line
+
+    fun clear() {
+        buf.setLength(0)
+    }
+    
+    override fun toString(): String = buf.toString()
 }

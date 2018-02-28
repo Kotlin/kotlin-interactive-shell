@@ -24,11 +24,11 @@ class RuntimePlugin : Plugin {
             repl.extensionPoint {
                 val compileResult = repl.compile(expr)
                 when (compileResult) {
-                    is ReplCompileResult.Incomplete ->
+                    is CompileResult.Incomplete ->
                         console.println("Incomplete line")
-                    is ReplCompileResult.Error ->
+                    is CompileResult.Error ->
                         repl.compileError(compileResult)
-                    is ReplCompileResult.CompiledClasses -> {
+                    is CompileResult.CompiledClasses -> {
                         compileResult.type?.let {
                             console.println(it)
                         }
@@ -57,18 +57,18 @@ class RuntimePlugin : Plugin {
 
     private lateinit var repl: Repl
     private lateinit var console: ConsoleReader
-    private var lastCompiledClasses: ReplCompileResult.CompiledClasses? = null
+    private var lastCompiledClasses: CompileResult.CompiledClasses? = null
 
     override fun init(repl: Repl, config: Configuration) {
         this.repl = repl
         this.console = config.getConsoleReader()
 
-        val inferTypeCmdFullName = config.getLocal("inferTypeCmd", "name", "type")
-        val inferTypeCmdShortName = config.getLocal("inferTypeCmd", "short", "t")
+        val inferTypeCmdName = config.getLocal("inferTypeCmd", "name", "type")
+        val inferTypeCmdShort = config.getLocal("inferTypeCmd", "short", "t")
         val inferTypeCmdDescription = "display the type of an expression without evaluating it"
 
-        val printSymbolsCmdFullName = config.getLocal("printSymbolsCmd", "name", "symbols")
-        val printSymbolsCmdShortName = config.getLocal("printSymbolsCmd", "short", "s")
+        val printSymbolsCmdName = config.getLocal("printSymbolsCmd", "name", "symbols")
+        val printSymbolsCmdShort = config.getLocal("printSymbolsCmd", "short", "s")
         val printSymbolsCmdDescription = "list defined symbols"
 
         EventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
@@ -77,8 +77,8 @@ class RuntimePlugin : Plugin {
             }
         })
 
-        repl.registerCommand(InferType(inferTypeCmdFullName, inferTypeCmdShortName, inferTypeCmdDescription))
-        repl.registerCommand(PrintSymbols(printSymbolsCmdFullName, printSymbolsCmdShortName, printSymbolsCmdDescription))
+        repl.registerCommand(InferType(inferTypeCmdName, inferTypeCmdShort, inferTypeCmdDescription))
+        repl.registerCommand(PrintSymbols(printSymbolsCmdName, printSymbolsCmdShort, printSymbolsCmdDescription))
     }
 
     private fun Configuration.getLocal(cmd: String, key: String, default: String) =

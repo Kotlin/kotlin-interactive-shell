@@ -164,7 +164,7 @@ open class KShell protected constructor(val configuration: Configuration,
 
             if (line == null || isQuitAction(line)) break
 
-            if (incompleteLines.isEmpty() && line.startsWith(":")) {
+            if (incompleteLines.isEmpty() && line.startsWith(":") && !line.startsWith("::")) {
                 try {
                     val action = commands.first { it.match(line) }
                     action.execute(line)
@@ -206,37 +206,53 @@ open class KShell protected constructor(val configuration: Configuration,
         return incompleteLines.isEmpty() && (line.equals(":quit", ignoreCase = true) || line.equals(":q", ignoreCase = true))
     }
 
-    override fun compile(code: String): ReplCompileResult {
+    private fun compileInternal(code: String): ReplCompileResult {
         val replCodeLine = ReplCodeLine(nextLine.incrementAndGet(), state.currentGeneration, code)
         return engine.compile(state, replCodeLine)
     }
 
+    override fun compile(code: String): CompileResult = compileInternal(code).wrap()
 
     override fun compileAndEval(line: String) {
         state.lock.write {
             val source = (incompleteLines + line).joinToString(separator = "\n")
-            val compileResult = compile(source)
+            val compileResult = compileInternal(source)
             when (compileResult) {
                 is ReplCompileResult.Incomplete -> {
                     incompleteLines.add(line)
                 }
                 is ReplCompileResult.Error -> {
-                    compileError(compileResult)
+                    compileError(compileResult.wrap())
                     alterState(state)
                     incompleteLines.clear()
                 }
                 is ReplCompileResult.CompiledClasses -> {
-                    if (compileResult.type != null && compileResult.type != "kotlin.Unit") {
+                    val isMultiline = line.contains('\n')
+                    // it is difficult to get the last expression
+                    // which actually produce value, therefore
+                    // we won't create resXXX variable
+                    if (!isMultiline &&
+                            compileResult.type != null &&
+                            compileResult.type != "kotlin.Unit") {
                         alterState(state)
-                        valueResult(compileResult, line)
+                        val code = if (incompleteLines.isNotEmpty()) {
+                            incompleteLines.add(line)
+                            incompleteLines.joinToString(separator = "\n")
+                        } else line
+                        valueResult(compileResult, code)
                         return
                     }
-                    EventManager.emitEvent(OnCompile(compileResult))
+                    EventManager.emitEvent(OnCompile(compileResult.wrap()))
                     val evalResult = engine.eval(state, compileResult, fallbackArgs, wrapper)
                     incompleteLines.clear()
                     when (evalResult) {
                         is ReplEvalResult.Incomplete,
-                        is ReplEvalResult.ValueResult -> throw IllegalStateException("Should never happen")
+                        is ReplEvalResult.ValueResult ->
+                            if (isMultiline) {
+                                reader.println(evalResult.toString())
+                            } else {
+//                                throw IllegalStateException("Should never happen")
+                            }
                         is ReplEvalResult.UnitResult -> { }
                         is ReplEvalResult.Error,
                         is ReplEvalResult.HistoryMismatch -> evalError(evalResult)
@@ -282,8 +298,9 @@ open class KShell protected constructor(val configuration: Configuration,
         reader.println(result.toString())
     }
 
-    override fun compileError(result: ReplCompileResult.Error) {
-        reader.println("Message: ${result.message} Location: ${result.location}")
+    override fun compileError(result: CompileResult.Error) {
+        reader.println("Message: ${result.message}")
+//        reader.println("Message: ${result.message} Location: ${result.location}")
     }
 
     open fun commandError(e: Exception) {
@@ -296,5 +313,44 @@ open class KShell protected constructor(val configuration: Configuration,
 
     open fun cleanUp() {
         reader.cleanUp()
+    }
+}
+
+class ReplClassData(private val classData: CompiledClassData): CompileResult.ClassData {
+    override val path: String
+        get() = classData.path
+    override val bytes: ByteArray
+        get() = classData.bytes
+}
+
+fun ReplCompileResult.Error.wrap(): CompileResult.Error {
+    val that = this
+    return object : CompileResult.Error {
+        override val message: String
+            get() = that.message
+    }
+}
+
+fun ReplCompileResult.Incomplete.wrap(): CompileResult.Incomplete = CompileResult.Incomplete
+
+fun ReplCompileResult.CompiledClasses.wrap(): CompileResult.CompiledClasses {
+    val that = this
+    return object : CompileResult.CompiledClasses {
+        override val mainClassName: String
+            get() = that.mainClassName
+        override val classes: List<CompileResult.ClassData>
+            get() = that.classes.map { ReplClassData(it) }
+        override val hasResult: Boolean
+            get() = that.hasResult
+        override val type: String?
+            get() = that.type
+    }
+}
+
+fun ReplCompileResult.wrap(): CompileResult {
+    return when (this) {
+        is ReplCompileResult.CompiledClasses -> this.wrap()
+        is ReplCompileResult.Error -> this.wrap()
+        is ReplCompileResult.Incomplete -> this.wrap()
     }
 }

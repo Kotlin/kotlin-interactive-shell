@@ -4,6 +4,7 @@ import sparklin.kshell.Plugin
 import sparklin.kshell.console.ConsoleReader
 import sparklin.kshell.plugins.HelpPlugin
 import sparklin.kshell.plugins.LoadFilePlugin
+import sparklin.kshell.plugins.PastePlugin
 import sparklin.kshell.plugins.RuntimePlugin
 import java.io.BufferedReader
 import java.io.File
@@ -30,7 +31,8 @@ class ConfigurationImpl: Configuration {
         val pluginClasses = get("plugins", ListConverter(TrimConverter),
                 listOf(LoadFilePlugin::class.qualifiedName!!,
                         RuntimePlugin::class.qualifiedName!!,
-                        HelpPlugin::class.qualifiedName!!))
+                        HelpPlugin::class.qualifiedName!!,
+                        PastePlugin::class.qualifiedName!!))
 
         pluginClasses.forEach { klassName ->
             val instance = CachedInstance<Plugin>()
