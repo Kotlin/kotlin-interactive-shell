@@ -31,3 +31,5 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Old spark stuff: separate main class and so on.
 
+[0.1.2]: https://github.com/khud/sparklin/compare/0.1.1...0.1.2
+[0.1.1]: https://github.com/khud/sparklin/compare/0.1...0.1.1
