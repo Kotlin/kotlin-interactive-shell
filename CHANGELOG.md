@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Added 2 methods to `ConsoleReader` to support history changes.
 
-## Fixed
+### Fixed
 - Problem with multiline code [#9](https://github.com/khud/sparklin/issues/9)
 - Doubled colon problem [#10](https://github.com/khud/sparklin/issues/10)
 
