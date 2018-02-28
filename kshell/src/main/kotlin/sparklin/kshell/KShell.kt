@@ -164,7 +164,7 @@ open class KShell protected constructor(val configuration: Configuration,
 
             if (line == null || isQuitAction(line)) break
 
-            if (incompleteLines.isEmpty() && line.startsWith(":")) {
+            if (incompleteLines.isEmpty() && line.startsWith(":") && !line.startsWith("::")) {
                 try {
                     val action = commands.first { it.match(line) }
                     action.execute(line)
