@@ -19,7 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed 
 - Bad platform-types support [#3](https://github.com/khud/sparklin/issues/3) for both `resXXX` and `:type` command.
 
-## [0.1] - 2018-02-02
+## 0.1 - 2018-02-02
 ### Added
 - Plugin management system.
 - Type inference command `:type`.
