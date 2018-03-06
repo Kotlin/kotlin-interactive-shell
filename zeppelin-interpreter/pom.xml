@@ -9,18 +9,19 @@
         <version>0.1.3</version>
     </parent>
 
-    <artifactId>kshell-console-jline2</artifactId>
+
+    <artifactId>zeppelin-interpeter</artifactId>
 	<version>0.1.3</version>
 
     <dependencies>
-	    <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib-jdk8</artifactId>
-            <version>${kotlin.version}</version>
+        <dependency>
+            <groupId>sparklin</groupId>
+            <artifactId>kshell</artifactId>
+            <version>${sparklin.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib</artifactId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
         <dependency>
@@ -28,21 +29,15 @@
             <artifactId>kotlin-reflect</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.fusesource.jansi/jansi -->
         <dependency>
-            <groupId>org.fusesource.jansi</groupId>
-            <artifactId>jansi</artifactId>
-            <version>1.16</version>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-compiler</artifactId>
+            <version>${kotlin.version}</version>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>sparklin</groupId>
-            <artifactId>kshell</artifactId>
-            <version>${sparklin.version}</version>
+            <groupId>org.apache.zeppelin</groupId>
+            <artifactId>zeppelin-interpreter</artifactId>
+            <version>0.7.3</version>
         </dependency>
     </dependencies>
 
@@ -55,6 +50,35 @@
         <!--<sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>-->
         <!--<testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>-->
         <plugins>
+            <plugin>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+                <version>2.15.2</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>compile</phase>
+                    </execution>
+
+                    <execution>
+                        <id>test-compile</id>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <phase>test-compile</phase>
+                    </execution>
+
+                    <execution>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <configuration>
@@ -108,10 +132,6 @@
                         <goals> <goal>testCompile</goal> </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -121,7 +141,7 @@
                     <archive>
                         <manifest>
                             <!-- addClasspath>true</addClasspath> -->
-                            <mainClass>sparklin.repl.Main</mainClass>
+                            <mainClass>sparklin.spark1x.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

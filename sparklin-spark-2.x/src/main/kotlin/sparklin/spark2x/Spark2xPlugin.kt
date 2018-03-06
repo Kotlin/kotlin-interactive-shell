@@ -8,12 +8,13 @@ import org.apache.spark.sql.internal.StaticSQLConf.CATALOG_IMPLEMENTATION
 import org.apache.spark.util.Utils
 import sparklin.core.Logging
 import sparklin.kshell.*
+import sparklin.kshell.plugins.SparkPlugin
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
 
-class Spark2xPlugin : Logging(), Plugin {
+class Spark2xPlugin : Logging(), SparkPlugin {
     override fun init(repl: Repl, config: Configuration) {
         val jars = getAddedJars()
         val conf = SparkConf()
@@ -129,4 +130,5 @@ class Spark2xPlugin : Logging(), Plugin {
         }
     }
 
+    override fun hadoopConfiguration() = Shared.sc.hadoopConfiguration()
 }

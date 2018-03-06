@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 MAVEN_REPO_BASE=$HOME/.m2/repository/org/jetbrains/kotlin
-KOTLIN_VERSION=1.2.20
-SPARKLIN_VERSION=0.1.2
+KOTLIN_VERSION=1.2.30
+SPARKLIN_VERSION=0.1.3
 
 # Kotlin libraries
 KOTLIN_STDLIB=${MAVEN_REPO_BASE}/kotlin-stdlib/${KOTLIN_VERSION}/kotlin-stdlib-${KOTLIN_VERSION}.jar
@@ -16,6 +16,7 @@ KSHELL_CONSOLE_JLINE2=$HOME/.m2/repository/sparklin/kshell-console-jline2/${SPAR
 
 # Spark 1.x support
 SPARKLIN_PLUGIN=$HOME/.m2/repository/sparklin/sparklin-spark-1.x/${SPARKLIN_VERSION}/sparklin-spark-1.x-${SPARKLIN_VERSION}.jar
+HDFS_BROWSER_PLUGIN=$HOME/.m2/repository/sparklin/hdfs-browser/${SPARKLIN_VERSION}/hdfs-browser-${SPARKLIN_VERSION}.jar
 
 # Please specify path to KShell configuration file, note that:
 # 1) If property config.path isn't specified Sparklin is trying find config file in path $HOME/.kshell

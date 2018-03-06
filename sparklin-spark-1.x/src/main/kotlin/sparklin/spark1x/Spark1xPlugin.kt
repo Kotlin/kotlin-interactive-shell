@@ -9,11 +9,12 @@ import org.apache.spark.sql.SQLContext
 import org.apache.spark.util.Utils
 import sparklin.core.Logging
 import sparklin.kshell.*
+import sparklin.kshell.plugins.SparkPlugin
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 
-class Spark1xPlugin : Logging(), Plugin {
+class Spark1xPlugin : Logging(), SparkPlugin {
     private lateinit var classServer: HttpServer
 
     override fun init(repl: Repl, config: Configuration) {
@@ -120,4 +121,6 @@ class Spark1xPlugin : Logging(), Plugin {
         out.flush()
         out.close()
     }
+
+    override fun hadoopConfiguration() = Shared.sc.hadoopConfiguration()
 }

@@ -69,9 +69,9 @@ class KShellTest {
     init {
         val defs = KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class,
                 ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES),
-                listOf(Shared::class.qualifiedName + ".*"))
+                listOf())
 
-        repl = KShell(testConfig, additionalClasspath=findClassJarsOrEmpty(sparklin.kshell.Shared::class),
+        repl = KShell(testConfig, additionalClasspath=listOf(),
                 sharedHostClassLoader = this.javaClass.classLoader,
                 scriptDefinition = defs)
         repl.initEngine()

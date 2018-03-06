@@ -10,13 +10,13 @@ import kotlin.script.templates.standard.ScriptTemplateWithArgs
 object KotlinShell {
     @JvmStatic
     fun main(args: Array<String>) {
-        val defs = KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class,
+        val kotlinScriptDefinitionEx = KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class,
                 ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES),
-                listOf(Shared::class.qualifiedName + ".*"))
+                listOf())
 
-        val repl = KShell(configuration(), additionalClasspath=findClassJarsOrEmpty(sparklin.kshell.Shared::class),
+        val repl = KShell(configuration(), additionalClasspath = listOf(),
                 sharedHostClassLoader = this.javaClass.classLoader,
-                scriptDefinition = defs)
+                scriptDefinition = kotlinScriptDefinitionEx)
 
         Runtime.getRuntime().addShutdownHook(Thread({
             println("\nBye!")

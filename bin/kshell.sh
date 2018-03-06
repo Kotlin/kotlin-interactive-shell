@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 MAVEN_REPO_BASE=$HOME/.m2/repository/org/jetbrains/kotlin
-KOTLIN_VERSION=1.2.20
-SPARKLIN_VERSION=0.1.2
+KOTLIN_VERSION=1.2.30
+SPARKLIN_VERSION=0.1.3
 
 # Kotlin libraries
 KOTLIN_STDLIB=${MAVEN_REPO_BASE}/kotlin-stdlib/${KOTLIN_VERSION}/kotlin-stdlib-${KOTLIN_VERSION}.jar

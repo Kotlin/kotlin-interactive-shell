@@ -1,6 +1,19 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.1.3]
+### Added
+- HDFS browser plugin
+
+### Changed
+- Kotlin version 1.2.20 -> 1.2.30
+
+### Fixed
+- Problem with custom commands which start with the same letter
+
+### Removed
+- Unnecessary `Shared` class from `KShell` 
+
 ## [0.1.2] - 2018-02-28
 ### Added
 - Paste command.
@@ -19,7 +32,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed 
 - Bad platform-types support [#3](https://github.com/khud/sparklin/issues/3) for both `resXXX` and `:type` command.
 
-## [0.1] - 2018-02-02
+## 0.1 - 2018-02-02
 ### Added
 - Plugin management system.
 - Type inference command `:type`.
@@ -31,5 +44,6 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Old spark stuff: separate main class and so on.
 
+[0.1.3]: https://github.com/khud/sparklin/compare/0.1.3...0.1.2
 [0.1.2]: https://github.com/khud/sparklin/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/khud/sparklin/compare/0.1...0.1.1
