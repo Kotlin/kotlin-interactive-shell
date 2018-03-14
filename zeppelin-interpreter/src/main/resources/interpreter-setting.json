@@ -1,0 +1,14 @@
+[
+  {
+    "group": "kotlin",
+    "name": "kotlin",
+    "className": "sparklin.zeppelin.KotlinInterpreter",
+    "defaultInterpreter": true,
+    "properties": {
+    },
+    "editor": {
+      "language": "kotlin",
+      "editOnDblClick": false
+    }
+  }
+]

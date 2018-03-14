@@ -2,6 +2,7 @@ package sparklin.kshell.configuration
 
 import sparklin.kshell.Plugin
 import sparklin.kshell.console.ConsoleReader
+import java.io.*
 
 interface Configuration {
     fun <T : Any> get(key: String, converter: Converter<T>, default: () -> T): T

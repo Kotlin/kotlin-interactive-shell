@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.script.KotlinScriptDefinition
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.Closeable
 import java.io.File
+import java.io.PrintStream
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -28,15 +29,11 @@ import kotlin.concurrent.write
 import kotlin.reflect.KClass
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
-val EMPTY_SCRIPT_ARGS: Array<out Any?> = arrayOf(emptyArray<String>())
-val EMPTY_SCRIPT_ARGS_TYPES: Array<out KClass<out Any>> = arrayOf(Array<String>::class)
-
 open class KShell protected constructor(val configuration: Configuration,
                                         val disposable: Disposable,
                                         val scriptDefinition: KotlinScriptDefinitionEx,
                                         val compilerConfiguration: CompilerConfiguration,
                                         protected val repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE,
-                                        protected val sharedHostClassLoader: ClassLoader? = null,
                                         protected val emptyArgsProvider: ScriptTemplateEmptyArgsProvider,
                                         protected val stateLock: ReentrantReadWriteLock = ReentrantReadWriteLock()) : Closeable, Repl {
 
@@ -47,29 +44,32 @@ open class KShell protected constructor(val configuration: Configuration,
                 scriptDefinition: KotlinScriptDefinitionEx = KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class, ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES)),
                 messageCollector: MessageCollector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false),
                 repeatingMode: ReplRepeatingMode = ReplRepeatingMode.NONE,
-                sharedHostClassLoader: ClassLoader? = null) : this(configuration, disposable,
+                includeStdlib: Boolean) : this(configuration, disposable,
             compilerConfiguration = CompilerConfiguration().apply {
                 addJvmClasspathRoots(PathUtil.getJdkClassesRoots(File(System.getProperty("java.home"))))
                 addJvmClasspathRoots(findRequiredScriptingJarFiles(scriptDefinition.template,
                         includeScriptEngine = false,
                         includeKotlinCompiler = false,
-                        includeStdLib = true,
+                        includeStdLib = includeStdlib,
                         includeRuntime = false))
                 addJvmClasspathRoots(additionalClasspath)
                 put(CommonConfigurationKeys.MODULE_NAME, moduleName)
                 put<MessageCollector>(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
             },
             repeatingMode = repeatingMode,
-            sharedHostClassLoader = sharedHostClassLoader,
             scriptDefinition = scriptDefinition,
             emptyArgsProvider = scriptDefinition)
+
+    constructor(configuration: Configuration, additionalClasspath: List<File>, scriptDefinition: KotlinScriptDefinitionEx, includeStdlib: Boolean = true) :
+            this(configuration = configuration, additionalClasspath = additionalClasspath,
+                    scriptDefinition = scriptDefinition, disposable = Disposer.newDisposable(), includeStdlib = includeStdlib)
 
     var fallbackArgs: ScriptArgsWithTypes? = emptyArgsProvider.defaultEmptyArgs
         get() = stateLock.read { field }
         set(value) = stateLock.write { field = value }
 
     private val baseClassloader = URLClassLoader(compilerConfiguration.jvmClasspathRoots.map { it.toURI().toURL() }
-            .toTypedArray(), sharedHostClassLoader)
+            .toTypedArray(), this.javaClass.classLoader)
 
     open class GenericRepl protected constructor(
             disposable: Disposable,
@@ -186,7 +186,7 @@ open class KShell protected constructor(val configuration: Configuration,
         cleanUp()
     }
 
-    fun initImports() {
+    private fun initImports() {
         scriptDefinition.defaultImports.forEach { compileAndEval("import $it") }
         additionalImports.forEach { compileAndEval("import $it") }
     }
@@ -213,18 +213,21 @@ open class KShell protected constructor(val configuration: Configuration,
 
     override fun compile(code: String): CompileResult = compileInternal(code).wrap()
 
-    override fun compileAndEval(line: String) {
-        state.lock.write {
+    override fun compileAndEval(line: String, interactive: Boolean): EvalResult {
+        return state.lock.write {
             val source = (incompleteLines + line).joinToString(separator = "\n")
             val compileResult = compileInternal(source)
             when (compileResult) {
                 is ReplCompileResult.Incomplete -> {
                     incompleteLines.add(line)
+                    if (!interactive) incompleteLines.clear()
+                    return EvalResult.Incomplete
                 }
                 is ReplCompileResult.Error -> {
                     compileError(compileResult.wrap())
                     alterState(state)
                     incompleteLines.clear()
+                    return EvalResult.Error(compileResult.message)
                 }
                 is ReplCompileResult.CompiledClasses -> {
                     val isMultiline = line.contains('\n')
@@ -239,23 +242,29 @@ open class KShell protected constructor(val configuration: Configuration,
                             incompleteLines.add(line)
                             incompleteLines.joinToString(separator = "\n")
                         } else line
-                        valueResult(compileResult, code)
-                        return
+                        return valueResult(compileResult, code)
                     }
                     EventManager.emitEvent(OnCompile(compileResult.wrap()))
                     val evalResult = engine.eval(state, compileResult, fallbackArgs, wrapper)
                     incompleteLines.clear()
-                    when (evalResult) {
+                    return when (evalResult) {
                         is ReplEvalResult.Incomplete,
-                        is ReplEvalResult.ValueResult ->
+                        is ReplEvalResult.ValueResult -> {
                             if (isMultiline) {
                                 reader.println(evalResult.toString())
-                            } else {
-//                                throw IllegalStateException("Should never happen")
                             }
-                        is ReplEvalResult.UnitResult -> { }
-                        is ReplEvalResult.Error,
-                        is ReplEvalResult.HistoryMismatch -> evalError(evalResult)
+                            EvalResult.Success
+                        }
+                        is ReplEvalResult.UnitResult -> {
+                            EvalResult.Success
+                        }
+                        is ReplEvalResult.Error -> {
+                            EvalResult.Error(evalResult.message)
+                        }
+                        is ReplEvalResult.HistoryMismatch -> {
+                            evalError(evalResult)
+                            EvalResult.Error(evalResult.toString())
+                        }
                     }
                 }
             }
@@ -288,10 +297,11 @@ open class KShell protected constructor(val configuration: Configuration,
             reader.setPrompt("... ")
     }
 
-    open fun valueResult(result: ReplCompileResult.CompiledClasses, line: String) {
+    open fun valueResult(result: ReplCompileResult.CompiledClasses, line: String): EvalResult {
         val name = "res${resultCounter.getAndIncrement()}"
-        compileAndEval("val $name = $line")
-        compileAndEval("println(\"$name: ${result.type} = \" + $name)")
+        val first = compileAndEval("val $name = $line")
+        if (first != EvalResult.Success) return first
+        return compileAndEval("println(\"$name: ${result.type} = \" + $name)")
     }
 
     open fun evalError(result: ReplEvalResult) {

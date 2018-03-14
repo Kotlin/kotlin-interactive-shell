@@ -13,7 +13,7 @@ interface Repl {
 
     fun compile(code: String): CompileResult
 
-    fun compileAndEval(line: String)
+    fun compileAndEval(line: String, interactive: Boolean = true): EvalResult
 
     fun registerCommand(command: sparklin.kshell.Command)
 
@@ -45,6 +45,29 @@ interface CompileResult {
     interface Error : CompileResult {
         val message: String
     }
+}
+
+sealed class EvalResult {
+    object Success : EvalResult() {
+        override fun isSuccess(): Boolean = true
+
+        override fun getMessage(): String? = null
+    }
+
+    object Incomplete: EvalResult() {
+        override fun isSuccess(): Boolean = false
+
+        override fun getMessage(): String? = "Incomplete statement"
+    }
+
+    data class Error(private val msg: String) : EvalResult() {
+        override fun isSuccess(): Boolean = false
+
+        override fun getMessage(): String = msg
+    }
+
+    abstract fun isSuccess(): Boolean
+    abstract fun getMessage(): String?
 }
 
 class OnCompile(private val compiledClasses: CompileResult.CompiledClasses) : Event<CompileResult.CompiledClasses> {

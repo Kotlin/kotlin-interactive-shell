@@ -1,23 +1,19 @@
 package sparklin.kshell
 
-import org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes
 import org.junit.After
 import org.junit.Test
 
 import org.junit.Assert.*
 import org.junit.Before
-import org.junit.BeforeClass
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.configuration.Converter
 import sparklin.kshell.console.Completer
 import sparklin.kshell.console.ConsoleReader
-import java.io.ByteArrayOutputStream
 import java.io.PrintStream
-import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 class KShellTest {
-    private lateinit var repl: KShell
-    private lateinit var stream: SingleLineOutputStream
+    private var repl: KShell
+    private val stream = SingleLineOutputStream()
     private val out = System.out
 
     val testConfig = object : Configuration {
@@ -67,24 +63,16 @@ class KShellTest {
     }
 
     init {
-        val defs = KotlinScriptDefinitionEx(ScriptTemplateWithArgs::class,
-                ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES),
-                listOf())
-
-        repl = KShell(testConfig, additionalClasspath=listOf(),
-                sharedHostClassLoader = this.javaClass.classLoader,
-                scriptDefinition = defs)
+        repl = KShell(testConfig, listOf(), KotlinScriptDefinitionEx())
         repl.initEngine()
-
-        stream = SingleLineOutputStream()
-
-        val ps = PrintStream(stream)
-        System.setOut(ps)
     }
 
     @Before
     fun init() {
         repl.resultCounter.set(1)
+        stream.clear()
+        val ps = PrintStream(stream)
+        System.setOut(ps)
     }
 
     @After
