@@ -19,11 +19,11 @@
             <artifactId>kshell</artifactId>
             <version>${sparklin.version}</version>
         </dependency>
-        <dependency>
-            <groupId>sparklin</groupId>
-            <artifactId>spark-common</artifactId>
-            <version>${sparklin.version}</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>sparklin</groupId>-->
+            <!--<artifactId>spark-common</artifactId>-->
+            <!--<version>${sparklin.version}</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
