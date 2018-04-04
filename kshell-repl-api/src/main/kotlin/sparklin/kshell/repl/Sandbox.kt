@@ -3,7 +3,7 @@ package sparklin.kshell.repl
 object Sandbox {
     @JvmStatic
     fun main(args: Array<String>) {
-        val repl = NewRepl()
+//        val repl = Repl()
 //        (1..20).map {
 //            println("i=" + it)
 //            repl.eval(it, "fun f$it(x: Int) = x + $it")
@@ -13,12 +13,12 @@ object Sandbox {
 
 //
 //        repl.eval(1, "val x = 10\nfun <R> g(x: R, y: Int) = x\nprintln(11111)\nx")
-        repl.eval(1, "val x = 10\nprintln(10)\nfun f(x: Int)=x\nx + 1")
-        repl.eval(2, "class A() { val x = 10 }")
-        repl.eval(3, "println(res1)\nval a = A()")
-        repl.eval(4, "fun f(x: A)=1")
-        repl.eval(5, "fun f(x: A)=2")
-        repl.eval(6, "println(f(a))")
+//        repl.eval(1, "val x = 10\nprintln(10)\nfun f(x: Int)=x\nx + 1")
+//        repl.eval(2, "class A() { val x = 10 }")
+//        repl.eval(3, "println(res1)\nval a = A()")
+//        repl.eval(4, "fun f(x: A)=1")
+//        repl.eval(5, "fun f(x: A)=2")
+//        repl.eval(6, "println(f(a))")
 
 //        repl.eval(1, "fun f(x: Int) = 1")
 //        repl.eval(2, "fun f(x: Int) = 2\nfun f(x: Int, y: Int) = x + y\nf(10)")

@@ -46,7 +46,7 @@ class ReplChecker(
 
     private fun createDiagnosticHolder() = ConsoleDiagnosticMessageHolder()
 
-    fun check(state: State, codeLine: CodeLine, isScript: Boolean): Result<CheckedCode> {
+    fun check(state: State, codeLine: CodeLine, isScript: Boolean): Result<CheckedCode, EvalError.CompileError> {
         state.lock.write {
             val fileName = makeFileBaseName(codeLine) + (if (isScript) ".kts" else ".kt")
             val virtualFile =
@@ -63,7 +63,7 @@ class ReplChecker(
 
             return when {
                 syntaxErrorReport.isHasErrors && syntaxErrorReport.isAllErrorsAtEof -> Result.Incomplete()
-                syntaxErrorReport.isHasErrors -> Result.Error(errorHolder.renderMessage())
+                syntaxErrorReport.isHasErrors -> Result.Error(EvalError.CompileError(errorHolder.renderMessage()))
                 else -> Result.Success(CheckedCode(codeLine, psiFile, errorHolder))
             }
         }

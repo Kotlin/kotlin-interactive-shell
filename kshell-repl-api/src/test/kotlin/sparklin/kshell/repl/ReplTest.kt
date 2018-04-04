@@ -9,16 +9,13 @@ import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.utils.PathUtil
-import java.io.BufferedOutputStream
+import org.junit.Assert.*
+import org.junit.Test
 import java.io.File
-import java.io.FileOutputStream
 import java.net.URLClassLoader
-import java.util.concurrent.locks.ReentrantReadWriteLock
 
-class NewRepl {
-    val replCompiler: ReplCompiler
-    val replEvaluator: ReplEvaluator
-    val state: State
+class ReplTest {
+    private val repl: Repl
 
     init {
         val messageCollector: MessageCollector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false)
@@ -41,35 +38,48 @@ class NewRepl {
         val baseClassloader = URLClassLoader(conf.jvmClasspathRoots.map { it.toURI().toURL() }
                 .toTypedArray(), this.javaClass.classLoader)
 
-        replCompiler = ReplCompiler(
-                compilerConfiguration = conf,
-                messageCollector = messageCollector)
-
-        replEvaluator = ReplEvaluator(classpath, baseClassloader)
-        state = State(ReentrantReadWriteLock())
-        println("OK")
+       repl = Repl(conf, messageCollector, classpath, baseClassloader)
     }
 
-    fun eval(no: Int, code: String) {
-        val res = replCompiler.compile(state, CodeLine(no, code))
-        when (res) {
-            is Result.Error -> println("{{{" + res.message)
-            is Result.Incomplete -> println("incomplete")
+    @Test
+    fun testSimple() {
+        assertValue(2, repl.eval("1 + 1"))
+    }
+
+    @Test
+    fun testMultipleLinesWithShadowing() {
+        assertValue(11, repl.eval("val x = 10\nfun f(x: Int)=x\nx + 1"))
+        assertUnit(repl.eval("class A() { val x = 10 }"))
+        assertUnit(repl.eval("println(res1)\nval a = A()"))
+        assertUnit(repl.eval("fun f(x: A)=1"))
+        assertUnit(repl.eval("fun f(x: A)=2"))
+        assertValue(2, repl.eval("f(a)"))
+    }
+
+
+    private fun assertValue(expected: Any?, result: Result<EvalResult, EvalError>) {
+        when (result) {
+            is Result.Error -> fail(result.toString())
             is Result.Success -> {
-                res.data.second.classes.forEach {
-                    println(it.path)
-                    writeClass("/Users/vitaly.khudobakhshov/Documents/research_projects/sparklin/temp/" + it.path, it.bytes)
+                val data = result.data
+                when (data) {
+                    is EvalResult.UnitResult -> fail("Value result expected")
+                    is EvalResult.ValueResult -> assertEquals(expected, data.value)
                 }
-                println("!!!! EVAL")
-                println(replEvaluator.eval(state, res.data.first, res.data.second, null))
             }
         }
     }
 
-    private fun writeClass(path: String, bytes: ByteArray) {
-        val out = BufferedOutputStream(FileOutputStream(path))
-        out.write(bytes)
-        out.flush()
-        out.close()
+    private fun assertUnit(result: Result<EvalResult, EvalError>) {
+        when (result) {
+            is Result.Error -> fail(result.toString())
+            is Result.Success -> {
+                val data = result.data
+                when (data) {
+                    is EvalResult.UnitResult -> { }
+                    is EvalResult.ValueResult -> fail("Unit result expected, but found $data")
+                }
+            }
+        }
     }
 }

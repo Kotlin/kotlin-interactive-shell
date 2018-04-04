@@ -1,5 +1,6 @@
 package sparklin.kshell.repl
 
+import com.google.common.base.Throwables
 import org.jetbrains.kotlin.cli.jvm.repl.GenericReplCompiler
 import sparklin.kshell.*
 import java.io.File
@@ -52,4 +53,25 @@ fun List<Snippet>.shadow(snippets: List<Snippet>) {
         val historyItem = it
         if (snippets.filterDeclarations().any { historyItem.signature() == it.signature()  }) historyItem.shadowed = true
     }
+}
+
+fun renderReplStackTrace(cause: Throwable): String {
+    val newTrace = arrayListOf<StackTraceElement>()
+    var skip = true
+    for (element in cause.stackTrace.reversed()) {
+        val method = "${element.className}.${element.methodName}"
+        if (method.startsWith("Line_") && method.endsWith("<clinit>")) {
+            skip = false
+        }
+        if (!skip) {
+            newTrace.add(element)
+        }
+    }
+
+    val resultingTrace = newTrace.reversed().dropLast(1)
+
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UsePropertyAccessSyntax")
+    (cause as java.lang.Throwable).setStackTrace(resultingTrace.toTypedArray())
+
+    return Throwables.getStackTraceAsString(cause).trimEnd()
 }

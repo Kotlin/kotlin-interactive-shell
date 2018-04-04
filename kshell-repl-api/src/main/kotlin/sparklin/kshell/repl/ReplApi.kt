@@ -8,10 +8,23 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-sealed class Result<T> {
-    class Incomplete<T>: Result<T>()
-    data class Error<T>(val message: String, val location: CompilerMessageLocation? = null): Result<T>()
-    data class Success<T>(val data: T): Result<T>()
+sealed class Result<S,E> {
+    class Incomplete<S,E>: Result<S,E>()
+    data class Error<S,E>(val error: E): Result<S,E>()
+    data class Success<S,E>(val data: S): Result<S,E>()
+}
+
+sealed class EvalError(val message: String) {
+    class CompileError(message: String, val location: CompilerMessageLocation? = null) : EvalError(message)
+    class RuntimeError(message: String, val cause: Exception? = null): EvalError(message)
+}
+
+sealed class EvalResult {
+    class ValueResult(val value: Any?, val type: String?) : EvalResult() {
+        override fun toString(): String = "$value : $type"
+    }
+
+    class UnitResult : EvalResult()
 }
 
 abstract class Snippet(val klass: String) {
@@ -69,9 +82,11 @@ class ClassSnippet(klass: String, name: String, val psi: KtClass): DeclarationSn
     override fun copy(): ClassSnippet = ClassSnippet(klass, name, psi).replicateShadowed(shadowed)
 }
 
-open class State(val lock: ReentrantReadWriteLock,
-    val resultIndex: AtomicInteger = AtomicInteger(1),
-    val snippets: MutableList<Snippet>  = mutableListOf())
+open class State(val lock: ReentrantReadWriteLock) {
+    val lineIndex: AtomicInteger = AtomicInteger(1)
+    val resultIndex: AtomicInteger = AtomicInteger(1)
+    val snippets: MutableList<Snippet> = mutableListOf()
+}
 
 data class CodeLine(val no: Int, val code: String, val part: Int = 0)
 

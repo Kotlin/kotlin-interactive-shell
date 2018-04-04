@@ -8,15 +8,12 @@ import kotlin.concurrent.write
 
 open class ReplEvaluator(
         val baseClasspath: Iterable<File>,
-        val baseClassloader: ClassLoader? = Thread.currentThread().contextClassLoader,
-        protected val fallbackScriptArgs: ScriptArgsWithTypes? = null
-//        protected val repeatingMode: ReplRepeatingMode = ReplRepeatingMode.REPEAT_ONLY_MOST_RECENT
-) {
+        val baseClassloader: ClassLoader? = Thread.currentThread().contextClassLoader) {
 
     val topClassLoader: ReplClassLoader = makeReplClassLoader(baseClassloader, baseClasspath)
 
     fun eval(state: State, snippets: List<Snippet>, compiledClasses: CompiledClasses,
-             invokeWrapper: InvokeWrapper?): ReplEvalResult {
+             invokeWrapper: InvokeWrapper?): Result<EvalResult, EvalError> {
         state.lock.write {
             val scriptClass = processClasses(compiledClasses)
             val scriptInstance =
@@ -29,18 +26,16 @@ open class ReplEvaluator(
                         scriptInstance
                     }
                     catch (e: Throwable) {
-                        throw e
-                        // ignore everything in the stack trace until this constructor call
-//                        return@eval ReplEvalResult.Error.Runtime(renderReplStackTrace(e.cause!!, startFromMethodName = "${scriptClass.name}.<init>"), e as? Exception)
+                        return Result.Error(EvalError.RuntimeError(renderReplStackTrace(e.cause!!), e as? Exception))
                     }
 
             commitSnippets(state, snippets)
 
             val resultField = scriptClass.getDeclaredField(ReplCompiler.RESULT_FIELD_NAME).apply { isAccessible = true }
             val resultValue: Any? = resultField.get(scriptInstance)
-
-            return if (compiledClasses.hasResult) ReplEvalResult.ValueResult(resultValue, compiledClasses.type)
-            else ReplEvalResult.UnitResult()
+            println("**** RESULT: " + resultValue)
+            return if (compiledClasses.hasResult) Result.Success(EvalResult.ValueResult(resultValue, compiledClasses.type))
+            else Result.Success(EvalResult.UnitResult())
         }
     }
 

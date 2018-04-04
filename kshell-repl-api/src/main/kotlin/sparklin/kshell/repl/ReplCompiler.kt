@@ -1,7 +1,6 @@
 package sparklin.kshell.repl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
@@ -19,20 +18,16 @@ class ReplCompiler(disposable: Disposable,
                    private val compilerConfiguration: CompilerConfiguration,
                    messageCollector: MessageCollector
 ) {
-
-    constructor(compilerConfiguration: CompilerConfiguration, messageCollector: MessageCollector) :
-            this(Disposer.newDisposable(), compilerConfiguration, messageCollector)
-
     private val checker = ReplChecker(disposable, compilerConfiguration, messageCollector)
 
     private val analyzerEngine = CodeAnalyzer(checker.environment)
 
-    fun compile(state: State, codeLine: CodeLine, previousStage: List<Snippet> = listOf()): Result<Pair<List<Snippet>, CompiledClasses>> {
+    fun compile(state: State, codeLine: CodeLine, previousStage: List<Snippet> = listOf()): Result<Pair<List<Snippet>, CompiledClasses>, EvalError.CompileError> {
         state.lock.write {
             val lineResult = checker.check(state, codeLine, true)
             val checkedLine = when (lineResult) {
                 is Result.Incomplete -> return Result.Incomplete()
-                is Result.Error -> return Result.Error(lineResult.message, lineResult.location)
+                is Result.Error -> return Result.Error(lineResult.error)
                 is Result.Success -> lineResult.data
             }
 
@@ -63,7 +58,7 @@ class ReplCompiler(disposable: Disposable,
             AnalyzerWithCompilerReport.reportDiagnostics(analysisResult.diagnostics, errorHolder)
 
             val descriptor = when (analysisResult) {
-                is CodeAnalyzer.AnalyzerResult.Error -> return Result.Error(errorHolder.renderedDiagnostics)
+                is CodeAnalyzer.AnalyzerResult.Error -> return Result.Error(EvalError.CompileError(errorHolder.renderedDiagnostics))
                 is CodeAnalyzer.AnalyzerResult.Success -> analysisResult.descriptor
             }
 
@@ -107,14 +102,16 @@ class ReplCompiler(disposable: Disposable,
                 }
             }
 
-            if (type != null && type != "kotlin.Unit") {
+            val hasResult = type != null && type != "kotlin.Unit"
+
+            if (hasResult) {
                 snippets.add(SyntheticImportSnippet(generatedClassname, RESULT_FIELD_NAME, "res${state.resultIndex.getAndIncrement()}"))
             }
 
             val classes = CompiledClasses(
                     generatedClassname,
                     generationState.factory.asList().map { CompiledClassData(it.relativePath, it.asByteArray()) },
-                    false,
+                    hasResult,
                     type)
 
             return if (deferredSnippets.isNotEmpty()) {
