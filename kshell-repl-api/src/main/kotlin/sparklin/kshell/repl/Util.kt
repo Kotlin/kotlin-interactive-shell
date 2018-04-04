@@ -37,3 +37,19 @@ fun getJavaVersion(): Int {
 
 fun makeFileBaseName(codeLine: CodeLine) =
         "Line_${codeLine.no}" + if (codeLine.part != 0) "_${codeLine.part}" else ""
+
+fun List<Snippet>.containsWithName(name: String): Boolean =
+        this.any { it is NamedSnippet && it.name == name }
+
+fun List<Snippet>.filterNamed(): List<NamedSnippet> =
+        this.filter { it is NamedSnippet }.map { it as NamedSnippet }
+
+fun List<Snippet>.filterDeclarations(): List<DeclarationSnippet> =
+        this.filter { it is DeclarationSnippet }.map { it as DeclarationSnippet }
+
+fun List<Snippet>.shadow(snippets: List<Snippet>) {
+    filterDeclarations().forEach {
+        val historyItem = it
+        if (snippets.filterDeclarations().any { historyItem.signature() == it.signature()  }) historyItem.shadowed = true
+    }
+}

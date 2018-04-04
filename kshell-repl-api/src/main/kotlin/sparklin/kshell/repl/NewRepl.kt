@@ -56,12 +56,12 @@ class NewRepl {
             is Result.Error -> println("{{{" + res.message)
             is Result.Incomplete -> println("incomplete")
             is Result.Success -> {
-                res.data.classes.forEach {
+                res.data.second.classes.forEach {
                     println(it.path)
                     writeClass("/Users/vitaly.khudobakhshov/Documents/research_projects/sparklin/temp/" + it.path, it.bytes)
                 }
                 println("!!!! EVAL")
-                println(replEvaluator.eval(state, res.data, null))
+                println(replEvaluator.eval(state, res.data.first, res.data.second, null))
             }
         }
     }
