@@ -64,6 +64,8 @@ class InitializerSnippet(klass: String, val psi: KtScriptInitializer): Snippet(k
 class ImportSnippet(klass: String, val psi: KtImportDirective): Snippet(klass) {
     override fun code(): String = psi.text
     override fun copy(): ImportSnippet = ImportSnippet(klass, psi)
+    override fun equals(other: Any?): Boolean = other != null && other is ImportSnippet && code() == other.code()
+    override fun hashCode(): Int = code().hashCode()
 }
 
 class SyntheticImportSnippet(klass: String, name: String, val alias: String): NamedSnippet(klass, name) {

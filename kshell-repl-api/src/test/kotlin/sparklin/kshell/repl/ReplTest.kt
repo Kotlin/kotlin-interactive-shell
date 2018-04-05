@@ -138,6 +138,17 @@ class ReplTest {
         assertEquals("List<#1>,List<Map<#0,#1>>", (repl.state.history.last() as FunctionSnippet).parametersTypes)
     }
 
+    @Test
+    fun testImport() {
+        assertSuccess(repl.eval("import java.io.File"))
+        assertSuccess(repl.eval("fun f(x: File)=x"))
+    }
+
+    @Test
+    fun testConsistentImportsForDeferredSnippets() {
+        assertSuccess(repl.eval("import java.io.File\nfun f(x: Int, a: File) = x\nfun f(a: File) = a"))
+    }
+
     private fun assertValue(expected: Any?, result: Result<EvalResult, EvalError>) {
         when (result) {
             is Result.Error -> fail(result.error.message)

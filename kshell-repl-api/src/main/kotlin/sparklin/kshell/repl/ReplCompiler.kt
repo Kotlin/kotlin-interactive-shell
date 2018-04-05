@@ -41,11 +41,11 @@ class ReplCompiler(disposable: Disposable,
 
             val (actualSnippets, deferredSnippets) = checkOverloads(snippets)
 
-            val import = state.history.filterNamed().map { it.copy() as NamedSnippet }
+            val import = state.history.map { it.copy() }
 
             import.shadow(previousStage)
 
-            val code = generateKotlinCodeFor(generatedClassname, import/*state.history.filterNamed()*/ + previousStage.filterNamed(), actualSnippets)
+            val code = generateKotlinCodeFor(generatedClassname, import + previousStage, actualSnippets)
 
             val result = checker.check(state, CodeLine(codeLine.no, code, codeLine.part), false)
             val psiForObject = when (result) {
@@ -166,7 +166,7 @@ class ReplCompiler(disposable: Disposable,
                 else -> throw IllegalArgumentException("Unexpected top level declaration: ${it.javaClass.kotlin}")
             })
         }
-        psiFile.getChildOfType<KtScript>()?.getChildOfType<KtImportList>()?.imports?.forEach {
+        psiFile.getChildOfType<KtImportList>()?.imports?.forEach {
             snippets.add(ImportSnippet(generatedClassname, it))
         }
         return snippets
@@ -192,27 +192,28 @@ class ReplCompiler(disposable: Disposable,
             }
         }
 
+        actual.addAll(0, imports)
         if (deferred.isNotEmpty()) {
             deferred.addAll(0, imports)
             deferred.addAll(initializers)
         } else {
-            actual.addAll(0, imports)
             actual.addAll(initializers)
         }
 
         return Pair(actual, deferred)
     }
 
-    private fun generateKotlinCodeFor(classname: String, imports: List<NamedSnippet>, snippets: List<Snippet>): String {
+    private fun generateKotlinCodeFor(classname: String, imports: List<Snippet>, snippets: List<Snippet>): String {
         val code = StringBuilder()
-        imports.forEach {
+        imports.filterNamed().forEach {
             if (it is DeclarationSnippet) {
                 if (!it.shadowed) code.appendln(it.toImportStatement())
             } else {
                 code.appendln(it.toImportStatement())
             }
         }
-        snippets.filter { it is ImportSnippet }.forEach { code.appendln(it.code()) }
+        (imports.filter { it is ImportSnippet } + snippets.filter { it is ImportSnippet })
+                .distinct().forEach { code.appendln(it.code()) }
         code.appendln("object $classname {")
         snippets.filter { it is DeclarationSnippet }.forEach { code.appendln(it.code()) }
         code.appendln("val __run = {")
