@@ -21,7 +21,7 @@ class Repl(disposable: Disposable,
 
     private val compiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
     private val evaluator = ReplEvaluator(baseClasspath, baseClassloader)
-    private val state = State(ReentrantReadWriteLock())
+    internal val state = State(ReentrantReadWriteLock())
 
     fun eval(code: String): Result<EvalResult, EvalError> {
         val res = compiler.compile(state, CodeLine(state.lineIndex.getAndIncrement(), code))

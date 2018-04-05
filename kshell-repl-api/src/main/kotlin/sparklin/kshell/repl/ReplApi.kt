@@ -90,10 +90,7 @@ open class State(val lock: ReentrantReadWriteLock) {
 
 data class CodeLine(val no: Int, val code: String, val part: Int = 0)
 
-class CheckedCode(
-        val codeLine: CodeLine,
-        val psiFile: KtFile,
-        val errorHolder: DiagnosticMessageHolder)
+class CheckedCode(val psiFile: KtFile, val errorHolder: DiagnosticMessageHolder)
 
 data class CompiledClasses(
         val mainClassName: String,

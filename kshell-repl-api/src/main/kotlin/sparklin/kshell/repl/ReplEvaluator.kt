@@ -26,14 +26,13 @@ open class ReplEvaluator(
                         scriptInstance
                     }
                     catch (e: Throwable) {
-                        return Result.Error(EvalError.RuntimeError(renderReplStackTrace(e.cause!!), e as? Exception))
+                        return Result.Error(EvalError.RuntimeError(e.message!!, e as? Exception))
                     }
 
             commitSnippets(state, snippets)
 
             val resultField = scriptClass.getDeclaredField(ReplCompiler.RESULT_FIELD_NAME).apply { isAccessible = true }
             val resultValue: Any? = resultField.get(scriptInstance)
-            println("**** RESULT: " + resultValue)
             return if (compiledClasses.hasResult) Result.Success(EvalResult.ValueResult(resultValue, compiledClasses.type))
             else Result.Success(EvalResult.UnitResult())
         }

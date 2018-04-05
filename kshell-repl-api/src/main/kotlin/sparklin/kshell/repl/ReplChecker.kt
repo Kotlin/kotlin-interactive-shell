@@ -64,7 +64,7 @@ class ReplChecker(
             return when {
                 syntaxErrorReport.isHasErrors && syntaxErrorReport.isAllErrorsAtEof -> Result.Incomplete()
                 syntaxErrorReport.isHasErrors -> Result.Error(EvalError.CompileError(errorHolder.renderMessage()))
-                else -> Result.Success(CheckedCode(codeLine, psiFile, errorHolder))
+                else -> Result.Success(CheckedCode(psiFile, errorHolder))
             }
         }
     }

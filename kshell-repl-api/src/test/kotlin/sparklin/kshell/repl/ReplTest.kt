@@ -42,7 +42,7 @@ class ReplTest {
     }
 
     @Test
-    fun testSimple() {
+    fun testSimpleValue() {
         assertValue(2, repl.eval("1 + 1"))
     }
 
@@ -50,16 +50,85 @@ class ReplTest {
     fun testMultipleLinesWithShadowing() {
         assertValue(11, repl.eval("val x = 10\nfun f(x: Int)=x\nx + 1"))
         assertUnit(repl.eval("class A() { val x = 10 }"))
-        assertUnit(repl.eval("println(res1)\nval a = A()"))
+        assertUnit(repl.eval("val a = A()"))
         assertUnit(repl.eval("fun f(x: A)=1"))
         assertUnit(repl.eval("fun f(x: A)=2"))
         assertValue(2, repl.eval("f(a)"))
     }
 
+    @Test
+    fun testOverloadWithShadowing() {
+        assertSuccess(repl.eval("fun f(x: Int) = 1"))
+        assertValue(2, repl.eval("fun f(x: Int) = 2\nfun f(x: Int, y: Int) = x + y\nf(10)"))
+    }
+
+    @Test
+    fun testCommitRollback() {
+        assertError(repl.eval( "fun f(x: Int) = x + 1\nfun f(x: Int, y: Int) = x + y\nval x: Int = TODO()"))
+        assertEquals(0, repl.state.snippets.size)
+    }
+
+    @Test
+    fun testInitializers() {
+        assertValue(6, repl.eval("var x = 5\nx = x + 1\nx"))
+    }
+
+    @Test
+    fun testShadowing() {
+        assertSuccess(repl.eval("val x = 10\nval y = 5"))
+        assertValue(25, repl.eval("val x = 20\nx + y"))
+        assertSuccess(repl.eval("fun f(x: Int) = x + 1\nfun f(x: Int, y: Int) = x + y"))
+        assertSuccess(repl.eval("fun f(x: Int) = 5"))
+        assertValue(5, repl.eval("f(10)"))
+    }
+
+    @Test
+    fun testGenericsShadowing() {
+        assertSuccess(repl.eval("fun <R> f(x: R, y: Int)=x"))
+        assertSuccess(repl.eval("fun f(x: Double, y: Int)=x"))
+        assertSuccess(repl.eval("fun <K> f(x: K, y: Int)=y"))
+        assertValue(10, repl.eval("f(20, 10)"))
+        assertValue(20.0, repl.eval("f(20.0, 10)"))
+    }
+
+    @Test
+    fun testClassShadowing() {
+        assertSuccess(repl.eval("class A { val x = 10 }"))
+        assertSuccess(repl.eval("class A { val x = 20 }"))
+        assertValue(20, repl.eval("val a = A()\na.x"))
+    }
+
+    @Test
+    fun testObjectShadowing() {
+        assertSuccess(repl.eval("object A { val x = 10 }"))
+        assertSuccess(repl.eval("object A { val x = 20 }"))
+        assertValue(20, repl.eval("A.x"))
+    }
+
+    @Test
+    fun testNamespace() {
+        assertValue(11, repl.eval("val x = 10\nfun x()=1\nx+x()"))
+        assertValue(11, repl.eval("object a { val x = 1 }\nfun a() = 10\na() + a.x"))
+    }
+
+    @Test
+    fun testResult() {
+        assertSuccess(repl.eval("1 + 1"))
+        assertSuccess(repl.eval("10"))
+        assertValue(12, repl.eval("res1 + res2"))
+    }
+
+    @Test
+    fun testMultipleShadowing() {
+        (1 .. 100).forEach {
+            assertSuccess(repl.eval("fun f(x: Int) = x + $it"))
+        }
+        assertValue(101, repl.eval("f(1)"))
+    }
 
     private fun assertValue(expected: Any?, result: Result<EvalResult, EvalError>) {
         when (result) {
-            is Result.Error -> fail(result.toString())
+            is Result.Error -> fail(result.error.message)
             is Result.Success -> {
                 val data = result.data
                 when (data) {
@@ -67,6 +136,20 @@ class ReplTest {
                     is EvalResult.ValueResult -> assertEquals(expected, data.value)
                 }
             }
+        }
+    }
+
+    private fun assertSuccess(result: Result<EvalResult, EvalError>) {
+        when (result) {
+            is Result.Error -> fail(result.error.message)
+            is Result.Success -> { }
+        }
+    }
+
+    private fun assertError(result: Result<EvalResult, EvalError>) {
+        when (result) {
+            is Result.Error -> { }
+            is Result.Success -> fail("Should be error but success found")
         }
     }
 

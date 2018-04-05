@@ -46,7 +46,6 @@ class ReplCompiler(disposable: Disposable,
 
             val code = generateKotlinCodeFor(generatedClassname, import/*state.snippets.filterNamed()*/ + previousStage.filterNamed(), actualSnippets)
 
-            println(">>>>> code >>>>>\n" + code + "\n>>>>>>>>>>>>>>")
             val result = checker.check(state, CodeLine(codeLine.no, code, codeLine.part), false)
             val psiForObject = when (result) {
                 is Result.Success -> result.data.psiFile
@@ -57,10 +56,8 @@ class ReplCompiler(disposable: Disposable,
 
             AnalyzerWithCompilerReport.reportDiagnostics(analysisResult.diagnostics, errorHolder)
 
-            val descriptor = when (analysisResult) {
-                is CodeAnalyzer.AnalyzerResult.Error -> return Result.Error(EvalError.CompileError(errorHolder.renderedDiagnostics))
-                is CodeAnalyzer.AnalyzerResult.Success -> analysisResult.descriptor
-            }
+            if (analysisResult is CodeAnalyzer.AnalyzerResult.Error)
+                return Result.Error(EvalError.CompileError(errorHolder.renderedDiagnostics))
 
             val expression = psiForObject.getChildOfType<KtObjectDeclaration>()
                     ?.declarations
@@ -89,8 +86,6 @@ class ReplCompiler(disposable: Disposable,
                     psiForObject.packageFqName,
                     setOf(psiForObject.containingKtFile),
                     org.jetbrains.kotlin.codegen.CompilationErrorHandler.THROW_EXCEPTION)
-
-            generationState.factory.asList().forEach { println(it) } // print classes
 
             actualSnippets.filterNamed().forEach {
                 if (it is FunctionSnippet) {
@@ -173,7 +168,6 @@ class ReplCompiler(disposable: Disposable,
         snippets.forEach {
             when (it) {
                 is NamedSnippet -> {
-                    // FIXME: classes and functions are in the same namespace?
                     if (actual.containsWithName(it.name)) current = deferred
                     current.add(it)
                 }
@@ -196,7 +190,7 @@ class ReplCompiler(disposable: Disposable,
     private fun generateKotlinCodeFor(classname: String, imports: List<NamedSnippet>, snippets: List<Snippet>): String {
         val code = StringBuilder()
         imports.forEach {
-            if (it is FunctionSnippet) {
+            if (it is DeclarationSnippet) {
                 if (!it.shadowed) code.appendln(it.toImportStatement())
             } else {
                 code.appendln(it.toImportStatement())
