@@ -12,10 +12,10 @@ open class ReplEvaluator(
 
     val topClassLoader: ReplClassLoader = makeReplClassLoader(baseClassloader, baseClasspath)
 
-    fun eval(state: State, snippets: List<Snippet>, compiledClasses: CompiledClasses,
+    fun eval(state: ReplState, data: CompilationData,
              invokeWrapper: InvokeWrapper?): Result<EvalResult, EvalError> {
         state.lock.write {
-            val scriptClass = processClasses(compiledClasses)
+            val scriptClass = processClasses(data.classes)
             val scriptInstance =
                     try {
                         val scriptInstance = if (invokeWrapper != null) {
@@ -29,18 +29,18 @@ open class ReplEvaluator(
                         return Result.Error(EvalError.RuntimeError(e.message!!, e as? Exception))
                     }
 
-            commitSnippets(state, snippets)
+            commitSnippets(state, data.snippets)
 
             val resultField = scriptClass.getDeclaredField(ReplCompiler.RESULT_FIELD_NAME).apply { isAccessible = true }
             val resultValue: Any? = resultField.get(scriptInstance)
-            return if (compiledClasses.hasResult) Result.Success(EvalResult.ValueResult(resultValue, compiledClasses.type))
+            return if (data.classes.hasResult) Result.Success(EvalResult.ValueResult(data.classes.valueResultVariable!!, resultValue!!, data.classes.type!!))
             else Result.Success(EvalResult.UnitResult())
         }
     }
 
-    private fun commitSnippets(state: State, snippets: List<Snippet>) {
-        state.snippets.shadow(snippets)
-        state.snippets.addAll(snippets)
+    private fun commitSnippets(state: ReplState, snippets: List<Snippet>) {
+        state.history.shadow(snippets)
+        state.history.addAll(snippets)
     }
 
     private fun processClasses(compileResult: CompiledClasses): Class<out Any> {

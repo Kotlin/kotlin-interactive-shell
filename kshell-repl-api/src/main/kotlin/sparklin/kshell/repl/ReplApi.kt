@@ -20,8 +20,8 @@ sealed class EvalError(val message: String) {
 }
 
 sealed class EvalResult {
-    class ValueResult(val value: Any?, val type: String?) : EvalResult() {
-        override fun toString(): String = "$value : $type"
+    class ValueResult(val name: String, val value: Any, val type: String) : EvalResult() {
+        override fun toString(): String = "$name: $type = $value"
     }
 
     class UnitResult : EvalResult()
@@ -82,13 +82,15 @@ class ClassSnippet(klass: String, name: String, val psi: KtClass): DeclarationSn
     override fun copy(): ClassSnippet = ClassSnippet(klass, name, psi).replicateShadowed(shadowed)
 }
 
-open class State(val lock: ReentrantReadWriteLock) {
+open class ReplState(val lock: ReentrantReadWriteLock) {
     val lineIndex: AtomicInteger = AtomicInteger(1)
     val resultIndex: AtomicInteger = AtomicInteger(1)
-    val snippets: MutableList<Snippet> = mutableListOf()
+    val history: MutableList<Snippet> = mutableListOf()
 }
 
 data class CodeLine(val no: Int, val code: String, val part: Int = 0)
+
+data class CompilationData(val snippets: List<Snippet>, val classes: CompiledClasses)
 
 class CheckedCode(val psiFile: KtFile, val errorHolder: DiagnosticMessageHolder)
 
@@ -96,12 +98,11 @@ data class CompiledClasses(
         val mainClassName: String,
         val classes: List<CompiledClassData>,
         val hasResult: Boolean,
+        val valueResultVariable: String?,
         val type: String?)
 
 data class CompiledClassData(val path: String, val bytes: ByteArray) : Serializable {
     override fun equals(other: Any?): Boolean = (other as? CompiledClassData)?.let { path == it.path && Arrays.equals(bytes, it.bytes) } ?: false
     override fun hashCode(): Int = path.hashCode() + Arrays.hashCode(bytes)
 }
-
-data class CompiledReplCodeLine(val className: String, val source: CodeLine)
 

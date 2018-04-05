@@ -1,9 +1,9 @@
 package sparklin.kshell.plugins
 
 import sparklin.kshell.BaseCommand
+import sparklin.kshell.KShell
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.Plugin
-import sparklin.kshell.Repl
 import sparklin.kshell.console.Completer
 import java.io.File
 
@@ -17,15 +17,15 @@ class LoadFilePlugin: Plugin {
             val p = line.indexOf(' ')
             val path = line.substring(p + 1).trim()
             val content = File(path).readText()
-            repl.compileAndEval(content)
+            repl.eval(content)
         }
 
         override fun completer(): Completer = FileCompleter()
     }
 
-    lateinit var repl: Repl
+    lateinit var repl: KShell
 
-    override fun init(repl: Repl, config: Configuration) {
+    override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
 
         val name = config.getLocal("name", "load")

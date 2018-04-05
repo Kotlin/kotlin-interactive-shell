@@ -1,8 +1,8 @@
 package sparklin.kshell.plugins
 
 import sparklin.kshell.BaseCommand
+import sparklin.kshell.KShell
 import sparklin.kshell.Plugin
-import sparklin.kshell.Repl
 import sparklin.kshell.configuration.CachedInstance
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.console.ConsoleReader
@@ -27,15 +27,15 @@ class PastePlugin : Plugin {
             val code = buf.toString()
             console.addHistoryItem(code)
             println("// Exiting paste mode, now interpreting.")
-            repl.compileAndEval(code)
+            repl.eval(code)
         }
     }
 
-    lateinit var repl: Repl
+    lateinit var repl: KShell
     lateinit var console: ConsoleReader
     lateinit var pasteConsole: ConsoleReader
 
-    override fun init(repl: Repl, config: Configuration) {
+    override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
         this.console = config.getConsoleReader()
         this.pasteConsole = getPasteConsoleReader(config)

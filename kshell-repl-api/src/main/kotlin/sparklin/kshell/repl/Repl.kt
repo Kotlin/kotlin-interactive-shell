@@ -21,14 +21,14 @@ class Repl(disposable: Disposable,
 
     private val compiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
     private val evaluator = ReplEvaluator(baseClasspath, baseClassloader)
-    internal val state = State(ReentrantReadWriteLock())
+    internal val state = ReplState(ReentrantReadWriteLock())
 
     fun eval(code: String): Result<EvalResult, EvalError> {
         val res = compiler.compile(state, CodeLine(state.lineIndex.getAndIncrement(), code))
         return when (res) {
             is Result.Error -> Result.Error(res.error)
             is Result.Incomplete -> Result.Incomplete()
-            is Result.Success -> evaluator.eval(state, res.data.first, res.data.second, null)
+            is Result.Success -> evaluator.eval(state, res.data, null)
         }
     }
 }

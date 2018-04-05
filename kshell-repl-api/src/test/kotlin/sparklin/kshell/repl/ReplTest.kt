@@ -65,7 +65,7 @@ class ReplTest {
     @Test
     fun testCommitRollback() {
         assertError(repl.eval( "fun f(x: Int) = x + 1\nfun f(x: Int, y: Int) = x + y\nval x: Int = TODO()"))
-        assertEquals(0, repl.state.snippets.size)
+        assertEquals(0, repl.state.history.size)
     }
 
     @Test
@@ -126,6 +126,18 @@ class ReplTest {
         assertValue(101, repl.eval("f(1)"))
     }
 
+    @Test
+    fun testType() {
+        assertType("kotlin.Int", repl.eval("1 + 1"))
+        assertType("kotlin.collections.List<kotlin.Int>", repl.eval("listOf(1,2,3)"))
+    }
+
+    @Test
+    fun testCompoundTypesSignature() {
+        assertSuccess(repl.eval("fun <R, T> f(x: List<T>, y: List<Map<R,T>>)=1"))
+        assertEquals("List<#1>,List<Map<#0,#1>>", (repl.state.history.last() as FunctionSnippet).parametersTypes)
+    }
+
     private fun assertValue(expected: Any?, result: Result<EvalResult, EvalError>) {
         when (result) {
             is Result.Error -> fail(result.error.message)
@@ -134,6 +146,19 @@ class ReplTest {
                 when (data) {
                     is EvalResult.UnitResult -> fail("Value result expected")
                     is EvalResult.ValueResult -> assertEquals(expected, data.value)
+                }
+            }
+        }
+    }
+
+    private fun assertType(expected: String, result: Result<EvalResult, EvalError>) {
+        when (result) {
+            is Result.Error -> fail(result.error.message)
+            is Result.Success -> {
+                val data = result.data
+                when (data) {
+                    is EvalResult.UnitResult -> fail("Value result expected")
+                    is EvalResult.ValueResult -> assertEquals(expected, data.type)
                 }
             }
         }

@@ -3,6 +3,7 @@ package sparklin.kshell.repl
 import com.intellij.openapi.Disposable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.asJava.elements.KtLightIdentifier
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
@@ -22,7 +23,7 @@ class ReplCompiler(disposable: Disposable,
 
     private val analyzerEngine = CodeAnalyzer(checker.environment)
 
-    fun compile(state: State, codeLine: CodeLine, previousStage: List<Snippet> = listOf()): Result<Pair<List<Snippet>, CompiledClasses>, EvalError.CompileError> {
+    fun compile(state: ReplState, codeLine: CodeLine, previousStage: List<Snippet> = listOf()): Result<CompilationData, EvalError.CompileError> {
         state.lock.write {
             val lineResult = checker.check(state, codeLine, true)
             val checkedLine = when (lineResult) {
@@ -40,11 +41,11 @@ class ReplCompiler(disposable: Disposable,
 
             val (actualSnippets, deferredSnippets) = checkOverloads(snippets)
 
-            val import = state.snippets.filterNamed().map { it.copy() as NamedSnippet }
+            val import = state.history.filterNamed().map { it.copy() as NamedSnippet }
 
             import.shadow(previousStage)
 
-            val code = generateKotlinCodeFor(generatedClassname, import/*state.snippets.filterNamed()*/ + previousStage.filterNamed(), actualSnippets)
+            val code = generateKotlinCodeFor(generatedClassname, import/*state.history.filterNamed()*/ + previousStage.filterNamed(), actualSnippets)
 
             val result = checker.check(state, CodeLine(codeLine.no, code, codeLine.part), false)
             val psiForObject = when (result) {
@@ -89,24 +90,24 @@ class ReplCompiler(disposable: Disposable,
 
             actualSnippets.filterNamed().forEach {
                 if (it is FunctionSnippet) {
-                    val typeParameters = it.psi.typeParameters.map { it.name!! }
-                    it.parametersTypes = it.psi.valueParameters
-                            .joinToString(separator = ",") { p ->
-                                qName(p.typeReference!!.typeElement!!.text, state.snippets, typeParameters)
-                            }
+                    it.parametersTypes = canonicalParameterTypes(state.history, it)
                 }
             }
 
             val hasResult = type != null && type != "kotlin.Unit"
 
+            var valueResultVariable: String? = null
+
             if (hasResult) {
-                snippets.add(SyntheticImportSnippet(generatedClassname, RESULT_FIELD_NAME, "res${state.resultIndex.getAndIncrement()}"))
+                valueResultVariable = "res${state.resultIndex.getAndIncrement()}"
+                snippets.add(SyntheticImportSnippet(generatedClassname, RESULT_FIELD_NAME, valueResultVariable))
             }
 
             val classes = CompiledClasses(
                     generatedClassname,
                     generationState.factory.asList().map { CompiledClassData(it.relativePath, it.asByteArray()) },
                     hasResult,
+                    valueResultVariable,
                     type)
 
             return if (deferredSnippets.isNotEmpty()) {
@@ -116,27 +117,42 @@ class ReplCompiler(disposable: Disposable,
                 when (otherResult) {
                     is Result.Error -> otherResult
                     is Result.Incomplete -> throw IllegalStateException("Should never happen")
-                    is Result.Success -> Result.Success(Pair(actualSnippets + otherResult.data.first, classes + otherResult.data.second))
+                    is Result.Success -> Result.Success(CompilationData(actualSnippets + otherResult.data.snippets, classes + otherResult.data.classes))
                 }
             } else {
-                Result.Success(Pair(snippets, classes))
+                Result.Success(CompilationData(snippets, classes))
             }
         }
     }
 
-    private fun qName(parameterType: String, snippets: List<Snippet>, typeParameters: List<String>): String {
-        val ind = typeParameters.indexOf(parameterType)
-        return if (ind < 0) {
-            snippets.filterDeclarations()
-                    .findLast { !it.shadowed && it.name == parameterType }
-                    ?.let { "${it.klass}.$parameterType" } ?: parameterType
-        } else {
-            "#$ind"
+    private fun canonicalParameterTypes(history: List<Snippet>, func: FunctionSnippet): String {
+        fun qName(parameterType: String, snippets: List<Snippet>, typeParameters: List<String>): String {
+            val ind = typeParameters.indexOf(parameterType)
+            return if (ind < 0) {
+                snippets.filterDeclarations()
+                        .findLast { !it.shadowed && it.name == parameterType }
+                        ?.let { "${it.klass}.$parameterType" } ?: parameterType
+            } else {
+                "#$ind"
+            }
         }
+
+        fun mkString(typeElement: KtTypeElement, history: List<Snippet>, typeParameters: List<String>): String {
+            val name = typeElement.getChildOfType<KtExpression>()!!.text
+            val args = typeElement.typeArgumentsAsTypes.map { mkString(it.typeElement!!, history, typeParameters) }
+            return qName(name, history, typeParameters) + if (args.isNotEmpty()) "<" + args.joinToString(separator = ",") + ">" else ""
+        }
+
+        val typeParameters = func.psi.typeParameters.map { it.name!! }
+
+        return func.psi.valueParameters
+                .joinToString(separator = ",") { p ->
+                    mkString(p.typeReference!!.getChildOfType()!!, history, typeParameters)
+                }
     }
 
     private operator fun CompiledClasses.plus(other: CompiledClasses) =
-            CompiledClasses(other.mainClassName, this.classes + other.classes, other.hasResult, other.type)
+            CompiledClasses(other.mainClassName, this.classes + other.classes, other.hasResult, other.valueResultVariable, other.type)
 
     private fun psiToSnippets(psiFile: KtFile, generatedClassname: String): MutableList<Snippet> {
         val snippets = mutableListOf<Snippet>()

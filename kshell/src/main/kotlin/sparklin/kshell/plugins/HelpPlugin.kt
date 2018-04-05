@@ -3,7 +3,7 @@ package sparklin.kshell.plugins
 import sparklin.kshell.console.ConsoleReader
 import sparklin.kshell.BaseCommand
 import sparklin.kshell.Plugin
-import sparklin.kshell.Repl
+import sparklin.kshell.KShell
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.match
 
@@ -34,10 +34,10 @@ class HelpPlugin: Plugin {
         }
     }
 
-    lateinit var repl: Repl
+    lateinit var repl: KShell
     lateinit var console: ConsoleReader
 
-    override fun init(repl: Repl, config: Configuration) {
+    override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
         this.console = config.getConsoleReader()
 
