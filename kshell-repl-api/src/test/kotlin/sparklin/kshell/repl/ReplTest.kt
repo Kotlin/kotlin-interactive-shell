@@ -24,8 +24,7 @@ class ReplTest {
         val classpath = findRequiredJarFiles(
                 includeScriptEngine = false,
                 includeKotlinCompiler = false,
-                includeStdLib = true,
-                includeRuntime = false)
+                includeStdLib = true)
 
         val conf = CompilerConfiguration().apply {
             addJvmClasspathRoots(PathUtil.getJdkClassesRoots(File(System.getProperty("java.home"))))
@@ -142,11 +141,18 @@ class ReplTest {
     fun testImport() {
         assertSuccess(repl.eval("import java.io.File"))
         assertSuccess(repl.eval("fun f(x: File)=x"))
+        assertSuccess(repl.eval("fun g(x: File)=x"))
     }
 
     @Test
     fun testConsistentImportsForDeferredSnippets() {
         assertSuccess(repl.eval("import java.io.File\nfun f(x: Int, a: File) = x\nfun f(a: File) = a"))
+    }
+
+    @Test
+    fun testPermanentSnippets() {
+        assertSuccess(repl.eval("1 + 1"))
+        assertError(repl.eval("val res1 = 10"))
     }
 
     private fun assertValue(expected: Any?, result: Result<EvalResult, EvalError>) {

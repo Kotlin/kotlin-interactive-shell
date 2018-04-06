@@ -16,11 +16,12 @@
 	<packaging>pom</packaging>
 
 	<modules>
+        <module>kshell-repl-api</module>
 		<module>kshell</module>
         <module>kshell-console-jline2</module>
         <module>sparklin-spark-1.x</module>
         <module>sparklin-spark-2.x</module>
         <module>hdfs-browser</module>
-        <module>zeppelin-interpreter</module>
+        <!--<module>zeppelin-interpreter</module>-->
     </modules>
 </project>

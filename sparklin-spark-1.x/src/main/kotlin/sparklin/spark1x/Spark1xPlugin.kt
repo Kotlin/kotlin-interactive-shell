@@ -4,12 +4,14 @@ import sparklin.kshell.configuration.Configuration
 import org.apache.spark.HttpServer
 import org.apache.spark.SecurityManager
 import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.util.Utils
 import sparklin.core.Logging
 import sparklin.kshell.*
 import sparklin.kshell.plugins.SparkPlugin
+import sparklin.kshell.repl.SyntheticImportSnippet
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -17,7 +19,7 @@ import java.io.FileOutputStream
 class Spark1xPlugin : Logging(), SparkPlugin {
     private lateinit var classServer: HttpServer
 
-    override fun init(repl: Repl, config: Configuration) {
+    override fun init(repl: KShell, config: Configuration) {
         val jars = getAddedJars()
         val conf = SparkConf()
                 .setMaster(getMaster())
@@ -30,20 +32,29 @@ class Spark1xPlugin : Logging(), SparkPlugin {
         val outputDir = Utils.createTempDir(rootDir, "spark")
         classServer = HttpServer(conf, outputDir, SecurityManager(conf), classServerPort, "HTTP class server")
         classServer.start()
-        Shared.sc = createSparkContext(conf, classServer)
-        Shared.sqlContext = createSQLContext(Shared.sc)
+        Holder.sparkContextDelegate = createSparkContext(conf, classServer)
+        Holder.sqlContextDelegate = createSQLContext(Holder.sparkContextDelegate)
         val replJars = replJars(jars)
 
-        EventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
+        repl.eventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
             override fun handle(event: OnCompile) {
-                event.data().classes.forEach {
+                event.data().classes.classes.forEach {
                     writeClass(outputDir.absolutePath + File.separator + it.path, it.bytes)
                 }
             }
         })
 
         repl.addClasspathRoots(replJars)
-        repl.addImports(listOf(Shared::class.qualifiedName!! + ".*"))
+        repl.state.history.add(SyntheticImportSnippet(Holder::class.qualifiedName!!, "sc", "sc"))
+        repl.state.history.add(SyntheticImportSnippet(Holder::class.qualifiedName!!, "sqlContext", "sqlContext"))
+    }
+
+    object Holder {
+        val sc: JavaSparkContext by lazy { sparkContextDelegate }
+        val sqlContext: SQLContext by lazy { sqlContextDelegate }
+
+        internal lateinit var sparkContextDelegate: JavaSparkContext
+        internal lateinit var sqlContextDelegate: SQLContext
     }
 
     override fun cleanUp() {
@@ -122,5 +133,5 @@ class Spark1xPlugin : Logging(), SparkPlugin {
         out.close()
     }
 
-    override fun hadoopConfiguration() = Shared.sc.hadoopConfiguration()
+    override fun hadoopConfiguration() = Holder.sparkContextDelegate.hadoopConfiguration()
 }

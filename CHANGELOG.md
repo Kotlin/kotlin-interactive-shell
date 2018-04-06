@@ -3,16 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [0.1.3]
 ### Added
-- HDFS browser plugin
+- JShell-like Kotlin snippets.
+- Completely new REPL architecture with object based class layout `kshell-repl-api`.
+- HDFS browser plugin.
+- Kotlin interpreter for Zeppelin.
 
 ### Changed
-- Kotlin version 1.2.20 -> 1.2.30
+- Kotlin version 1.2.20 -> 1.2.30.
+- Unit testes moved to `kshell-repl-api`.
 
 ### Fixed
-- Problem with custom commands which start with the same letter
+- Problem with custom commands which start with the same letter.
 
 ### Removed
-- Unnecessary `Shared` class from `KShell` 
+- Unnecessary `Shared` class from `KShell`. 
+- Additional classes and interfaces to abstract `GenericRepl` results.
+- All `GenericRepl` dependencies.
 
 ## [0.1.2] - 2018-02-28
 ### Added

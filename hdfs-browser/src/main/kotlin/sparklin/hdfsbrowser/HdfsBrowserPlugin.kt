@@ -4,8 +4,8 @@ import sparklin.kshell.console.ConsoleReader
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import sparklin.kshell.BaseCommand
+import sparklin.kshell.KShell
 import sparklin.kshell.Plugin
-import sparklin.kshell.Repl
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.plugins.SparkPlugin
 import kotlin.reflect.KClass
@@ -13,7 +13,7 @@ import org.apache.hadoop.conf.Configuration as HadoopConfiguration
 
 
 class HdfsBrowserPlugin : Plugin {
-    private lateinit var repl: Repl
+    private lateinit var repl: KShell
     private lateinit var fs: FileSystem
     private lateinit var console: ConsoleReader
     private var workingDirectory = "."
@@ -34,7 +34,7 @@ class HdfsBrowserPlugin : Plugin {
         }
     }
 
-    override fun init(repl: Repl, config: Configuration) {
+    override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
         this.fs = FileSystem.get(findHadoopConfiguration(config))
         this.console = config.getConsoleReader()

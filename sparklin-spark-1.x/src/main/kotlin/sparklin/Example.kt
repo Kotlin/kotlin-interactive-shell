@@ -21,6 +21,3 @@ fun wordCount(sc: JavaSparkContext, sqlContext: SQLContext) {
     val df = sqlContext.createDataFrame(counts, schema)
 }
 
-
-fun f(x: Int) = x + 1
-

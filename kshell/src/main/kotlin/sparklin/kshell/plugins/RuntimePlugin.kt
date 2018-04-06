@@ -47,17 +47,11 @@ class RuntimePlugin : Plugin {
                     println(it.name)
                 }
             }
-//            repl.apply {
-////                lastCompiledClasses?.let {
-//////                    println(table)
-////                }
-//            }
         }
     }
 
     private lateinit var repl: KShell
     private lateinit var console: ConsoleReader
-    private var lastCompiledClasses: CompiledClasses? = null
 
     override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
@@ -70,12 +64,6 @@ class RuntimePlugin : Plugin {
         val printSymbolsCmdName = config.getLocal("printSymbolsCmd", "name", "symbols")
         val printSymbolsCmdShort = config.getLocal("printSymbolsCmd", "short", "s")
         val printSymbolsCmdDescription = "list defined symbols"
-
-        EventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
-            override fun handle(event: OnCompile) {
-                lastCompiledClasses = event.data()
-            }
-        })
 
         repl.registerCommand(InferType(inferTypeCmdName, inferTypeCmdShort, inferTypeCmdDescription))
         repl.registerCommand(PrintSymbols(printSymbolsCmdName, printSymbolsCmdShort, printSymbolsCmdDescription))

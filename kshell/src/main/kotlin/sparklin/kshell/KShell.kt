@@ -24,15 +24,13 @@ open class KShell(val disposable: Disposable,
 
     private lateinit var compiler: ReplCompiler
     private lateinit var evaluator: ReplEvaluator
-    internal val state = ReplState(ReentrantReadWriteLock())
+    val state = ReplState(ReentrantReadWriteLock())
 
     val incompleteLines = arrayListOf<String>()
-
     val reader = configuration.getConsoleReader()
-
     val commands = mutableListOf<sparklin.kshell.Command>(FakeQuit())
-
     val additionalImports = mutableListOf<String>()
+    val eventManager = EventManager()
 
     private class FakeQuit: sparklin.kshell.BaseCommand("quit", "q", "exit the interpreter") {
         override fun execute(line: String) {}
@@ -53,13 +51,9 @@ open class KShell(val disposable: Disposable,
 
     fun addClasspathRoots(files: List<File>) = compilerConfiguration.addJvmClasspathRoots(files)
 
-    fun addImports(imports: List<String>) {
-        additionalImports.addAll(imports)
-    }
-
     fun initEngine() {
         reader.apply {
-            addCompleter(sparklin.kshell.ContextDependentCompleter(commands, incompleteLines::isEmpty, buildDefaultCompleter()))
+            addCompleter(ContextDependentCompleter(commands, incompleteLines::isEmpty, buildDefaultCompleter()))
         }
 
         configuration.load()
@@ -132,12 +126,14 @@ open class KShell(val disposable: Disposable,
                     incompleteLines.clear()
                 }
                 is Result.Success -> {
+                    eventManager.emitEvent(OnCompile(compileResult.data))
                     val evalResult = evaluator.eval(state, compileResult.data, null)
                     when (evalResult) {
                         is Result.Error -> {
                             reader.println("Message: ${evalResult.error.message}")
                         }
                         is Result.Success -> if (evalResult.data is EvalResult.ValueResult) {
+                            incompleteLines.clear()
                             reader.println(evalResult.data.toString())
                         }
                     }
@@ -152,7 +148,7 @@ open class KShell(val disposable: Disposable,
 
     fun printPrompt() {
         if (incompleteLines.isEmpty())
-            reader.setPrompt("kotlin> ")
+            reader.setPrompt("kotlin [${state.lineIndex.get()}]> ")
         else
             reader.setPrompt("... ")
     }
@@ -170,6 +166,6 @@ open class KShell(val disposable: Disposable,
     }
 }
 
-class OnCompile(private val compiledClasses: CompiledClasses) : Event<CompiledClasses> {
-    override fun data(): CompiledClasses = compiledClasses
+class OnCompile(private val data: CompilationData) : Event<CompilationData> {
+    override fun data(): CompilationData = data
 }

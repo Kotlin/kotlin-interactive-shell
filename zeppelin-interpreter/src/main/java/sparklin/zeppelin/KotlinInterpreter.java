@@ -1,22 +1,24 @@
 package sparklin.zeppelin;
 
+import com.intellij.openapi.util.Disposer;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterContext;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.apache.zeppelin.interpreter.util.InterpreterOutputStream;
 import org.apache.zeppelin.scheduler.Job;
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
+import org.jetbrains.kotlin.cli.common.messages.MessageRenderer;
+import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector;
+import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sparklin.kshell.EvalResult;
 import sparklin.kshell.KShell;
-import sparklin.kshell.KotlinScriptDefinitionEx;
+import sparklin.kshell.Util;
 import sparklin.kshell.configuration.Configuration;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Properties;
+import java.util.*;
 
 public class KotlinInterpreter extends Interpreter {
     private static Logger log = LoggerFactory.getLogger(KotlinInterpreter.class);
@@ -35,9 +37,19 @@ public class KotlinInterpreter extends Interpreter {
         out = new InterpreterOutputStream(log);
         configuration = new InterpreterConfiguration(getProperty());
         System.setOut(new PrintStream(out));
-        KotlinScriptDefinitionEx kotlinScriptDefinitionEx = new KotlinScriptDefinitionEx();
-        repl = new KShell(configuration, Collections.<File>emptyList(), kotlinScriptDefinitionEx, false);
+        repl = createRepl(configuration);
         repl.initEngine();
+    }
+
+    private KShell createRepl(Configuration configuration) {
+        MessageCollector messageCollector = new PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false);
+        String moduleName = "my-module";
+        List<File> additionalClasspath = new ArrayList<File>();
+        List<File> classpath = Util.findJars(false, true, false);
+        CompilerConfiguration conf = Util.createCompilerConfiguration(classpath, additionalClasspath,
+                moduleName, messageCollector);
+        ClassLoader baseClassloader = Util.baseClassloader(conf);
+        return new KShell(Disposer.newDisposable(), configuration, conf, messageCollector, classpath, baseClassloader);
     }
 
     @Override
@@ -66,12 +78,12 @@ public class KotlinInterpreter extends Interpreter {
 //                    .put("CURRENT_THREAD", Thread.currentThread()); //to be able to terminate thread
 
             out.setInterpreterOutput(interpreterContext.out);
-            EvalResult res = repl.compileAndEval(line, false);
-            if (res.isSuccess()) {
+//            EvalResult res = repl.eval(line, false);
+//            if (res.isSuccess()) {
                 return new InterpreterResult(InterpreterResult.Code.SUCCESS);
-            } else {
-                return new InterpreterResult(InterpreterResult.Code.ERROR, res.getMessage());
-            }
+//            } else {
+//                return new InterpreterResult(InterpreterResult.Code.ERROR, res.getMessage());
+//            }
         } catch (Exception e) {
             String msg = e.toString() + "\n at " + e.getStackTrace()[0];
             log.error("Failed to run script: " + e);

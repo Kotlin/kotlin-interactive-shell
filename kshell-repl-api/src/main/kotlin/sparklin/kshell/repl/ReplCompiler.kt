@@ -3,7 +3,6 @@ package sparklin.kshell.repl
 import com.intellij.openapi.Disposable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.asJava.elements.KtLightIdentifier
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
@@ -38,6 +37,13 @@ class ReplCompiler(disposable: Disposable,
             val generatedClassname = makeFileBaseName(codeLine)
 
             val snippets = psiToSnippets(psiFile, generatedClassname)
+
+            val permanents = state.history.filter<SyntheticImportSnippet>().map { it.alias }
+            val conflict = snippets.filter<DeclarationSnippet>().find { permanents.contains(it.name) }
+
+            if (conflict != null) {
+                return Result.Error(EvalError.CompileError("${conflict.name} cannot be replaced"))
+            }
 
             val (actualSnippets, deferredSnippets) = checkOverloads(snippets)
 
@@ -88,7 +94,7 @@ class ReplCompiler(disposable: Disposable,
                     setOf(psiForObject.containingKtFile),
                     org.jetbrains.kotlin.codegen.CompilationErrorHandler.THROW_EXCEPTION)
 
-            actualSnippets.filterNamed().forEach {
+            actualSnippets.filter<NamedSnippet>().forEach {
                 if (it is FunctionSnippet) {
                     it.parametersTypes = canonicalParameterTypes(state.history, it)
                 }
@@ -129,7 +135,7 @@ class ReplCompiler(disposable: Disposable,
         fun qName(parameterType: String, snippets: List<Snippet>, typeParameters: List<String>): String {
             val ind = typeParameters.indexOf(parameterType)
             return if (ind < 0) {
-                snippets.filterDeclarations()
+                snippets.filter<DeclarationSnippet>()
                         .findLast { !it.shadowed && it.name == parameterType }
                         ?.let { "${it.klass}.$parameterType" } ?: parameterType
             } else {
@@ -205,19 +211,23 @@ class ReplCompiler(disposable: Disposable,
 
     private fun generateKotlinCodeFor(classname: String, imports: List<Snippet>, snippets: List<Snippet>): String {
         val code = StringBuilder()
-        imports.filterNamed().forEach {
-            if (it is DeclarationSnippet) {
-                if (!it.shadowed) code.appendln(it.toImportStatement())
-            } else {
-                code.appendln(it.toImportStatement())
+
+        imports.filter<NamedSnippet>().forEach {
+            when (it) {
+                is DeclarationSnippet -> if (!it.shadowed) code.appendln(it.toImportStatement())
+                else -> code.appendln(it.toImportStatement())
             }
         }
-        (imports.filter { it is ImportSnippet } + snippets.filter { it is ImportSnippet })
-                .distinct().forEach { code.appendln(it.code()) }
+
+        (imports.filter<ImportSnippet>() + snippets.filter())
+                .map { it.code() }
+                .distinct()
+                .forEach { code.appendln(it) }
+
         code.appendln("object $classname {")
-        snippets.filter { it is DeclarationSnippet }.forEach { code.appendln(it.code()) }
+        snippets.filter<DeclarationSnippet>().forEach { code.appendln(it.code()) }
         code.appendln("val __run = {")
-        snippets.filter { it is InitializerSnippet }.forEach { code.appendln(it.code()) }
+        snippets.filter<InitializerSnippet>().forEach { code.appendln(it.code()) }
         code.appendln("}")
         code.appendln("val $RESULT_FIELD_NAME=__run()")
         code.appendln("}")
