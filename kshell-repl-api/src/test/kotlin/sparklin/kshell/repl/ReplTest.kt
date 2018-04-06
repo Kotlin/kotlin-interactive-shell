@@ -142,6 +142,10 @@ class ReplTest {
         assertSuccess(repl.eval("import java.io.File"))
         assertSuccess(repl.eval("fun f(x: File)=x"))
         assertSuccess(repl.eval("fun g(x: File)=x"))
+        assertSuccess(repl.eval("import java.io.File"))
+        assertSuccess(repl.eval("import java.io.*"))
+        assertSuccess(repl.eval("import java.io.*"))
+        assertSuccess(repl.eval("fun g1(x: File)=x"))
     }
 
     @Test
@@ -153,6 +157,15 @@ class ReplTest {
     fun testPermanentSnippets() {
         assertSuccess(repl.eval("1 + 1"))
         assertError(repl.eval("val res1 = 10"))
+    }
+
+    @Test
+    fun testQualifiedImport() {
+        assertSuccess(repl.eval("import java.io.File as JFile"))
+        assertSuccess(repl.eval("fun f(x: JFile)=x"))
+        assertSuccess(repl.eval("fun g(x: JFile)=f(x)"))
+        assertSuccess(repl.eval("import java.io.FileInputStream as JFile"))
+        assertSuccess(repl.eval("fun f(v: JFile)=v.close()"))
     }
 
     private fun assertValue(expected: Any?, result: Result<EvalResult, EvalError>) {

@@ -38,8 +38,8 @@ class ReplCompiler(disposable: Disposable,
 
             val snippets = psiToSnippets(psiFile, generatedClassname)
 
-            val permanents = state.history.filter<SyntheticImportSnippet>().map { it.alias }
-            val conflict = snippets.filter<DeclarationSnippet>().find { permanents.contains(it.name) }
+            val permanents = state.history.filterIsInstance<SyntheticImportSnippet>().map { it.alias }
+            val conflict = snippets.filterIsInstance<DeclarationSnippet>().find { permanents.contains(it.name) }
 
             if (conflict != null) {
                 return Result.Error(EvalError.CompileError("${conflict.name} cannot be replaced"))
@@ -94,7 +94,7 @@ class ReplCompiler(disposable: Disposable,
                     setOf(psiForObject.containingKtFile),
                     org.jetbrains.kotlin.codegen.CompilationErrorHandler.THROW_EXCEPTION)
 
-            actualSnippets.filter<NamedSnippet>().forEach {
+            actualSnippets.filterIsInstance<NamedSnippet>().forEach {
                 if (it is FunctionSnippet) {
                     it.parametersTypes = canonicalParameterTypes(state.history, it)
                 }
@@ -135,7 +135,7 @@ class ReplCompiler(disposable: Disposable,
         fun qName(parameterType: String, snippets: List<Snippet>, typeParameters: List<String>): String {
             val ind = typeParameters.indexOf(parameterType)
             return if (ind < 0) {
-                snippets.filter<DeclarationSnippet>()
+                snippets.filterIsInstance<DeclarationSnippet>()
                         .findLast { !it.shadowed && it.name == parameterType }
                         ?.let { "${it.klass}.$parameterType" } ?: parameterType
             } else {
@@ -209,30 +209,30 @@ class ReplCompiler(disposable: Disposable,
         return Pair(actual, deferred)
     }
 
-    private fun generateKotlinCodeFor(classname: String, imports: List<Snippet>, snippets: List<Snippet>): String {
-        val code = StringBuilder()
-
-        imports.filter<NamedSnippet>().forEach {
-            when (it) {
-                is DeclarationSnippet -> if (!it.shadowed) code.appendln(it.toImportStatement())
-                else -> code.appendln(it.toImportStatement())
+    private fun generateKotlinCodeFor(classname: String, imports: List<Snippet>, snippets: List<Snippet>) =
+        buildString {
+            imports.filterIsInstance<NamedSnippet>().forEach {
+                when (it) {
+                    is DeclarationSnippet -> if (!it.shadowed) appendln(it.toImportStatement())
+                    else -> appendln(it.toImportStatement())
+                }
             }
+
+            val distinctImports = linkedMapOf<String, ImportSnippet>()
+            (imports.filterIsInstance<ImportSnippet>() + snippets.filterIsInstance<ImportSnippet>())
+                    .forEach { distinctImports[it.psi.aliasName ?: it.code()] = it }
+
+            distinctImports.forEach { appendln(it.value.code()) }
+
+            appendln("object $classname {")
+            snippets.filterIsInstance<DeclarationSnippet>().forEach { appendln(it.code()) }
+            appendln("val __run = {")
+            snippets.filterIsInstance<InitializerSnippet>().forEach { appendln(it.code()) }
+            appendln("}")
+            appendln("val $RESULT_FIELD_NAME=__run()")
+            appendln("}")
         }
 
-        (imports.filter<ImportSnippet>() + snippets.filter())
-                .map { it.code() }
-                .distinct()
-                .forEach { code.appendln(it) }
-
-        code.appendln("object $classname {")
-        snippets.filter<DeclarationSnippet>().forEach { code.appendln(it.code()) }
-        code.appendln("val __run = {")
-        snippets.filter<InitializerSnippet>().forEach { code.appendln(it.code()) }
-        code.appendln("}")
-        code.appendln("val $RESULT_FIELD_NAME=__run()")
-        code.appendln("}")
-        return code.toString()
-    }
 
     companion object {
         const val RESULT_FIELD_NAME = "__result"

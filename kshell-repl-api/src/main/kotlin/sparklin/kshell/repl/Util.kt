@@ -96,9 +96,9 @@ fun List<Snippet>.containsWithName(name: String): Boolean =
         this.any { it is NamedSnippet && it.name == name }
 
 fun List<Snippet>.shadow(snippets: List<Snippet>) {
-    filter<DeclarationSnippet>().forEach {
+    filterIsInstance<DeclarationSnippet>().forEach {
         val historyItem = it
-        if (snippets.filter<DeclarationSnippet>().any { historyItem.signature() == it.signature()  }) historyItem.shadowed = true
+        if (snippets.filterIsInstance<DeclarationSnippet>().any { historyItem.signature() == it.signature()  }) historyItem.shadowed = true
     }
 }
 
