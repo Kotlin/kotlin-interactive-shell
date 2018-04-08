@@ -4,26 +4,23 @@ import com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
 import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
+import org.jetbrains.kotlin.utils.PathUtil
 import sparklin.kshell.configuration.CachedInstance
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.configuration.ConfigurationImpl
-import java.io.File
+import sparklin.kshell.repl.stdlibPathForJar
 
 object KotlinShell {
     @JvmStatic
     fun main(args: Array<String>) {
         val messageCollector: MessageCollector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false)
-        val moduleName = "my-module"
-        val additionalClasspath = listOf<File>()
-        val classpath = Util.findJars(
-                includeScriptEngine = false,
-                includeKotlinCompiler = false,
-                includeStdLib = true)
 
-        val conf = Util.createCompilerConfiguration(classpath, additionalClasspath, moduleName, messageCollector)
-        val baseClassloader = Util.baseClassloader(conf)
         val repl = KShell(Disposer.newDisposable(),
-                configuration(), conf, messageCollector, classpath, baseClassloader)
+                configuration(),
+                messageCollector,
+                listOf(PathUtil.stdlibPathForJar()),
+                "kshell",
+                KShell::class.java.classLoader)
 
         Runtime.getRuntime().addShutdownHook(Thread({
             println("\nBye!")

@@ -1,17 +1,13 @@
 package sparklin.kshell.plugins
 
+import sparklin.kshell.BaseCommand
+import sparklin.kshell.KShell
+import sparklin.kshell.Plugin
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.console.ConsoleReader
-import org.jetbrains.kotlin.cli.common.repl.InvokeWrapper
-import sparklin.kshell.*
-import sparklin.kshell.repl.CompiledClasses
 import sparklin.kshell.repl.DeclarationSnippet
+import sparklin.kshell.repl.EvalError
 import sparklin.kshell.repl.Result
-import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
-import kotlin.reflect.KProperty1
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 class RuntimePlugin : Plugin {
     inner class InferType(fullName: String, shortName: String, description: String):
@@ -28,7 +24,7 @@ class RuntimePlugin : Plugin {
                 is Result.Incomplete ->
                     console.println("Incomplete line")
                 is Result.Error ->
-                    repl.compilationError(compileResult)
+                    repl.handleError(EvalError.CompileError(compileResult.error.message))
                 is Result.Success -> {
                     compileResult.data.classes.type?.let {
                         console.println(it)

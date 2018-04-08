@@ -26,7 +26,7 @@ open class ReplEvaluator(
                         scriptInstance
                     }
                     catch (e: Throwable) {
-                        return Result.Error(EvalError.RuntimeError(e.message!!, e as? Exception))
+                        return Result.Error(EvalError.RuntimeError(e.message ?: e.javaClass.canonicalName, e as? Exception))
                     }
 
             commitSnippets(state, data.snippets)

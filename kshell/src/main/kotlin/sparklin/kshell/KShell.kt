@@ -1,26 +1,42 @@
 package sparklin.kshell
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import sparklin.kshell.console.Completer
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
 import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
 import org.jetbrains.kotlin.cli.common.repl.InvokeWrapper
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
+import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.utils.PathUtil
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.repl.*
+import sparklin.kshell.wrappers.ResultWrapper
 import java.io.Closeable
 import java.io.File
+import java.net.URLClassLoader
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
 open class KShell(val disposable: Disposable,
                   val configuration: Configuration,
-                  val compilerConfiguration: CompilerConfiguration,
                   val messageCollector: MessageCollector,
-                  val baseClasspath: Iterable<File>,
-                  val baseClassloader: ClassLoader?) : Closeable {
+                  val classpath: List<File>,
+                  val moduleName: String,
+                  val classLoader: ClassLoader) : Closeable {
+
+    private val compilerConfiguration = CompilerConfiguration().apply {
+        addJvmClasspathRoots(PathUtil.getJdkClassesRoots(File(System.getProperty("java.home"))))
+        addJvmClasspathRoots(classpath)
+        put(CommonConfigurationKeys.MODULE_NAME, moduleName)
+        put<MessageCollector>(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
+    }
+
+    val baseClassloader = URLClassLoader(compilerConfiguration.jvmClasspathRoots.map { it.toURI().toURL() }
+            .toTypedArray(), classLoader)
 
     private lateinit var compiler: ReplCompiler
     private lateinit var evaluator: ReplEvaluator
@@ -29,23 +45,13 @@ open class KShell(val disposable: Disposable,
     val incompleteLines = arrayListOf<String>()
     val reader = configuration.getConsoleReader()
     val commands = mutableListOf<sparklin.kshell.Command>(FakeQuit())
-    val additionalImports = mutableListOf<String>()
     val eventManager = EventManager()
 
     private class FakeQuit: sparklin.kshell.BaseCommand("quit", "q", "exit the interpreter") {
         override fun execute(line: String) {}
     }
 
-    var wrapper: InvokeWrapper = object: InvokeWrapper {
-        override fun <T> invoke(body: () -> T): T {
-            return body()
-        }
-    }
-
     open fun buildDefaultCompleter() = Completer.DEFAULT_COMPLETER
-
-//    fun getReplEnvironment() = engine.compiler.getReplEnvironment()
-
 
     fun listCommands(): Iterable<sparklin.kshell.Command> = commands.asIterable()
 
@@ -60,13 +66,11 @@ open class KShell(val disposable: Disposable,
         configuration.plugins().forEach { it.init(this, configuration) }
 
         compiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
-        evaluator = ReplEvaluator(baseClasspath, baseClassloader)
+        evaluator = ReplEvaluator(classpath, baseClassloader)
     }
 
     fun doRun() {
-
         initEngine()
-        initImports()
 
         do {
             printPrompt()
@@ -78,6 +82,7 @@ open class KShell(val disposable: Disposable,
                 try {
                     val action = commands.first { it.match(line) }
                     action.execute(line)
+                    state.lineIndex.getAndIncrement()
                 } catch (_: NoSuchElementException) {
                     reader.println("Unknown command $line")
                 } catch (e: Exception) {
@@ -88,17 +93,26 @@ open class KShell(val disposable: Disposable,
                     incompleteLines.clear()
                     reader.println("You typed two blank lines. Starting a new command.")
                 } else {
-                    eval(line)
+                    val source = (incompleteLines + line).joinToString(separator = "\n")
+                    val result = eval(source).result
+                    when (result) {
+                        is Result.Error -> {
+                            incompleteLines.clear()
+                            handleError(result.error)
+                        }
+                        is Result.Success -> {
+                            incompleteLines.clear()
+                            handleResult(result.data)
+                        }
+                        is Result.Incomplete -> {
+                            incompleteLines.add(line)
+                        }
+                    }
                 }
             }
         } while (true)
 
         cleanUp()
-    }
-
-    private fun initImports() {
-//        scriptDefinition.defaultImports.forEach { compileAndEval("import $it") }
-//        additionalImports.forEach { compileAndEval("import $it") }
     }
 
     fun registerCommand(command: sparklin.kshell.Command) {
@@ -113,37 +127,30 @@ open class KShell(val disposable: Disposable,
 
     fun compile(code: String) = compiler.compile(state, nextLine(code))
 
-    fun eval(line: String) {
-        return state.lock.write {
-            val source = (incompleteLines + line).joinToString(separator = "\n")
+    fun eval(source: String): ResultWrapper =
+        state.lock.write {
             val compileResult = compile(source)
-            when (compileResult) {
+            ResultWrapper(when (compileResult) {
                 is Result.Incomplete -> {
-                    incompleteLines.add(line)
+                    Result.Incomplete()
                 }
                 is Result.Error -> {
-                    compilationError(compileResult)
-                    incompleteLines.clear()
+                    Result.Error<EvalResult, EvalError>(compileResult.error)
                 }
                 is Result.Success -> {
                     eventManager.emitEvent(OnCompile(compileResult.data))
-                    val evalResult = evaluator.eval(state, compileResult.data, null)
-                    when (evalResult) {
-                        is Result.Error -> {
-                            reader.println("Message: ${evalResult.error.message}")
-                        }
-                        is Result.Success -> if (evalResult.data is EvalResult.ValueResult) {
-                            incompleteLines.clear()
-                            reader.println(evalResult.data.toString())
-                        }
-                    }
+                    evaluator.eval(state, compileResult.data, null)
                 }
-            }
+            })
         }
+
+    fun handleError(error: EvalError) {
+        reader.println("Message: ${error.message}")
     }
 
-    fun compilationError(compileResult: Result.Error<CompilationData, EvalError.CompileError>) {
-        reader.println("Message: ${compileResult.error.message}")
+    fun handleResult(result: EvalResult) {
+        if (result is EvalResult.ValueResult)
+            reader.println(result.toString())
     }
 
     fun printPrompt() {

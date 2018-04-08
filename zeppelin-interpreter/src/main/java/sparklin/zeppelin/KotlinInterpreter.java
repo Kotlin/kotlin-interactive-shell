@@ -1,6 +1,7 @@
 package sparklin.zeppelin;
 
 import com.intellij.openapi.util.Disposer;
+import kotlin.Pair;
 import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterContext;
 import org.apache.zeppelin.interpreter.InterpreterResult;
@@ -10,14 +11,17 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer;
 import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
+import org.jetbrains.kotlin.utils.PathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sparklin.kshell.KShell;
-import sparklin.kshell.Util;
 import sparklin.kshell.configuration.Configuration;
+import sparklin.kshell.wrappers.ResultWrapper;
+import static sparklin.kshell.wrappers.ResultWrapper.Status.*;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.net.URLClassLoader;
 import java.util.*;
 
 public class KotlinInterpreter extends Interpreter {
@@ -43,13 +47,15 @@ public class KotlinInterpreter extends Interpreter {
 
     private KShell createRepl(Configuration configuration) {
         MessageCollector messageCollector = new PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false);
-        String moduleName = "my-module";
-        List<File> additionalClasspath = new ArrayList<File>();
-        List<File> classpath = Util.findJars(false, true, false);
-        CompilerConfiguration conf = Util.createCompilerConfiguration(classpath, additionalClasspath,
-                moduleName, messageCollector);
-        ClassLoader baseClassloader = Util.baseClassloader(conf);
-        return new KShell(Disposer.newDisposable(), configuration, conf, messageCollector, classpath, baseClassloader);
+        List<File> classpath = new ArrayList<File>();
+        // add kotlin stdlib jar
+        classpath.add(PathUtil.getResourcePathForClass(Pair.class));
+        return new KShell(Disposer.newDisposable(),
+                configuration,
+                messageCollector,
+                classpath,
+                "zeppelin",
+                new URLClassLoader(getClassloaderUrls(), getClass().getClassLoader()));
     }
 
     @Override
@@ -73,17 +79,20 @@ public class KotlinInterpreter extends Interpreter {
     public InterpreterResult interpret(String line, InterpreterContext interpreterContext) {
         try {
             log.info("Interpreting...");
-//            Job runningJob = getRunningJob(interpreterContext.getParagraphId());
-//            runningJob.info()
-//                    .put("CURRENT_THREAD", Thread.currentThread()); //to be able to terminate thread
+            Job runningJob = getRunningJob(interpreterContext.getParagraphId());
+            runningJob.info()
+                    .put("CURRENT_THREAD", Thread.currentThread()); //to be able to terminate thread
 
             out.setInterpreterOutput(interpreterContext.out);
-//            EvalResult res = repl.eval(line, false);
-//            if (res.isSuccess()) {
-                return new InterpreterResult(InterpreterResult.Code.SUCCESS);
-//            } else {
-//                return new InterpreterResult(InterpreterResult.Code.ERROR, res.getMessage());
-//            }
+            ResultWrapper result = repl.eval(line);
+            ResultWrapper.Status status = result.getStatus();
+            if (status == ERROR || status == INCOMPLETE) {
+                Exception e = result.getErrorCause();
+                if (e != null) e.printStackTrace(new PrintStream(out));
+                return new InterpreterResult(InterpreterResult.Code.ERROR, result.getMessageOrEmpty());
+            } else {
+                return new InterpreterResult(InterpreterResult.Code.SUCCESS, result.getMessageOrEmpty());
+            }
         } catch (Exception e) {
             String msg = e.toString() + "\n at " + e.getStackTrace()[0];
             log.error("Failed to run script: " + e);
@@ -93,21 +102,20 @@ public class KotlinInterpreter extends Interpreter {
 
     @Override
     public void cancel(InterpreterContext interpreterContext) {
-//        log.info("Canceling...");
-//        Job runningJob = getRunningJob(interpreterContext.getParagraphId());
-//        if (runningJob != null) {
-//            Map<String, Object> info = runningJob.info();
-//            Object object = info.get("CURRENT_THREAD");
-//            if (object instanceof Thread) {
-//                try {
-//                    Thread t = (Thread) object;
-////                    t.dumpStack();
-//                    t.interrupt();
-//                } catch (Throwable t) {
-//                    log.error("Failed to cancel script: " + t, t);
-//                }
-//            }
-//        }
+        log.info("Canceling...");
+        Job runningJob = getRunningJob(interpreterContext.getParagraphId());
+        if (runningJob != null) {
+            Map<String, Object> info = runningJob.info();
+            Object object = info.get("CURRENT_THREAD");
+            if (object instanceof Thread) {
+                try {
+                    Thread t = (Thread) object;
+                    t.interrupt();
+                } catch (Throwable t) {
+                    log.error("Failed to cancel script: " + t, t);
+                }
+            }
+        }
     }
 
     @Override
