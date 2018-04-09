@@ -4,14 +4,18 @@ import sparklin.kshell.BaseCommand
 import sparklin.kshell.KShell
 import sparklin.kshell.Plugin
 import sparklin.kshell.configuration.Configuration
+import sparklin.kshell.configuration.IdentityConverter
 import sparklin.kshell.console.ConsoleReader
 import sparklin.kshell.repl.DeclarationSnippet
 import sparklin.kshell.repl.EvalError
+import sparklin.kshell.repl.PropertySnippet
 import sparklin.kshell.repl.Result
 
 class RuntimePlugin : Plugin {
-    inner class InferType(fullName: String, shortName: String, description: String):
-        BaseCommand(fullName, shortName, description) {
+    inner class InferType(conf: Configuration): BaseCommand() {
+        override val name: String by conf.get(default = "type")
+        override val short: String by conf.get(default = "t")
+        override val description: String = "display the type of an expression without evaluating it"
 
         override val params = "<expr>"
 
@@ -34,8 +38,10 @@ class RuntimePlugin : Plugin {
         }
     }
 
-    inner class PrintSymbols(fullName: String, shortName: String, description: String):
-            sparklin.kshell.BaseCommand(fullName, shortName, description) {
+    inner class ListSymbols(conf: Configuration) : sparklin.kshell.BaseCommand() {
+        override val name: String by conf.get(default = "list")
+        override val short: String? by conf.get(default = "ls")
+        override val description: String = "list defined symbols"
 
         override fun execute(line: String) {
             repl.state.history.forEach {
@@ -53,16 +59,8 @@ class RuntimePlugin : Plugin {
         this.repl = repl
         this.console = config.getConsoleReader()
 
-        val inferTypeCmdName = config.getLocal("inferTypeCmd", "name", "type")
-        val inferTypeCmdShort = config.getLocal("inferTypeCmd", "short", "t")
-        val inferTypeCmdDescription = "display the type of an expression without evaluating it"
-
-        val printSymbolsCmdName = config.getLocal("printSymbolsCmd", "name", "symbols")
-        val printSymbolsCmdShort = config.getLocal("printSymbolsCmd", "short", "s")
-        val printSymbolsCmdDescription = "list defined symbols"
-
-        repl.registerCommand(InferType(inferTypeCmdName, inferTypeCmdShort, inferTypeCmdDescription))
-        repl.registerCommand(PrintSymbols(printSymbolsCmdName, printSymbolsCmdShort, printSymbolsCmdDescription))
+        repl.registerCommand(InferType(config))
+        repl.registerCommand(ListSymbols(config))
     }
 
     private fun Configuration.getLocal(cmd: String, key: String, default: String) =

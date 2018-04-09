@@ -8,8 +8,10 @@ import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.match
 
 class HelpPlugin: Plugin {
-    inner class Help(fullName: String, shortName: String, description: String):
-            BaseCommand(fullName, shortName, description) {
+    inner class Help(conf: Configuration): BaseCommand() {
+        override val name: String by conf.get(default = "help")
+        override val short: String by conf.get(default = "h")
+        override val description: String = "print this summary or command-specific help"
 
         override val params = "[command]"
 
@@ -41,7 +43,7 @@ class HelpPlugin: Plugin {
         this.repl = repl
         this.console = config.getConsoleReader()
 
-        repl.registerCommand(Help("help", "h", "print this summary or command-specific help"))
+        repl.registerCommand(Help(config))
     }
 
     override fun cleanUp() { }

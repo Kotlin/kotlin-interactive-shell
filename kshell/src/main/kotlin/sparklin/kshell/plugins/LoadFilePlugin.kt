@@ -8,8 +8,10 @@ import sparklin.kshell.console.Completer
 import java.io.File
 
 class LoadFilePlugin: Plugin {
-    inner class Load(name: String, short: String, description: String):
-            BaseCommand(name, short, description) {
+    inner class Load(conf: Configuration): BaseCommand() {
+        override val name: String by conf.get(default = "load")
+        override val short: String by conf.get(default = "l")
+        override val description: String = "load file and evaluate"
 
         override val params = "<path>"
 
@@ -28,11 +30,7 @@ class LoadFilePlugin: Plugin {
     override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
 
-        val name = config.getLocal("name", "load")
-        val short = config.getLocal("short", "l")
-        val description = "load script"
-
-        repl.registerCommand(Load(name, short, description))
+        repl.registerCommand(Load(config))
     }
 
     private fun Configuration.getLocal(key: String, default: String) =

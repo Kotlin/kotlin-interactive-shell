@@ -47,7 +47,10 @@ open class KShell(val disposable: Disposable,
     val commands = mutableListOf<sparklin.kshell.Command>(FakeQuit())
     val eventManager = EventManager()
 
-    private class FakeQuit: sparklin.kshell.BaseCommand("quit", "q", "exit the interpreter") {
+    private class FakeQuit: sparklin.kshell.BaseCommand() {
+        override val name: String = "quit"
+        override val short: String = "q"
+        override val description: String = "quit the kshell"
         override fun execute(line: String) {}
     }
 

@@ -9,13 +9,13 @@ import sparklin.kshell.plugins.RuntimePlugin
 import java.io.*
 import java.util.*
 
-open class PropertyBasedConfiguration(protected val props: Properties, protected val defaultPlugins: List<String>) : Configuration {
+open class PropertyBasedConfiguration(protected val props: Properties, protected val defaultPlugins: List<String>) : Configuration() {
     private val plugins = linkedMapOf<String, CachedInstance<Plugin>>()
     private val consoleReader = CachedInstance<ConsoleReader>()
 
-    override fun <T : Any> get(key: String, converter: Converter<T>, default: () -> T): T {
+    override fun <T : Any> get(key: String, converter: Converter<T>): T? {
         val strValue = props.getProperty(key)
-        return if (strValue != null) converter.convert(strValue) else default()
+        return strValue?.let { converter.convert(strValue) }
     }
 
     override fun load() {

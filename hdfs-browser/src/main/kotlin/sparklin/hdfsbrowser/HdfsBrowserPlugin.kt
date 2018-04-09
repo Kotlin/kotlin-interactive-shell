@@ -18,7 +18,11 @@ class HdfsBrowserPlugin : Plugin {
     private lateinit var console: ConsoleReader
     private var workingDirectory = "."
 
-    inner class LsCommand : BaseCommand("hdfs.ls", null, "") {
+    inner class LsCommand(conf: Configuration) : BaseCommand() {
+        override val name: String by conf.get(default = "hdfs.ls")
+        override val short: String? by conf.getNullable()
+        override val description: String = "list files in HDFS directory"
+
         override val params: String = "[-h] [<path>]"
 
         override fun execute(line: String) {
@@ -39,7 +43,7 @@ class HdfsBrowserPlugin : Plugin {
         this.fs = FileSystem.get(findHadoopConfiguration(config))
         this.console = config.getConsoleReader()
 
-        repl.registerCommand(LsCommand())
+        repl.registerCommand(LsCommand(config))
     }
 
     private fun findHadoopConfiguration(config: Configuration): HadoopConfiguration {

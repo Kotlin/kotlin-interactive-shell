@@ -8,8 +8,11 @@ import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.console.ConsoleReader
 
 class PastePlugin : Plugin {
-    inner class Paste(name: String, short: String, description: String):
-            BaseCommand(name, short, description) {
+    inner class Paste(conf: Configuration): BaseCommand() {
+        override val name: String by conf.get(default = "paste")
+        override val short: String by conf.get(default = "p")
+        override val description: String = "enter paste mode"
+
         override fun execute(line: String) {
             println("// Entering paste mode (ctrl-D to finish)")
             val buf = StringBuilder()
@@ -40,7 +43,7 @@ class PastePlugin : Plugin {
         this.console = config.getConsoleReader()
         this.pasteConsole = getPasteConsoleReader(config)
 
-        repl.registerCommand(Paste("paste", "p", "enter paste mode"))
+        repl.registerCommand(Paste(config))
     }
 
     override fun cleanUp() { }
