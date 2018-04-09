@@ -42,16 +42,16 @@ abstract class DeclarationSnippet(klass: String, name: String, var shadowed: Boo
         return this as T
     }
 
+    abstract val psi: KtDeclaration
+    override fun code(): String = psi.text
     open fun signature(): String = name
 }
 
-class PropertySnippet(klass: String, name: String, val psi: KtProperty): DeclarationSnippet(klass, name) {
-    override fun code(): String = psi.text
+class PropertySnippet(klass: String, name: String, override val psi: KtProperty): DeclarationSnippet(klass, name) {
     override fun copy(): PropertySnippet = PropertySnippet(klass, name, psi).replicateShadowed(shadowed)
 }
 
-class FunctionSnippet(klass: String, name: String, val psi: KtFunction, var parametersTypes: String? = null): DeclarationSnippet(klass, name) {
-    override fun code(): String = psi.text
+class FunctionSnippet(klass: String, name: String, override val psi: KtFunction, var parametersTypes: String? = null): DeclarationSnippet(klass, name) {
     override fun copy(): FunctionSnippet = FunctionSnippet(klass, name, psi, parametersTypes).replicateShadowed(shadowed)
     override fun signature(): String = "$name($parametersTypes)"
 }
@@ -72,13 +72,11 @@ class SyntheticImportSnippet(klass: String, name: String, val alias: String): Na
     override fun copy(): SyntheticImportSnippet = SyntheticImportSnippet(klass, name, alias)
 }
 
-class ObjectSnippet(klass: String, name: String, val psi: KtObjectDeclaration): DeclarationSnippet(klass, name) {
-    override fun code(): String = psi.text
+class ObjectSnippet(klass: String, name: String, override val psi: KtObjectDeclaration): DeclarationSnippet(klass, name) {
     override fun copy(): ObjectSnippet = ObjectSnippet(klass, name, psi).replicateShadowed(shadowed)
 }
 
-class ClassSnippet(klass: String, name: String, val psi: KtClass): DeclarationSnippet(klass, name) {
-    override fun code(): String = psi.text
+class ClassSnippet(klass: String, name: String, override val psi: KtClass): DeclarationSnippet(klass, name) {
     override fun copy(): ClassSnippet = ClassSnippet(klass, name, psi).replicateShadowed(shadowed)
 }
 
