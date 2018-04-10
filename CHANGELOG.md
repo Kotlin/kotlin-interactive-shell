@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.1.3]
+## [0.2]
 ### Added
 - JShell-like Kotlin snippets.
 - Completely new REPL architecture with object based class layout `kshell-repl-api`.
@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Unit testes moved to `kshell-repl-api`.
 
 ### Fixed
+- Custom REPL fixes [#7](https://github.com/khud/sparklin/issues/7)
 - Problem with custom commands which start with the same letter.
 
 ### Removed
@@ -50,6 +51,6 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Old spark stuff: separate main class and so on.
 
-[0.1.3]: https://github.com/khud/sparklin/compare/0.1.3...0.1.2
+[0.2]: https://github.com/khud/sparklin/compare/0.2...0.1.2
 [0.1.2]: https://github.com/khud/sparklin/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/khud/sparklin/compare/0.1...0.1.1
