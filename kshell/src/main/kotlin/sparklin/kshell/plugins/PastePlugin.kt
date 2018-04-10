@@ -1,15 +1,18 @@
 package sparklin.kshell.plugins
 
 import sparklin.kshell.BaseCommand
+import sparklin.kshell.KShell
 import sparklin.kshell.Plugin
-import sparklin.kshell.Repl
 import sparklin.kshell.configuration.CachedInstance
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.console.ConsoleReader
 
 class PastePlugin : Plugin {
-    inner class Paste(name: String, short: String, description: String):
-            BaseCommand(name, short, description) {
+    inner class Paste(conf: Configuration): BaseCommand() {
+        override val name: String by conf.get(default = "paste")
+        override val short: String by conf.get(default = "p")
+        override val description: String = "enter paste mode"
+
         override fun execute(line: String) {
             println("// Entering paste mode (ctrl-D to finish)")
             val buf = StringBuilder()
@@ -27,20 +30,20 @@ class PastePlugin : Plugin {
             val code = buf.toString()
             console.addHistoryItem(code)
             println("// Exiting paste mode, now interpreting.")
-            repl.compileAndEval(code)
+            repl.eval(code)
         }
     }
 
-    lateinit var repl: Repl
+    lateinit var repl: KShell
     lateinit var console: ConsoleReader
     lateinit var pasteConsole: ConsoleReader
 
-    override fun init(repl: Repl, config: Configuration) {
+    override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
         this.console = config.getConsoleReader()
         this.pasteConsole = getPasteConsoleReader(config)
 
-        repl.registerCommand(Paste("paste", "p", "enter paste mode"))
+        repl.registerCommand(Paste(config))
     }
 
     override fun cleanUp() { }

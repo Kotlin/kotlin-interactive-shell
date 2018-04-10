@@ -6,11 +6,11 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>0.1.2</version>
+        <version>0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>kshell-console-jline2</artifactId>
-	<version>0.1.2</version>
+	<version>0.2-SNAPSHOT</version>
 
     <dependencies>
 	    <dependency>
@@ -58,7 +58,7 @@
             <plugin>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <configuration>
-                    <jvmTarget>1.8</jvmTarget>
+                    <jvmTarget>${jvm.version}</jvmTarget>
                 </configuration>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <version>${kotlin.version}</version>

@@ -1,19 +1,23 @@
 package sparklin.kshell.plugins
 
+import sparklin.kshell.*
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.console.ConsoleReader
-import org.jetbrains.kotlin.cli.common.repl.ReplCompileResult
-import org.jetbrains.kotlin.cli.common.repl.InvokeWrapper
-import sparklin.kshell.*
+import sparklin.kshell.repl.*
+import sparklin.kshell.repl.ReplCompiler.Companion.RESULT_FIELD_NAME
+import sparklin.kshell.repl.ReplCompiler.Companion.RUN_FIELD_NAME
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
+import kotlin.reflect.KVariance
 import kotlin.reflect.full.declaredMemberProperties
-import kotlin.script.templates.standard.ScriptTemplateWithArgs
+import kotlin.reflect.full.valueParameters
 
 class RuntimePlugin : Plugin {
-    inner class InferType(fullName: String, shortName: String, description: String):
-        BaseCommand(fullName, shortName, description) {
+    inner class InferType(conf: Configuration): BaseCommand() {
+        override val name: String by conf.get(default = "type")
+        override val short: String by conf.get(default = "t")
+        override val description: String = "display the type of an expression without evaluating it"
 
         override val params = "<expr>"
 
@@ -21,132 +25,57 @@ class RuntimePlugin : Plugin {
             val p = line.indexOf(' ')
             val expr = line.substring(p + 1).trim()
 
-            repl.extensionPoint {
-                val compileResult = repl.compile(expr)
-                when (compileResult) {
-                    is CompileResult.Incomplete ->
-                        console.println("Incomplete line")
-                    is CompileResult.Error ->
-                        repl.compileError(compileResult)
-                    is CompileResult.CompiledClasses -> {
-                        compileResult.type?.let {
-                            console.println(it)
-                        }
+            val compileResult = repl.compile(expr)
+            when (compileResult) {
+                is Result.Incomplete ->
+                    console.println("Incomplete line")
+                is Result.Error ->
+                    repl.handleError(EvalError.CompileError(compileResult.error.message))
+                is Result.Success -> {
+                    compileResult.data.classes.type?.let {
+                        console.println(it)
                     }
                 }
             }
         }
     }
 
-    inner class PrintSymbols(fullName: String, shortName: String, description: String):
-            sparklin.kshell.BaseCommand(fullName, shortName, description) {
-        private val table = SymbolsTable()
-
-        init {
-            repl.wrapper = ExtractSymbols(repl.wrapper, table)
-        }
+    inner class ListSymbols(conf: Configuration) : sparklin.kshell.BaseCommand() {
+        override val name: String by conf.get(default = "list")
+        override val short: String? by conf.get(default = "ls")
+        override val description: String = "list defined symbols"
 
         override fun execute(line: String) {
-            repl.apply {
-                lastCompiledClasses?.let {
-                    println(table)
-                }
+            if (!table.isEmpty()) {
+                println(table)
             }
         }
     }
 
-    private lateinit var repl: Repl
+    private lateinit var repl: KShell
     private lateinit var console: ConsoleReader
-    private var lastCompiledClasses: CompileResult.CompiledClasses? = null
+    private var lastCompiledClasses: CompiledClasses? = null
+    private lateinit var table: SymbolsTable
 
-    override fun init(repl: Repl, config: Configuration) {
+    override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
         this.console = config.getConsoleReader()
+        this.table = SymbolsTable(repl.state.history)
 
-        val inferTypeCmdName = config.getLocal("inferTypeCmd", "name", "type")
-        val inferTypeCmdShort = config.getLocal("inferTypeCmd", "short", "t")
-        val inferTypeCmdDescription = "display the type of an expression without evaluating it"
 
-        val printSymbolsCmdName = config.getLocal("printSymbolsCmd", "name", "symbols")
-        val printSymbolsCmdShort = config.getLocal("printSymbolsCmd", "short", "s")
-        val printSymbolsCmdDescription = "list defined symbols"
-
-        EventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
+        repl.eventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
             override fun handle(event: OnCompile) {
-                lastCompiledClasses = event.data()
+                lastCompiledClasses = event.data().classes
             }
         })
 
-        repl.registerCommand(InferType(inferTypeCmdName, inferTypeCmdShort, inferTypeCmdDescription))
-        repl.registerCommand(PrintSymbols(printSymbolsCmdName, printSymbolsCmdShort, printSymbolsCmdDescription))
-    }
+        repl.invokeWrapper = ExtractSymbols(repl.invokeWrapper, table)
 
-    private fun Configuration.getLocal(cmd: String, key: String, default: String) =
-            this.get("${LoadFilePlugin::class.qualifiedName!!}.$cmd.$key", default)
+        repl.registerCommand(InferType(config))
+        repl.registerCommand(ListSymbols(config))
+    }
 
     override fun cleanUp() { }
-}
-
-
-sealed class Symbol(val name: String,  val kind: SymbolKind) {
-    abstract fun show(verbose: VerboseLevel): String
-}
-
-class ClassSymbol(name: String, private val clazz: KClass<*>): Symbol(name, SymbolKind.CLASS) {
-    override fun show(verbose: VerboseLevel): String =
-            when (verbose) {
-                VerboseLevel.LOW -> name
-                VerboseLevel.MEDIUM, VerboseLevel.HIGH -> "class $name"
-            }
-}
-
-class InstanceSymbol(name: String, private val obj: Any?, private val prop: KProperty1<*, *>): Symbol(name, SymbolKind.INSTANCE) {
-    override fun show(verbose: VerboseLevel): String =
-            when (verbose) {
-                VerboseLevel.LOW -> name
-                VerboseLevel.MEDIUM -> signature()
-                VerboseLevel.HIGH -> {
-                    val instrumentation = getInstrumentation()
-                    if (instrumentation != null) {
-                        if (obj != null) {
-                            val size = human(instrumentation.getObjectSize(obj))
-                            "${signature()} ($size)"
-                        } else {
-                            "${signature()} (null)"
-                        }
-                    } else signature()
-                }
-            }
-
-    private fun human(size: Long): String = size.toString()
-
-    private fun signature(): String {
-        val def = if (prop.toString().startsWith("val")) "val" else "var"
-        val type = prop.returnType
-        return "$def $name: $type"
-    }
-}
-
-class FunctionSymbol(name: String, private val func: KFunction<*>): Symbol(name, SymbolKind.FUNCTION) {
-    override fun show(verbose: VerboseLevel): String =
-            when(verbose) {
-                VerboseLevel.LOW -> name
-                VerboseLevel.MEDIUM -> {
-                    val type = func.returnType
-                    "fun $name(...): $type"
-                }
-                VerboseLevel.HIGH -> signature()
-            }
-
-    private fun signature(): String {
-        return "signature"
-    }
-}
-
-enum class VerboseLevel {
-    LOW,
-    MEDIUM,
-    HIGH
 }
 
 enum class SymbolKind {
@@ -155,46 +84,88 @@ enum class SymbolKind {
     FUNCTION
 }
 
-class SymbolsTable {
-    private val dict = HashMap<Pair<String, SymbolKind>, Symbol>()
+sealed class Symbol(val namespace: String, val name: String, val kind: SymbolKind) {
+    abstract fun show(): String
+}
+
+class ClassSymbol(namespace: String, name: String, private val clazz: KClass<*>): Symbol(namespace, name, SymbolKind.CLASS) {
+    override fun show(): String {
+        return "class $name"
+    }
+}
+
+class InstanceSymbol(namespace: String, name: String, private val obj: Any?, private val prop: KProperty1<*, *>): Symbol(namespace, name, SymbolKind.INSTANCE) {
+    override fun show(): String {
+        val def = if (prop.toString().startsWith("val")) "val" else "var"
+        val type = prop.returnType
+        return "$def $name: $type"
+    }
+}
+
+class FunctionSymbol(namespace: String, name: String, private val func: KFunction<*>): Symbol(namespace, name, SymbolKind.FUNCTION) {
+    override fun show(): String {
+        val tp = if (func.typeParameters.isNotEmpty()) "<" + func.typeParameters.joinToString(separator = ",") {
+            (if (it.variance != KVariance.INVARIANT) "${it.variance} ${it.name}" else it.name) +
+                    (if (it.upperBounds.isNotEmpty()) ": ${it.upperBounds.joinToString(separator = ",")}" else "")
+            } + "> " else ""
+
+        val vp = func.valueParameters.joinToString(separator = ",") {
+            it.name + ": " + it.type
+        }
+
+        return "fun $tp$name($vp): ${func.returnType}"
+    }
+}
+
+class SymbolsTable(val history: List<Snippet>) {
+    private val symbols = mutableListOf<Symbol>()
 
     fun add(symbol: Symbol) {
-        dict[Pair(symbol.name, symbol.kind)] = symbol
+        symbols.add(symbol)
     }
+
+    fun isEmpty() = symbols.isEmpty()
 
     override fun toString(): String = list().joinToString(separator = "\n")
 
     fun list(pattern: String? = null, kinds: List<SymbolKind> =
-        listOf(SymbolKind.INSTANCE, SymbolKind.FUNCTION, SymbolKind.CLASS),
-             verbose: VerboseLevel = VerboseLevel.MEDIUM): List<String> {
+            listOf(SymbolKind.INSTANCE, SymbolKind.FUNCTION, SymbolKind.CLASS)): List<String> {
         val regex = pattern?.let { Regex(it) }
-        return dict.values.filter { kinds.contains(it.kind) &&
+        return symbols.filter { kinds.contains(it.kind) && !isShadowed(it)
                 (regex == null || it.name.matches(regex)) }.map {
-            it.show(verbose)
+            it.show()
         }
     }
+
+    fun isShadowed(symbol: Symbol) =
+        history.filterIsInstance<NamedSnippet>().findLast { it.klass == symbol.namespace && it.name == symbol.name } != null
+
 }
 
-class ExtractSymbols(private val wrapper: InvokeWrapper, private val table: SymbolsTable): InvokeWrapper {
+class ExtractSymbols(private val wrapper: InvokeWrapper?, private val table: SymbolsTable): InvokeWrapper {
     override fun <T> invoke(body: () -> T): T {
-        val r = wrapper.invoke(body)
-        // cast carefully
-        val scriptTemplate = r as ScriptTemplateWithArgs
+        val r = wrapper?.invoke(body) ?: body()
 
-        scriptTemplate::class.nestedClasses.forEach { clazz ->
+        // cast carefully
+        val embodiment = r as Any
+        val namespace = embodiment::class.simpleName!!
+
+        embodiment::class.nestedClasses.forEach { clazz ->
             clazz.simpleName?.let {
-                table.add(ClassSymbol(it, clazz))
+                table.add(ClassSymbol(namespace, it, clazz))
             }
         }
 
-        scriptTemplate::class.members.filter { callable -> callable.toString().contains(" Line_") }.forEach {
+        embodiment::class.members.filter { callable -> val cname = callable.toString()
+            cname.contains(" Line_")}.forEach {
             when (it) {
                 is KProperty1<*, *> -> {
-                    val obj = readProperty(scriptTemplate, it.name)
-                    table.add(InstanceSymbol(it.name, obj, it))
+                    val obj = readProperty(embodiment, it.name)
+                    if (it.name != RESULT_FIELD_NAME && it.name != RUN_FIELD_NAME)
+                        table.add(InstanceSymbol(namespace, it.name, obj, it))
                 }
                 is KFunction<*> -> {
-                    table.add(FunctionSymbol(it.name, it))
+                    table.add(FunctionSymbol(namespace, it.name, it))
                 }
                 else -> throw IllegalStateException("Unknown symbol: $it of ${it::class}")
             }

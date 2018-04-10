@@ -2,7 +2,7 @@ package sparklin.kshell
 
 import kotlin.reflect.KClass
 
-object EventManager {
+class EventManager {
     private val eventHandlers = hashMapOf<String, MutableList<EventHandler<Any>>>()
 
     fun <T> emitEvent(event: Event<T>) {

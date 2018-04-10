@@ -1,10 +1,10 @@
 package sparklin.kshell
 
+import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.console.Completer
 
-abstract class BaseCommand(override val name: String,
-                           override val short: String?,
-                           private val description: String): sparklin.kshell.Command {
+abstract class BaseCommand: sparklin.kshell.Command {
+    abstract val description: String
 
     open val params = ""
 

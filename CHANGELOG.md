@@ -1,6 +1,26 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.2]
+### Added
+- JShell-like Kotlin snippets.
+- Completely new REPL architecture with object based class layout `kshell-repl-api`.
+- HDFS browser plugin.
+- Kotlin interpreter for Zeppelin.
+
+### Changed
+- Kotlin version 1.2.20 -> 1.2.30.
+- Unit testes moved to `kshell-repl-api`.
+
+### Fixed
+- Custom REPL fixes [#7](https://github.com/khud/sparklin/issues/7)
+- Problem with custom commands which start with the same letter.
+
+### Removed
+- Unnecessary `Shared` class from `KShell`. 
+- Additional classes and interfaces to abstract `GenericRepl` results.
+- All `GenericRepl` dependencies.
+
 ## [0.1.2] - 2018-02-28
 ### Added
 - Paste command.
@@ -31,5 +51,6 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Old spark stuff: separate main class and so on.
 
+[0.2]: https://github.com/khud/sparklin/compare/0.2...0.1.2
 [0.1.2]: https://github.com/khud/sparklin/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/khud/sparklin/compare/0.1...0.1.1

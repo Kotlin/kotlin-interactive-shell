@@ -8,13 +8,15 @@ import org.apache.spark.sql.internal.StaticSQLConf.CATALOG_IMPLEMENTATION
 import org.apache.spark.util.Utils
 import sparklin.core.Logging
 import sparklin.kshell.*
+import sparklin.kshell.plugins.SparkPlugin
+import sparklin.kshell.repl.SyntheticImportSnippet
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
 
-class Spark2xPlugin : Logging(), Plugin {
-    override fun init(repl: Repl, config: Configuration) {
+class Spark2xPlugin : Logging(), SparkPlugin {
+    override fun init(repl: KShell, config: Configuration) {
         val jars = getAddedJars()
         val conf = SparkConf()
                 .setMaster(getMaster())
@@ -24,20 +26,29 @@ class Spark2xPlugin : Logging(), Plugin {
         val tmp = System.getProperty("java.io.tmpdir")
         val rootDir = conf.get("spark.repl.classdir", tmp)
         val outputDir = Utils.createTempDir(rootDir, "spark")
-        Shared.spark = createSparkSession(conf, outputDir)
-        Shared.sc =  JavaSparkContext.fromSparkContext(Shared.spark.sparkContext())
+        Holder.sparkSessionDelegate = createSparkSession(conf, outputDir)
+        Holder.sparkContextDelegate = JavaSparkContext.fromSparkContext(Holder.sparkSessionDelegate.sparkContext())
         val replJars = replJars(jars)
 
-        EventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
+        repl.eventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
             override fun handle(event: OnCompile) {
-                event.data().classes.forEach {
+                event.data().classes.classes.forEach {
                     writeClass(outputDir.absolutePath + File.separator + it.path, it.bytes)
                 }
             }
         })
 
         repl.addClasspathRoots(replJars)
-        repl.addImports(listOf(Shared::class.qualifiedName!! + ".*"))
+        repl.state.history.add(SyntheticImportSnippet(Holder::class.qualifiedName!!, "sc", "sc"))
+        repl.state.history.add(SyntheticImportSnippet(Holder::class.qualifiedName!!, "spark", "spark"))
+    }
+
+    object Holder {
+        val spark: SparkSession by lazy { sparkSessionDelegate }
+        val sc: JavaSparkContext by lazy { sparkContextDelegate }
+
+        lateinit var sparkSessionDelegate: SparkSession
+        lateinit var sparkContextDelegate: JavaSparkContext
     }
 
     private fun createSparkSession(conf: SparkConf, outputDir: File): SparkSession {
@@ -129,4 +140,5 @@ class Spark2xPlugin : Logging(), Plugin {
         }
     }
 
+    override fun hadoopConfiguration() = Holder.sc.hadoopConfiguration()
 }

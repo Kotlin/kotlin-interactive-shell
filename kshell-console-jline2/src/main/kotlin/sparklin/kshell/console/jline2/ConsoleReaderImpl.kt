@@ -53,8 +53,6 @@ class ConsoleReaderImpl: ConsoleReader {
     override fun println(s: String) = reader.println(s)
 
     override fun cleanUp() {
-        history?.let {
-            it.flush()
-        }
+        history.flush()
     }
 }
