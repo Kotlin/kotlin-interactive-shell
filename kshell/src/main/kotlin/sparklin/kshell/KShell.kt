@@ -4,9 +4,6 @@ import com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import sparklin.kshell.console.Completer
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
-import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
-import org.jetbrains.kotlin.cli.common.repl.InvokeWrapper
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
@@ -46,6 +43,8 @@ open class KShell(val disposable: Disposable,
     val reader = configuration.getConsoleReader()
     val commands = mutableListOf<sparklin.kshell.Command>(FakeQuit())
     val eventManager = EventManager()
+
+    var invokeWrapper: InvokeWrapper? = null
 
     private class FakeQuit: sparklin.kshell.BaseCommand() {
         override val name: String = "quit"
@@ -142,7 +141,7 @@ open class KShell(val disposable: Disposable,
                 }
                 is Result.Success -> {
                     eventManager.emitEvent(OnCompile(compileResult.data))
-                    evaluator.eval(state, compileResult.data, null)
+                    evaluator.eval(state, compileResult.data, invokeWrapper)
                 }
             })
         }

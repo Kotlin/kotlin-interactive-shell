@@ -104,3 +104,6 @@ data class CompiledClassData(val path: String, val bytes: ByteArray) : Serializa
     override fun hashCode(): Int = path.hashCode() + Arrays.hashCode(bytes)
 }
 
+interface InvokeWrapper {
+    operator fun <T> invoke(body: () -> T): T // e.g. for capturing io
+}

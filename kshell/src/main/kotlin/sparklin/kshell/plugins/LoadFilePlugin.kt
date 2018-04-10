@@ -33,8 +33,5 @@ class LoadFilePlugin: Plugin {
         repl.registerCommand(Load(config))
     }
 
-    private fun Configuration.getLocal(key: String, default: String) =
-            this.get("${LoadFilePlugin::class.qualifiedName!!}.cmd.$key", default)
-
     override fun cleanUp() { }
 }

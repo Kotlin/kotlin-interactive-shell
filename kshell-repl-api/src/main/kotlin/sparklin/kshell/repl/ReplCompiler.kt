@@ -226,16 +226,17 @@ class ReplCompiler(disposable: Disposable,
 
             appendln("object $classname {")
             snippets.filterIsInstance<DeclarationSnippet>().forEach { appendln(it.code()) }
-            appendln("val __run = {")
+            appendln("val $RUN_FIELD_NAME = {")
             snippets.filterIsInstance<InitializerSnippet>().forEach { appendln(it.code()) }
             appendln("}")
-            appendln("val $RESULT_FIELD_NAME=__run()")
+            appendln("val $RESULT_FIELD_NAME=$RUN_FIELD_NAME()")
             appendln("}")
         }
 
 
     companion object {
         const val RESULT_FIELD_NAME = "__result"
+        const val RUN_FIELD_NAME = "__run"
     }
 
     private inline fun <reified T : PsiElement> PsiElement.getChildOfType(): T? {
