@@ -2,13 +2,14 @@ package sparklin.kshell
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
-import sparklin.kshell.console.Completer
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.utils.PathUtil
+import org.jline.reader.LineReaderBuilder
+import org.jline.terminal.TerminalBuilder
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.repl.*
 import sparklin.kshell.wrappers.ResultWrapper
@@ -40,7 +41,9 @@ open class KShell(val disposable: Disposable,
     val state = ReplState(ReentrantReadWriteLock())
 
     val incompleteLines = arrayListOf<String>()
-    val reader = configuration.getConsoleReader()
+    val term = TerminalBuilder.builder().build()
+    val readerBuilder = LineReaderBuilder.builder().terminal(term)
+    val reader = readerBuilder.build()
     val commands = mutableListOf<sparklin.kshell.Command>(FakeQuit())
     val eventManager = EventManager()
 
@@ -53,16 +56,16 @@ open class KShell(val disposable: Disposable,
         override fun execute(line: String) {}
     }
 
-    open fun buildDefaultCompleter() = Completer.DEFAULT_COMPLETER
+//    open fun buildDefaultCompleter() = Completer.DEFAULT_COMPLETER
 
     fun listCommands(): Iterable<sparklin.kshell.Command> = commands.asIterable()
 
     fun addClasspathRoots(files: List<File>) = compilerConfiguration.addJvmClasspathRoots(files)
 
     fun initEngine() {
-        reader.apply {
-            addCompleter(ContextDependentCompleter(commands, incompleteLines::isEmpty, buildDefaultCompleter()))
-        }
+//        reader.apply {
+//            addCompleter(ContextDependentCompleter(commands, incompleteLines::isEmpty, buildDefaultCompleter()))
+//        }
 
         configuration.load()
         configuration.plugins().forEach { it.init(this, configuration) }
@@ -75,8 +78,7 @@ open class KShell(val disposable: Disposable,
         initEngine()
 
         do {
-            printPrompt()
-            val line = reader.readLine()
+            val line = reader.readLine(getPrompt())
 
             if (line == null || isQuitAction(line)) break
 
@@ -86,14 +88,14 @@ open class KShell(val disposable: Disposable,
                     action.execute(line)
                     state.lineIndex.getAndIncrement()
                 } catch (_: NoSuchElementException) {
-                    reader.println("Unknown command $line")
+                    println("Unknown command $line")
                 } catch (e: Exception) {
                     commandError(e)
                 }
             } else {
                 if (line.isBlank() && (incompleteLines.isNotEmpty() && incompleteLines.last().isBlank())) {
                     incompleteLines.clear()
-                    reader.println("You typed two blank lines. Starting a new command.")
+                    println("You typed two blank lines. Starting a new command.")
                 } else {
                     val source = (incompleteLines + line).joinToString(separator = "\n")
                     val result = eval(source).result
@@ -104,7 +106,7 @@ open class KShell(val disposable: Disposable,
                         }
                         is Result.Success -> {
                             incompleteLines.clear()
-                            handleResult(result.data)
+                            handleSuccess(result.data)
                         }
                         is Result.Incomplete -> {
                             incompleteLines.add(line)
@@ -147,20 +149,20 @@ open class KShell(val disposable: Disposable,
         }
 
     fun handleError(error: EvalError) {
-        reader.println("Message: ${error.message}")
+        println("Message: ${error.message}")
     }
 
-    fun handleResult(result: EvalResult) {
+    fun handleSuccess(result: EvalResult) {
         if (result is EvalResult.ValueResult)
-            reader.println(result.toString())
+            println(result.toString())
     }
 
-    fun printPrompt() {
+    fun getPrompt() =
         if (incompleteLines.isEmpty())
-            reader.setPrompt("kotlin [${state.lineIndex.get()}]> ")
+            "kotlin [${state.lineIndex.get()}]> "
         else
-            reader.setPrompt("... ")
-    }
+            "... "
+
 
     open fun commandError(e: Exception) {
         e.printStackTrace()
@@ -171,7 +173,6 @@ open class KShell(val disposable: Disposable,
     }
 
     open fun cleanUp() {
-        reader.cleanUp()
     }
 }
 

@@ -1,5 +1,6 @@
 package sparklin.kshell.repl
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
@@ -165,6 +166,19 @@ class ReplTest {
         assertSuccess(repl.eval("fun g(x: JFile)=f(x)"))
         assertSuccess(repl.eval("import java.io.FileInputStream as JFile"))
         assertSuccess(repl.eval("fun f(v: JFile)=v.close()"))
+    }
+
+    @Test
+    fun testWhile() {
+        assertValue(2, repl.eval("""
+           var i = 10
+           var x = 0
+           while (i > 0) {
+                x = 2 * i
+                i --
+           }
+           x
+        """))
     }
 
     private fun assertValue(expected: Any?, result: Result<EvalResult, EvalError>) {

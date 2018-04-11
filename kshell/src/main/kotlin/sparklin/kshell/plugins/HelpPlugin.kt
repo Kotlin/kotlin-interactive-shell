@@ -1,6 +1,5 @@
 package sparklin.kshell.plugins
 
-import sparklin.kshell.console.ConsoleReader
 import sparklin.kshell.BaseCommand
 import sparklin.kshell.Plugin
 import sparklin.kshell.KShell
@@ -22,14 +21,14 @@ class HelpPlugin: Plugin {
             repl.apply {
                 if (args.size == 1) {
                     val help = commands.joinToString(separator = "\n") { it.desc() }
-                    console.println(help)
+                    println(help)
                 } else {
                     val command = args[1]
                     try {
                         val res = commands.first { it.match(":$command") }
-                        console.println(res.help())
+                        println(res.help())
                     } catch (_: NoSuchElementException) {
-                        console.println("$command: no such command. Type :help for help.")
+                        println("$command: no such command. Type :help for help.")
                     }
                 }
             }
@@ -37,11 +36,9 @@ class HelpPlugin: Plugin {
     }
 
     lateinit var repl: KShell
-    lateinit var console: ConsoleReader
 
     override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
-        this.console = config.getConsoleReader()
 
         repl.registerCommand(Help(config))
     }

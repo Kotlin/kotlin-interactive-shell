@@ -2,7 +2,6 @@ package sparklin.kshell.plugins
 
 import sparklin.kshell.*
 import sparklin.kshell.configuration.Configuration
-import sparklin.kshell.console.ConsoleReader
 import sparklin.kshell.repl.*
 import sparklin.kshell.repl.ReplCompiler.Companion.RESULT_FIELD_NAME
 import sparklin.kshell.repl.ReplCompiler.Companion.RUN_FIELD_NAME
@@ -28,12 +27,12 @@ class RuntimePlugin : Plugin {
             val compileResult = repl.compile(expr)
             when (compileResult) {
                 is Result.Incomplete ->
-                    console.println("Incomplete line")
+                    println("Incomplete line")
                 is Result.Error ->
                     repl.handleError(EvalError.CompileError(compileResult.error.message))
                 is Result.Success -> {
                     compileResult.data.classes.type?.let {
-                        console.println(it)
+                        println(it)
                     }
                 }
             }
@@ -53,13 +52,11 @@ class RuntimePlugin : Plugin {
     }
 
     private lateinit var repl: KShell
-    private lateinit var console: ConsoleReader
     private var lastCompiledClasses: CompiledClasses? = null
     private lateinit var table: SymbolsTable
 
     override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
-        this.console = config.getConsoleReader()
         this.table = SymbolsTable(repl.state.history)
 
 

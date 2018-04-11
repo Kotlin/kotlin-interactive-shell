@@ -1,6 +1,5 @@
 package sparklin.hdfsbrowser
 
-import sparklin.kshell.console.ConsoleReader
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import sparklin.kshell.BaseCommand
@@ -15,7 +14,6 @@ import org.apache.hadoop.conf.Configuration as HadoopConfiguration
 class HdfsBrowserPlugin : Plugin {
     private lateinit var repl: KShell
     private lateinit var fs: FileSystem
-    private lateinit var console: ConsoleReader
     private var workingDirectory = "."
 
     inner class LsCommand(conf: Configuration) : BaseCommand() {
@@ -29,7 +27,7 @@ class HdfsBrowserPlugin : Plugin {
             val p = line.indexOf(' ')
             val parseResult = parseOpts(if (p < 0) "" else line.substring(p + 1).trim(), "h")
             when (parseResult) {
-                is ParseResult.ParseError -> console.println(parseResult.msg)
+                is ParseResult.ParseError -> println(parseResult.msg)
                 is ParseResult.ParsedOptions -> {
                     val path = if (parseResult.other.isBlank()) workingDirectory else parseResult.other
                     listFiles(path, parseResult.opts.isNotEmpty())
@@ -41,7 +39,6 @@ class HdfsBrowserPlugin : Plugin {
     override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
         this.fs = FileSystem.get(findHadoopConfiguration(config))
-        this.console = config.getConsoleReader()
 
         repl.registerCommand(LsCommand(config))
     }
@@ -66,7 +63,7 @@ class HdfsBrowserPlugin : Plugin {
         fs.listStatus(Path(path)).forEach {
             val summary = fs.getContentSummary(it.path)
             val size = if (isHumanReadable) calcHumanReadableSize(summary.length) else summary.length.toString()
-            console.println(String.format("%-20s%s", size, it.path))
+            println(String.format("%-20s%s", size, it.path))
         }
     }
 

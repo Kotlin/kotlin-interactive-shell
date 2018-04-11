@@ -1,7 +1,6 @@
 package sparklin.kshell.configuration
 
 import sparklin.kshell.Plugin
-import sparklin.kshell.console.ConsoleReader
 import kotlin.reflect.KProperty
 
 abstract class Configuration {
@@ -20,8 +19,6 @@ abstract class Configuration {
     abstract fun getPlugin(klassName: String): Plugin?
 
     abstract fun plugins(): Iterator<Plugin>
-
-    abstract fun getConsoleReader(): ConsoleReader
 
     inner class DelegateProvider<out T : Any>(private val converter: Converter<T>, val default: () -> T) {
         operator fun <R : Any> getValue(thisRef: R, property: KProperty<*>): T {

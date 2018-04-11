@@ -1,15 +1,11 @@
 package sparklin.kshell
 
-import sparklin.kshell.console.Completer
-
 interface Command {
     fun execute(line: String)
 
     val name: String
 
     val short: String?
-
-    fun completer(): Completer
 
     fun help(): String
 
