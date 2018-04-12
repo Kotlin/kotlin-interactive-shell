@@ -48,7 +48,11 @@
             <artifactId>kshell-repl-api</artifactId>
             <version>0.2-SNAPSHOT</version>
         </dependency>
-
+        <dependency>
+            <groupId>sparklin</groupId>
+            <artifactId>jline3-shaded</artifactId>
+            <version>0.2-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -19,15 +19,14 @@ class Repl(disposable: Disposable,
                 baseClassloader: ClassLoader?  = Thread.currentThread().contextClassLoader) :
             this(Disposer.newDisposable(), compilerConfiguration, messageCollector, baseClasspath, baseClassloader)
 
-    private val compiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
-    private val evaluator = ReplEvaluator(baseClasspath, baseClassloader)
-    internal val state = ReplState(ReentrantReadWriteLock())
+    val compiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
+    val evaluator = ReplEvaluator(baseClasspath, baseClassloader)
+    val state = ReplState(ReentrantReadWriteLock())
 
     fun eval(code: String): Result<EvalResult, EvalError> {
         val res = compiler.compile(state, CodeLine(state.lineIndex.getAndIncrement(), code))
         return when (res) {
             is Result.Error -> Result.Error(res.error)
-            is Result.Incomplete -> Result.Incomplete()
             is Result.Success -> evaluator.eval(state, res.data, null)
         }
     }

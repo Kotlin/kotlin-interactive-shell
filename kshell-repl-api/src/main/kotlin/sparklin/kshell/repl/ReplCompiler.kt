@@ -18,7 +18,7 @@ class ReplCompiler(disposable: Disposable,
                    private val compilerConfiguration: CompilerConfiguration,
                    messageCollector: MessageCollector
 ) {
-    private val checker = ReplChecker(disposable, compilerConfiguration, messageCollector)
+    val checker = ReplChecker(disposable, compilerConfiguration, messageCollector)
 
     private val analyzerEngine = CodeAnalyzer(checker.environment)
 
@@ -26,7 +26,6 @@ class ReplCompiler(disposable: Disposable,
         state.lock.write {
             val lineResult = checker.check(state, codeLine, true)
             val checkedLine = when (lineResult) {
-                is Result.Incomplete -> return Result.Incomplete()
                 is Result.Error -> return Result.Error(lineResult.error)
                 is Result.Success -> lineResult.data
             }
@@ -34,7 +33,7 @@ class ReplCompiler(disposable: Disposable,
             val psiFile = checkedLine.psiFile
             val errorHolder = checkedLine.errorHolder
 
-            val generatedClassname = makeFileBaseName(codeLine)
+            val generatedClassname = codeLine.mkFileName()
 
             val snippets = psiToSnippets(psiFile, generatedClassname)
 
@@ -42,7 +41,7 @@ class ReplCompiler(disposable: Disposable,
             val conflict = snippets.filterIsInstance<DeclarationSnippet>().find { permanents.contains(it.name) }
 
             if (conflict != null) {
-                return Result.Error(EvalError.CompileError("${conflict.name} cannot be replaced"))
+                return Result.Error(EvalError.CompileError(checkedLine.psiFile, false, "${conflict.name} cannot be replaced"))
             }
 
             val (actualSnippets, deferredSnippets) = checkOverloads(snippets)
@@ -64,7 +63,7 @@ class ReplCompiler(disposable: Disposable,
             AnalyzerWithCompilerReport.reportDiagnostics(analysisResult.diagnostics, errorHolder)
 
             if (analysisResult is CodeAnalyzer.AnalyzerResult.Error)
-                return Result.Error(EvalError.CompileError(errorHolder.renderedDiagnostics))
+                return Result.Error(EvalError.CompileError(psiFile, false, errorHolder.renderedDiagnostics))
 
             val expression = psiForObject.getChildOfType<KtObjectDeclaration>()
                     ?.declarations
@@ -122,7 +121,6 @@ class ReplCompiler(disposable: Disposable,
 
                 when (otherResult) {
                     is Result.Error -> otherResult
-                    is Result.Incomplete -> throw IllegalStateException("Should never happen")
                     is Result.Success -> Result.Success(CompilationData(actualSnippets + otherResult.data.snippets, classes + otherResult.data.classes))
                 }
             } else {

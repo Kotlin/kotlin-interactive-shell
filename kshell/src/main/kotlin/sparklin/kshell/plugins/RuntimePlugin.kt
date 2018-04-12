@@ -26,10 +26,8 @@ class RuntimePlugin : Plugin {
 
             val compileResult = repl.compile(expr)
             when (compileResult) {
-                is Result.Incomplete ->
-                    println("Incomplete line")
                 is Result.Error ->
-                    repl.handleError(EvalError.CompileError(compileResult.error.message))
+                    repl.handleError(compileResult.error)
                 is Result.Success -> {
                     compileResult.data.classes.type?.let {
                         println(it)

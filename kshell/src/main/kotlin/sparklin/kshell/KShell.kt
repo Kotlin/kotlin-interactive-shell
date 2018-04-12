@@ -8,9 +8,12 @@ import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.utils.PathUtil
-import org.jline.reader.LineReaderBuilder
-import org.jline.terminal.TerminalBuilder
+import sparklin.kshell.org.jline.reader.LineReaderBuilder
+import sparklin.kshell.org.jline.terminal.TerminalBuilder
 import sparklin.kshell.configuration.Configuration
+import sparklin.kshell.console.KtHighlighter
+import sparklin.kshell.org.jline.reader.LineReader
+import sparklin.kshell.org.jline.utils.AttributedStyle
 import sparklin.kshell.repl.*
 import sparklin.kshell.wrappers.ResultWrapper
 import java.io.Closeable
@@ -36,14 +39,14 @@ open class KShell(val disposable: Disposable,
     val baseClassloader = URLClassLoader(compilerConfiguration.jvmClasspathRoots.map { it.toURI().toURL() }
             .toTypedArray(), classLoader)
 
-    private lateinit var compiler: ReplCompiler
-    private lateinit var evaluator: ReplEvaluator
+    private val compiler: ReplCompiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
+    private val evaluator: ReplEvaluator = ReplEvaluator(classpath, baseClassloader)
     val state = ReplState(ReentrantReadWriteLock())
 
     val incompleteLines = arrayListOf<String>()
     val term = TerminalBuilder.builder().build()
-    val readerBuilder = LineReaderBuilder.builder().terminal(term)
-    val reader = readerBuilder.build()
+    lateinit var readerBuilder: LineReaderBuilder
+    lateinit var reader: LineReader
     val commands = mutableListOf<sparklin.kshell.Command>(FakeQuit())
     val eventManager = EventManager()
 
@@ -56,22 +59,22 @@ open class KShell(val disposable: Disposable,
         override fun execute(line: String) {}
     }
 
-//    open fun buildDefaultCompleter() = Completer.DEFAULT_COMPLETER
-
     fun listCommands(): Iterable<sparklin.kshell.Command> = commands.asIterable()
 
     fun addClasspathRoots(files: List<File>) = compilerConfiguration.addJvmClasspathRoots(files)
 
     fun initEngine() {
-//        reader.apply {
-//            addCompleter(ContextDependentCompleter(commands, incompleteLines::isEmpty, buildDefaultCompleter()))
-//        }
+        val hm = mapOf(KtHighlighter.KotlinElement.KEYWORD to AttributedStyle.BOLD.foreground(AttributedStyle.RED),
+                KtHighlighter.KotlinElement.FUNCTION to AttributedStyle.DEFAULT.foreground(AttributedStyle.YELLOW),
+                KtHighlighter.KotlinElement.NUMBER to AttributedStyle.DEFAULT.foreground(AttributedStyle.CYAN),
+                KtHighlighter.KotlinElement.STRING to AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN),
+                KtHighlighter.KotlinElement.STRING_TEMPLATE to AttributedStyle.BOLD.foreground(AttributedStyle.YELLOW),
+                KtHighlighter.KotlinElement.TYPE to AttributedStyle.DEFAULT.foreground(AttributedStyle.MAGENTA))
+        readerBuilder = LineReaderBuilder.builder().terminal(term).highlighter(KtHighlighter(state, compiler.checker, hm))
+        reader = readerBuilder.build()
 
         configuration.load()
         configuration.plugins().forEach { it.init(this, configuration) }
-
-        compiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
-        evaluator = ReplEvaluator(classpath, baseClassloader)
     }
 
     fun doRun() {
@@ -101,15 +104,16 @@ open class KShell(val disposable: Disposable,
                     val result = eval(source).result
                     when (result) {
                         is Result.Error -> {
-                            incompleteLines.clear()
-                            handleError(result.error)
+                            if (result.error.isIncomplete) {
+                                incompleteLines.add(line)
+                            } else {
+                                incompleteLines.clear()
+                                handleError(result.error)
+                            }
                         }
                         is Result.Success -> {
                             incompleteLines.clear()
                             handleSuccess(result.data)
-                        }
-                        is Result.Incomplete -> {
-                            incompleteLines.add(line)
                         }
                     }
                 }
@@ -135,9 +139,6 @@ open class KShell(val disposable: Disposable,
         state.lock.write {
             val compileResult = compile(source)
             ResultWrapper(when (compileResult) {
-                is Result.Incomplete -> {
-                    Result.Incomplete()
-                }
                 is Result.Error -> {
                     Result.Error<EvalResult, EvalError>(compileResult.error)
                 }

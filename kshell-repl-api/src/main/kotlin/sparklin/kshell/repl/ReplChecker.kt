@@ -46,24 +46,24 @@ class ReplChecker(
 
     private fun createDiagnosticHolder() = ConsoleDiagnosticMessageHolder()
 
-    fun check(state: ReplState, codeLine: CodeLine, isScript: Boolean): Result<CheckedCode, EvalError.CompileError> {
+    fun check(state: ReplState, code: Code, isScript: Boolean): Result<CheckedCode, EvalError.CompileError> {
         state.lock.write {
-            val fileName = makeFileBaseName(codeLine) + (if (isScript) ".kts" else ".kt")
+            val fileName = code.mkFileName() + (if (isScript) ".kts" else ".kt")
             val virtualFile =
-                    LightVirtualFile(fileName, KotlinLanguage.INSTANCE, StringUtil.convertLineSeparators(codeLine.code)).apply {
+                    LightVirtualFile(fileName, KotlinLanguage.INSTANCE, StringUtil.convertLineSeparators(code.source())).apply {
                         charset = CharsetToolkit.UTF8_CHARSET
                     }
 
             val psiFile: KtFile =  psiFileFactory.trySetupPsiForFile(virtualFile, KotlinLanguage.INSTANCE, true, false) as KtFile?
-                        ?: error("File not analyzed at line ${codeLine.no}: ${codeLine.code}")
+                        ?: error("File not analyzed ${code.source()}")
 
             val errorHolder = createDiagnosticHolder()
 
             val syntaxErrorReport = AnalyzerWithCompilerReport.reportSyntaxErrors(psiFile, errorHolder)
 
             return when {
-                syntaxErrorReport.isHasErrors && syntaxErrorReport.isAllErrorsAtEof -> Result.Incomplete()
-                syntaxErrorReport.isHasErrors -> Result.Error(EvalError.CompileError(errorHolder.renderMessage()))
+                syntaxErrorReport.isHasErrors && syntaxErrorReport.isAllErrorsAtEof -> Result.Error(EvalError.CompileError(psiFile, true))
+                syntaxErrorReport.isHasErrors -> Result.Error(EvalError.CompileError(psiFile, false, errorHolder.renderMessage()))
                 else -> Result.Success(CheckedCode(psiFile, errorHolder))
             }
         }

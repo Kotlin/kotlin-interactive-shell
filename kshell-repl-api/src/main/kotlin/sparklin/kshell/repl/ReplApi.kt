@@ -9,14 +9,13 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 sealed class Result<S,E> {
-    class Incomplete<S,E>: Result<S,E>()
     data class Error<S,E>(val error: E): Result<S,E>()
     data class Success<S,E>(val data: S): Result<S,E>()
 }
 
-sealed class EvalError(val message: String) {
-    class CompileError(message: String, val location: CompilerMessageLocation? = null) : EvalError(message)
-    class RuntimeError(message: String, val cause: Exception? = null): EvalError(message)
+sealed class EvalError(val isIncomplete: Boolean, val message: String?) {
+    class CompileError(val psiFile: KtFile, isIncomplete: Boolean, message: String? = null, val location: CompilerMessageLocation? = null) : EvalError(isIncomplete, message)
+    class RuntimeError(message: String, val cause: Exception? = null) : EvalError(false, message)
 }
 
 sealed class EvalResult {
@@ -86,7 +85,15 @@ open class ReplState(val lock: ReentrantReadWriteLock) {
     val history: MutableList<Snippet> = mutableListOf()
 }
 
-data class CodeLine(val no: Int, val code: String, val part: Int = 0)
+interface Code {
+    fun mkFileName(): String
+    fun source(): String
+}
+
+data class CodeLine(val no: Int, val code: String, val part: Int = 0): Code {
+    override fun mkFileName(): String = "Line_$no" + if (part != 0) "_$part" else ""
+    override fun source(): String = code
+}
 
 data class CompilationData(val snippets: List<Snippet>, val classes: CompiledClasses)
 

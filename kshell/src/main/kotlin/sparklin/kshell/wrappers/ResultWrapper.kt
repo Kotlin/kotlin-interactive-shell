@@ -12,15 +12,13 @@ class ResultWrapper(val result: Result<EvalResult, EvalError>) {
 
     fun getStatus(): Status =
             when (result) {
-                is Result.Error -> Status.ERROR
-                is Result.Incomplete -> Status.INCOMPLETE
+                is Result.Error -> if (result.error.isIncomplete) Status.INCOMPLETE else Status.ERROR
                 is Result.Success -> Status.SUCCESS
             }
 
     fun getMessage(): String? =
             when (result) {
                 is Result.Error -> result.error.message
-                is Result.Incomplete -> null
                 is Result.Success -> if (result.data is EvalResult.ValueResult) result.data.toString() else null
             }
 

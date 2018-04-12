@@ -1,7 +1,7 @@
 package sparklin.kshell.plugins
 
-import org.jline.reader.EndOfFileException
-import org.jline.reader.LineReader
+import sparklin.kshell.org.jline.reader.EndOfFileException
+import sparklin.kshell.org.jline.reader.LineReader
 import sparklin.kshell.BaseCommand
 import sparklin.kshell.KShell
 import sparklin.kshell.Plugin
@@ -28,13 +28,12 @@ class PastePlugin : Plugin {
                 }
             } catch (e: EndOfFileException) { }
             val code = buf.toString()
-//            console.addHistoryItem(code)
+//            console.addHistoryItem(source)
             println("// Exiting paste mode, now interpreting.")
             val result = repl.eval(code).result
             when (result) {
                 is Result.Error -> repl.handleError(result.error)
                 is Result.Success -> repl.handleSuccess(result.data)
-                is Result.Incomplete -> repl.handleError(EvalError.CompileError("Incomplete"))
             }
         }
     }

@@ -19,9 +19,6 @@ internal fun getJavaVersion(): Int {
     }
 }
 
-internal fun makeFileBaseName(codeLine: CodeLine) =
-        "Line_${codeLine.no}" + if (codeLine.part != 0) "_${codeLine.part}" else ""
-
 internal fun List<Snippet>.containsWithName(name: String): Boolean =
         this.any { it is NamedSnippet && it.name == name }
 
