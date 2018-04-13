@@ -1,9 +1,6 @@
 package sparklin.kshell.configuration
 
-import sparklin.kshell.plugins.HelpPlugin
-import sparklin.kshell.plugins.LoadFilePlugin
-import sparklin.kshell.plugins.PastePlugin
-import sparklin.kshell.plugins.RuntimePlugin
+import sparklin.kshell.plugins.*
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -13,7 +10,7 @@ class ConfigurationImpl : PropertyBasedConfiguration(Properties(),
         listOf(LoadFilePlugin::class.qualifiedName!!,
         RuntimePlugin::class.qualifiedName!!,
         HelpPlugin::class.qualifiedName!!,
-        PastePlugin::class.qualifiedName!!))  {
+        PastePlugin::class.qualifiedName!!, SyntaxPlugin::class.qualifiedName!!))  {
     override fun load() {
         val path = configPath()
 

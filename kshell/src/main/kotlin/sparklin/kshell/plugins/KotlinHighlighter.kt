@@ -1,4 +1,4 @@
-package sparklin.kshell.console
+package sparklin.kshell.plugins
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.lexer.KtKeywordToken
@@ -14,9 +14,9 @@ import sparklin.kshell.repl.ReplState
 import sparklin.kshell.repl.Result
 import java.util.concurrent.atomic.AtomicInteger
 
-class KtHighlighter(private val state: ReplState,
-                    private val checker: ReplChecker,
-                    private val styles: Map<KotlinElement, AttributedStyle>): Highlighter {
+class KotlinHighlighter(private val state: ReplState,
+                        private val checker: ReplChecker,
+                        private val styles: Map<KotlinElement, AttributedStyle>): Highlighter {
     private val counter = AtomicInteger(0)
 
     override fun highlight(reader: LineReader, buffer: String): AttributedString {

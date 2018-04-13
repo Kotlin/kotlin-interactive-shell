@@ -11,9 +11,7 @@ import org.jetbrains.kotlin.utils.PathUtil
 import sparklin.kshell.org.jline.reader.LineReaderBuilder
 import sparklin.kshell.org.jline.terminal.TerminalBuilder
 import sparklin.kshell.configuration.Configuration
-import sparklin.kshell.console.KtHighlighter
 import sparklin.kshell.org.jline.reader.LineReader
-import sparklin.kshell.org.jline.utils.AttributedStyle
 import sparklin.kshell.repl.*
 import sparklin.kshell.wrappers.ResultWrapper
 import java.io.Closeable
@@ -39,14 +37,17 @@ open class KShell(val disposable: Disposable,
     val baseClassloader = URLClassLoader(compilerConfiguration.jvmClasspathRoots.map { it.toURI().toURL() }
             .toTypedArray(), classLoader)
 
-    private val compiler: ReplCompiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
+    val compiler: ReplCompiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
     private val evaluator: ReplEvaluator = ReplEvaluator(classpath, baseClassloader)
     val state = ReplState(ReentrantReadWriteLock())
 
     val incompleteLines = arrayListOf<String>()
+
     val term = TerminalBuilder.builder().build()
     lateinit var readerBuilder: LineReaderBuilder
     lateinit var reader: LineReader
+    val highlighter = ContextHighlighter()
+
     val commands = mutableListOf<sparklin.kshell.Command>(FakeQuit())
     val eventManager = EventManager()
 
@@ -64,13 +65,7 @@ open class KShell(val disposable: Disposable,
     fun addClasspathRoots(files: List<File>) = compilerConfiguration.addJvmClasspathRoots(files)
 
     fun initEngine() {
-        val hm = mapOf(KtHighlighter.KotlinElement.KEYWORD to AttributedStyle.BOLD.foreground(AttributedStyle.RED),
-                KtHighlighter.KotlinElement.FUNCTION to AttributedStyle.DEFAULT.foreground(AttributedStyle.YELLOW),
-                KtHighlighter.KotlinElement.NUMBER to AttributedStyle.DEFAULT.foreground(AttributedStyle.CYAN),
-                KtHighlighter.KotlinElement.STRING to AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN),
-                KtHighlighter.KotlinElement.STRING_TEMPLATE to AttributedStyle.BOLD.foreground(AttributedStyle.YELLOW),
-                KtHighlighter.KotlinElement.TYPE to AttributedStyle.DEFAULT.foreground(AttributedStyle.MAGENTA))
-        readerBuilder = LineReaderBuilder.builder().terminal(term).highlighter(KtHighlighter(state, compiler.checker, hm))
+        readerBuilder = LineReaderBuilder.builder().terminal(term).highlighter(highlighter)
         reader = readerBuilder.build()
 
         configuration.load()
@@ -86,6 +81,7 @@ open class KShell(val disposable: Disposable,
             if (line == null || isQuitAction(line)) break
 
             if (incompleteLines.isEmpty() && line.startsWith(":") && !line.startsWith("::")) {
+                highlighter.context = ContextHighlighter.Context.COMMAND
                 try {
                     val action = commands.first { it.match(line) }
                     action.execute(line)
@@ -96,6 +92,7 @@ open class KShell(val disposable: Disposable,
                     commandError(e)
                 }
             } else {
+                highlighter.context = ContextHighlighter.Context.CODE
                 if (line.isBlank() && (incompleteLines.isNotEmpty() && incompleteLines.last().isBlank())) {
                     incompleteLines.clear()
                     println("You typed two blank lines. Starting a new command.")

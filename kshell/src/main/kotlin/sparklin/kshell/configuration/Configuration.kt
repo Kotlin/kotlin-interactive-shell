@@ -36,6 +36,8 @@ abstract class Configuration {
 
     fun <T : Any> get(converter: Converter<T>, default: () -> T): DelegateProvider<T> = DelegateProvider(converter, default)
 
+    fun <T : Any> get(converter: Converter<T>, default: T): DelegateProvider<T> = DelegateProvider(converter, { default })
+
     fun get(default: () -> String) = get(IdentityConverter, default)
 
     fun get(default: String) = get({ default })
