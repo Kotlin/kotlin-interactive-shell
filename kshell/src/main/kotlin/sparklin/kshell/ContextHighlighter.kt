@@ -5,12 +5,13 @@ import sparklin.kshell.org.jline.reader.LineReader
 import sparklin.kshell.org.jline.utils.AttributedString
 import sparklin.kshell.org.jline.utils.AttributedStringBuilder
 
-class ContextHighlighter: Highlighter {
+class ContextHighlighter(private val isIncomplete: () -> Boolean): Highlighter {
     private val highlighters = mutableMapOf<Context, Highlighter>()
 
-    var context: Context = Context.CODE
-
     override fun highlight(reader: LineReader, buffer: String): AttributedString {
+        val context = if (isIncomplete() &&
+                buffer.startsWith(":") &&
+                !buffer.startsWith("::")) Context.COMMAND else Context.CODE
         return highlighters.getOrDefault(context, DEFAULT).highlight(reader, buffer)
     }
 

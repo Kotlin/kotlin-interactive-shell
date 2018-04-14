@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class KotlinHighlighter(private val state: ReplState,
                         private val checker: ReplChecker,
-                        private val styles: Map<KotlinElement, AttributedStyle>): Highlighter {
+                        private val styles: SyntaxPlugin.HighlightStyles): Highlighter {
     private val counter = AtomicInteger(0)
 
     override fun highlight(reader: LineReader, buffer: String): AttributedString {
@@ -40,14 +40,14 @@ class KotlinHighlighter(private val state: ReplState,
         for (i in buffer.indices) {
             psi.findElementAt(i)?.let { element ->
                 val st = when {
-                    element.isKeyword() -> style(KotlinElement.KEYWORD)
-                    element.isFunction() -> style(KotlinElement.FUNCTION)
-                    element.isNumber() -> style(KotlinElement.NUMBER)
-                    element.isString() -> style(KotlinElement.STRING)
-                    element.isStringTemplate() -> style(KotlinElement.STRING_TEMPLATE)
-                    element.isType() -> style(KotlinElement.TYPE)
-                    else -> AttributedStyle.DEFAULT
-                }
+                    element.isKeyword() -> styles.keyword
+                    element.isFunction() -> styles.function
+                    element.isNumber() -> styles.number
+                    element.isString() -> styles.string
+                    element.isStringTemplate() -> styles.stringTemplate
+                    element.isType() -> styles.type
+                    else -> null
+                } ?: AttributedStyle.DEFAULT
                 sb.style(st)
                 sb.append(buffer[i])
             }
@@ -68,23 +68,10 @@ class KotlinHighlighter(private val state: ReplState,
         if (e == s) return true
         return ss.any { it == e }
     }
-    private fun style(element: KotlinElement): AttributedStyle = styles.getOrDefault(element, AttributedStyle.DEFAULT)
 
     class CodeFragment(val no: Int, val src: String): Code {
         override fun mkFileName(): String = "Fragment_$no"
 
         override fun source(): String = src
-    }
-
-    enum class KotlinElement {
-        KEYWORD,
-        FUNCTION,
-        VARIABLE,
-        PROPERTY,
-        TYPE,
-        TYPE_PARAMETER,
-        NUMBER,
-        STRING,
-        STRING_TEMPLATE
     }
 }

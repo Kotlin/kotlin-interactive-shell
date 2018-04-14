@@ -46,7 +46,7 @@ open class KShell(val disposable: Disposable,
     val term = TerminalBuilder.builder().build()
     lateinit var readerBuilder: LineReaderBuilder
     lateinit var reader: LineReader
-    val highlighter = ContextHighlighter()
+    val highlighter = ContextHighlighter(incompleteLines::isNotEmpty)
 
     val commands = mutableListOf<sparklin.kshell.Command>(FakeQuit())
     val eventManager = EventManager()
@@ -81,7 +81,6 @@ open class KShell(val disposable: Disposable,
             if (line == null || isQuitAction(line)) break
 
             if (incompleteLines.isEmpty() && line.startsWith(":") && !line.startsWith("::")) {
-                highlighter.context = ContextHighlighter.Context.COMMAND
                 try {
                     val action = commands.first { it.match(line) }
                     action.execute(line)
@@ -92,7 +91,6 @@ open class KShell(val disposable: Disposable,
                     commandError(e)
                 }
             } else {
-                highlighter.context = ContextHighlighter.Context.CODE
                 if (line.isBlank() && (incompleteLines.isNotEmpty() && incompleteLines.last().isBlank())) {
                     incompleteLines.clear()
                     println("You typed two blank lines. Starting a new command.")
