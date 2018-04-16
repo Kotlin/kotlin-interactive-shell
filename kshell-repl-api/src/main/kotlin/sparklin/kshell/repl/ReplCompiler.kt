@@ -22,7 +22,7 @@ class ReplCompiler(disposable: Disposable,
 
     private val analyzerEngine = CodeAnalyzer(checker.environment)
 
-    fun compile(state: ReplState, codeLine: CodeLine, previousStage: List<Snippet> = listOf()): Result<CompilationData, EvalError.CompileError> {
+    fun compile(state: ReplState, codeLine: SourceCode, previousStage: List<Snippet> = listOf()): Result<CompilationData, EvalError.CompileError> {
         state.lock.write {
             val lineResult = checker.check(state, codeLine, true)
             val checkedLine = when (lineResult) {
@@ -52,13 +52,13 @@ class ReplCompiler(disposable: Disposable,
 
             val code = generateKotlinCodeFor(generatedClassname, import + previousStage, actualSnippets)
 
-            val result = checker.check(state, CodeLine(codeLine.no, code, codeLine.part), false)
+            val result = checker.check(state, codeLine.replace(code), false)
             val psiForObject = when (result) {
                 is Result.Success -> result.data.psiFile
                 else -> throw IllegalStateException("Should never happen")
             }
 
-            val analysisResult = analyzerEngine.doAnalyze(psiForObject, codeLine)
+            val analysisResult = analyzerEngine.doAnalyze(psiForObject)
 
             AnalyzerWithCompilerReport.reportDiagnostics(analysisResult.diagnostics, errorHolder)
 
@@ -117,7 +117,7 @@ class ReplCompiler(disposable: Disposable,
 
             return if (deferredSnippets.isNotEmpty()) {
                 val otherCode = deferredSnippets.joinToString(separator = "\n") { it.code() }
-                val otherResult = compile(state, CodeLine(codeLine.no, otherCode, codeLine.part + 1), actualSnippets)
+                val otherResult = compile(state, codeLine.nextPart(otherCode), actualSnippets)
 
                 when (otherResult) {
                     is Result.Error -> otherResult

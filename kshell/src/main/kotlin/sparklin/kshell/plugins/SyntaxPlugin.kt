@@ -5,7 +5,6 @@ import sparklin.kshell.KShell
 import sparklin.kshell.Plugin
 import sparklin.kshell.configuration.BooleanConverter
 import sparklin.kshell.configuration.Configuration
-import sparklin.kshell.ContextHighlighter
 import sparklin.kshell.configuration.Converter
 import sparklin.kshell.org.jline.utils.AttributedStyle
 import sparklin.kshell.org.jline.utils.AttributedStyle.*
@@ -20,7 +19,10 @@ class SyntaxPlugin: Plugin {
         override val params: String = "{on | off}"
 
         init {
-            if (on) repl.highlighter.bind(ContextHighlighter.Context.CODE, syntaxHighlighter)
+            repl.highlighter.apply {
+                syntaxHighlighter = kotlinHighlighter
+                enabled = on
+            }
         }
 
         override fun execute(line: String) {
@@ -32,8 +34,8 @@ class SyntaxPlugin: Plugin {
             }
 
             when (args[1]) {
-                "on" -> repl.highlighter.bind(ContextHighlighter.Context.CODE, syntaxHighlighter)
-                "off" -> repl.highlighter.default(ContextHighlighter.Context.CODE)
+                "on" -> repl.highlighter.enabled = true
+                "off" -> repl.highlighter.enabled = false
                 else -> {
                     println("Unknown option ${args[1]}")
                     println(help())
@@ -48,11 +50,11 @@ class SyntaxPlugin: Plugin {
     }
 
     lateinit var repl: KShell
-    lateinit var syntaxHighlighter: KotlinHighlighter
+    lateinit var kotlinHighlighter: KotlinHighlighter
 
     override fun init(repl: KShell, conf: Configuration) {
         this.repl = repl
-        syntaxHighlighter = KotlinHighlighter(repl.state, repl.compiler.checker, HighlightStylesFromConfiguration(conf))
+        kotlinHighlighter = KotlinHighlighter(repl.state, repl.compiler.checker, HighlightStylesFromConfiguration(conf))
 
         repl.registerCommand(Syntax(conf))
     }

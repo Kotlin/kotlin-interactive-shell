@@ -59,7 +59,7 @@ class CodeAnalyzer(environment: KotlinCoreEnvironment) {
         class Success(diagnostics: Diagnostics) : AnalyzerResult(diagnostics)
     }
 
-    fun doAnalyze(linePsi: KtFile, codeLine: CodeLine): AnalyzerResult {
+    fun doAnalyze(linePsi: KtFile): AnalyzerResult {
         trace.clearDiagnostics()
         scriptDeclarationFactory.setDelegateFactory(FileBasedDeclarationProviderFactory(resolveSession.storageManager, listOf(linePsi)))
         /*val context = */topDownAnalyzer.analyzeDeclarations(topDownAnalysisContext.topDownAnalysisMode, listOf(linePsi))

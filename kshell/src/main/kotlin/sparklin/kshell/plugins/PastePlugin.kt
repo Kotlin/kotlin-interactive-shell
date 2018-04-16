@@ -6,7 +6,6 @@ import sparklin.kshell.BaseCommand
 import sparklin.kshell.KShell
 import sparklin.kshell.Plugin
 import sparklin.kshell.configuration.Configuration
-import sparklin.kshell.repl.EvalError
 import sparklin.kshell.repl.Result
 
 class PastePlugin : Plugin {
@@ -45,7 +44,7 @@ class PastePlugin : Plugin {
     override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
         this.console = repl.reader
-        this.pasteConsole = repl.readerBuilder.build()
+        this.pasteConsole = repl.readerBuilder.highlighter(console.highlighter).build()
 
         repl.registerCommand(Paste(config))
     }

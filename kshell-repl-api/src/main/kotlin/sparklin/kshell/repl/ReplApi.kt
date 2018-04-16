@@ -85,14 +85,19 @@ open class ReplState(val lock: ReentrantReadWriteLock) {
     val history: MutableList<Snippet> = mutableListOf()
 }
 
-interface Code {
+interface SourceCode {
     fun mkFileName(): String
-    fun source(): String
+    fun nextPart(codePart: String): SourceCode
+    fun replace(code: String): SourceCode
+    val no: Int
+    val code: String
+    val part: Int
 }
 
-data class CodeLine(val no: Int, val code: String, val part: Int = 0): Code {
+data class CodeLine(override val no: Int, override val code: String, override val part: Int = 0): SourceCode {
     override fun mkFileName(): String = "Line_$no" + if (part != 0) "_$part" else ""
-    override fun source(): String = code
+    override fun nextPart(codePart: String): CodeLine = CodeLine(no, codePart, part + 1)
+    override fun replace(code: String): CodeLine = CodeLine(no, code, part)
 }
 
 data class CompilationData(val snippets: List<Snippet>, val classes: CompiledClasses)

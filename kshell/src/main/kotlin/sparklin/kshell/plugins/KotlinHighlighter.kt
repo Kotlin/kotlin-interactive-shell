@@ -3,32 +3,19 @@ package sparklin.kshell.plugins
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.psi.*
-import sparklin.kshell.org.jline.reader.Highlighter
-import sparklin.kshell.org.jline.reader.LineReader
 import sparklin.kshell.org.jline.utils.AttributedString
 import sparklin.kshell.org.jline.utils.AttributedStringBuilder
 import sparklin.kshell.org.jline.utils.AttributedStyle
-import sparklin.kshell.repl.Code
-import sparklin.kshell.repl.ReplChecker
-import sparklin.kshell.repl.ReplState
-import sparklin.kshell.repl.Result
+import sparklin.kshell.repl.*
 import java.util.concurrent.atomic.AtomicInteger
 
 class KotlinHighlighter(private val state: ReplState,
                         private val checker: ReplChecker,
-                        private val styles: SyntaxPlugin.HighlightStyles): Highlighter {
-    private val counter = AtomicInteger(0)
-
-    override fun highlight(reader: LineReader, buffer: String): AttributedString {
-        return highlight(buffer)
-    }
-
-    fun highlight(buffer: String): AttributedString {
-        if (buffer.startsWith(":") && !buffer.startsWith("::")) {
-            return AttributedStringBuilder().append(buffer).toAttributedString()
-        }
-
-        val fragment = CodeFragment(counter.getAndIncrement(), buffer)
+                        private val styles: SyntaxPlugin.HighlightStyles): BaseHighlighter {
+    override fun highlight(buffer: String, offset: Int): AttributedString {
+        require(offset >= 0)
+        val code = buffer.substring(offset)
+        val fragment = CodeFragment(code)
         val lineResult = checker.check(state, fragment, true)
 
         val psi = when (lineResult) {
@@ -37,7 +24,8 @@ class KotlinHighlighter(private val state: ReplState,
         }
 
         val sb = AttributedStringBuilder()
-        for (i in buffer.indices) {
+        if (offset != 0) sb.append(buffer.substring(0, offset))
+        for (i in code.indices) {
             psi.findElementAt(i)?.let { element ->
                 val st = when {
                     element.isKeyword() -> styles.keyword
@@ -49,7 +37,7 @@ class KotlinHighlighter(private val state: ReplState,
                     else -> null
                 } ?: AttributedStyle.DEFAULT
                 sb.style(st)
-                sb.append(buffer[i])
+                sb.append(code[i])
             }
         }
         return sb.toAttributedString()
@@ -69,9 +57,11 @@ class KotlinHighlighter(private val state: ReplState,
         return ss.any { it == e }
     }
 
-    class CodeFragment(val no: Int, val src: String): Code {
-        override fun mkFileName(): String = "Fragment_$no"
-
-        override fun source(): String = src
+    private class CodeFragment(override val code: String): SourceCode {
+        override val no: Int = 0
+        override val part: Int = 0
+        override fun mkFileName(): String = "Fragment"
+        override fun nextPart(codePart: String): SourceCode = throw UnsupportedOperationException("Should never happen")
+        override fun replace(code: String): SourceCode = throw UnsupportedOperationException("Should never happen")
     }
 }

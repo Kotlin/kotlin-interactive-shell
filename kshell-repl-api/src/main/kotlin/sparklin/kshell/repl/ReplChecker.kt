@@ -46,16 +46,16 @@ class ReplChecker(
 
     private fun createDiagnosticHolder() = ConsoleDiagnosticMessageHolder()
 
-    fun check(state: ReplState, code: Code, isScript: Boolean): Result<CheckedCode, EvalError.CompileError> {
+    fun check(state: ReplState, code: SourceCode, isScript: Boolean): Result<CheckedCode, EvalError.CompileError> {
         state.lock.write {
             val fileName = code.mkFileName() + (if (isScript) ".kts" else ".kt")
             val virtualFile =
-                    LightVirtualFile(fileName, KotlinLanguage.INSTANCE, StringUtil.convertLineSeparators(code.source())).apply {
+                    LightVirtualFile(fileName, KotlinLanguage.INSTANCE, StringUtil.convertLineSeparators(code.code)).apply {
                         charset = CharsetToolkit.UTF8_CHARSET
                     }
 
             val psiFile: KtFile =  psiFileFactory.trySetupPsiForFile(virtualFile, KotlinLanguage.INSTANCE, true, false) as KtFile?
-                        ?: error("File not analyzed ${code.source()}")
+                        ?: error("File not analyzed ${code.code}")
 
             val errorHolder = createDiagnosticHolder()
 

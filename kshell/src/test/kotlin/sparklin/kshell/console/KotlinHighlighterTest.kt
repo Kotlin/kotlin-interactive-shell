@@ -78,6 +78,13 @@ class KotlinHighlighterTest : ReplTestBase() {
         assertEquals("println(nnnn)", ht.highlight("println(1000)").mnemonics())
     }
 
+    @Test
+    fun testOffset() {
+        val ht = KotlinHighlighter(repl.state, repl.compiler.checker,
+                styles.filter(listOf(number)))
+        assertEquals(":t n + n", ht.highlight(":t 1 + 1", 2).mnemonics())
+    }
+
     private fun  Map<String, AttributedStyle?>.filter(list: List<String>): HighlightStylesFromMap =
             HighlightStylesFromMap(map { if (list.contains(it.key)) Pair(it.key, it.value) else Pair(it.key, null) }.toMap())
 

@@ -46,7 +46,7 @@ open class KShell(val disposable: Disposable,
     val term = TerminalBuilder.builder().build()
     lateinit var readerBuilder: LineReaderBuilder
     lateinit var reader: LineReader
-    val highlighter = ContextHighlighter(incompleteLines::isNotEmpty)
+    val highlighter = ContextHighlighter({ s -> !isCommandMode(s)}, { s -> commands.firstOrNull { it.weakMatch(s) } })
 
     val commands = mutableListOf<sparklin.kshell.Command>(FakeQuit())
     val eventManager = EventManager()
@@ -72,6 +72,10 @@ open class KShell(val disposable: Disposable,
         configuration.plugins().forEach { it.init(this, configuration) }
     }
 
+    private fun isCommandMode(buffer: String): Boolean = incompleteLines.isEmpty()
+                && buffer.startsWith(":")
+                && !buffer.startsWith("::")
+
     fun doRun() {
         initEngine()
 
@@ -80,7 +84,7 @@ open class KShell(val disposable: Disposable,
 
             if (line == null || isQuitAction(line)) break
 
-            if (incompleteLines.isEmpty() && line.startsWith(":") && !line.startsWith("::")) {
+            if (isCommandMode(line)) {
                 try {
                     val action = commands.first { it.match(line) }
                     action.execute(line)
@@ -128,7 +132,9 @@ open class KShell(val disposable: Disposable,
 
     private fun nextLine(code: String) = CodeLine(state.lineIndex.getAndIncrement(), code)
 
-    fun compile(code: String) = compiler.compile(state, nextLine(code))
+    private fun compile(code: String) = compiler.compile(state, nextLine(code))
+
+    fun compile(code: SourceCode) = compiler.compile(state, code)
 
     fun eval(source: String): ResultWrapper =
         state.lock.write {

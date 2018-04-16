@@ -2,9 +2,13 @@ package sparklin.kshell.plugins
 
 import sparklin.kshell.*
 import sparklin.kshell.configuration.Configuration
+import sparklin.kshell.org.jline.reader.Highlighter
+import sparklin.kshell.org.jline.reader.LineReader
+import sparklin.kshell.org.jline.utils.AttributedString
 import sparklin.kshell.repl.*
 import sparklin.kshell.repl.ReplCompiler.Companion.RESULT_FIELD_NAME
 import sparklin.kshell.repl.ReplCompiler.Companion.RUN_FIELD_NAME
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
@@ -19,22 +23,32 @@ class RuntimePlugin : Plugin {
         override val description: String = "display the type of an expression without evaluating it"
 
         override val params = "<expr>"
-
         override fun execute(line: String) {
             val p = line.indexOf(' ')
             val expr = line.substring(p + 1).trim()
 
-            val compileResult = repl.compile(expr)
+            val compileResult = repl.compile(CodeExpr(counter.getAndIncrement(), expr))
             when (compileResult) {
-                is Result.Error ->
-                    repl.handleError(compileResult.error)
-                is Result.Success -> {
-                    compileResult.data.classes.type?.let {
-                        println(it)
-                    }
-                }
+                is Result.Error -> repl.handleError(compileResult.error)
+                is Result.Success -> compileResult.data.classes.type?.let { println(it) }
             }
         }
+
+        override fun highlighter(): Highlighter = customHighlighter
+    }
+
+    private class CustomHighlighter(val baseHighlighter: () -> BaseHighlighter): Highlighter {
+        override fun highlight(reader: LineReader, buffer: String): AttributedString {
+            val p = buffer.indexOf(' ')
+            return baseHighlighter().highlight(buffer, p + 1)
+        }
+    }
+
+    private data class CodeExpr(override val no: Int, override val code: String): SourceCode {
+        override val part: Int = 0
+        override fun mkFileName(): String = "TypeInference_$no"
+        override fun nextPart(codePart: String): SourceCode = throw UnsupportedOperationException("Should never happen")
+        override fun replace(code: String): CodeExpr = CodeExpr(no, code)
     }
 
     inner class ListSymbols(conf: Configuration) : sparklin.kshell.BaseCommand() {
@@ -52,6 +66,8 @@ class RuntimePlugin : Plugin {
     private lateinit var repl: KShell
     private var lastCompiledClasses: CompiledClasses? = null
     private lateinit var table: SymbolsTable
+    private lateinit var customHighlighter: CustomHighlighter
+    private val counter = AtomicInteger(0)
 
     override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
@@ -65,6 +81,7 @@ class RuntimePlugin : Plugin {
         })
 
         repl.invokeWrapper = ExtractSymbols(repl.invokeWrapper, table)
+        customHighlighter = CustomHighlighter({ repl.highlighter.syntaxHighlighter })
 
         repl.registerCommand(InferType(config))
         repl.registerCommand(ListSymbols(config))
