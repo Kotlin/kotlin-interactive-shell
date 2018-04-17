@@ -156,9 +156,12 @@ open class KShell(val disposable: Disposable,
             })
         }
 
-    fun handleError(error: EvalError) {
-        println("Message: ${error.message}")
-    }
+    fun handleError(error: EvalError) = when (error) {
+            is EvalError.RuntimeError -> {
+                if (error.cause != null) error.cause?.printStackTrace() else println("Runtime Error: ${error.message}")
+            }
+            is EvalError.CompileError -> println("Compile Error: ${error.message}")
+        }
 
     fun handleSuccess(result: EvalResult) {
         if (result is EvalResult.ValueResult)
