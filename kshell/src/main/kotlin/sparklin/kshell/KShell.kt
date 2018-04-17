@@ -34,11 +34,14 @@ open class KShell(val disposable: Disposable,
         put<MessageCollector>(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
     }
 
-    val baseClassloader = URLClassLoader(compilerConfiguration.jvmClasspathRoots.map { it.toURI().toURL() }
+    private val baseClassloader = URLClassLoader(compilerConfiguration.jvmClasspathRoots.map { it.toURI().toURL() }
             .toTypedArray(), classLoader)
 
-    val compiler: ReplCompiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
-    private val evaluator: ReplEvaluator = ReplEvaluator(classpath, baseClassloader)
+    lateinit var compiler: ReplCompiler
+        private set
+
+    private lateinit var evaluator: ReplEvaluator
+
     val state = ReplState(ReentrantReadWriteLock())
 
     val incompleteLines = arrayListOf<String>()
@@ -70,6 +73,9 @@ open class KShell(val disposable: Disposable,
 
         configuration.load()
         configuration.plugins().forEach { it.init(this, configuration) }
+
+        compiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
+        evaluator = ReplEvaluator(classpath, baseClassloader)
     }
 
     private fun isCommandMode(buffer: String): Boolean = incompleteLines.isEmpty()

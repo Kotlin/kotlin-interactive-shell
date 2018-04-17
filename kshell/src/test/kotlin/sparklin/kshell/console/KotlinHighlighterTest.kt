@@ -50,13 +50,13 @@ class KotlinHighlighterTest : ReplTestBase() {
 
     @Test
     fun testFunction() {
-        val ht = KotlinHighlighter(repl.state, repl.compiler.checker, styles.filter(listOf(keyword, function)))
+        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker }, styles.filter(listOf(keyword, function)))
         assertEquals("kkk f(x: Int) = x", ht.highlight("fun g(x: Int) = x").mnemonics())
     }
 
     @Test
     fun testType() {
-        val ht = KotlinHighlighter(repl.state, repl.compiler.checker,
+        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
                 styles.filter(listOf(type)))
         assertEquals("fun g(x: ttt): ttt = x", ht.highlight("fun g(x: Int): Int = x").mnemonics())
         assertEquals("val x: tttttt = 1.0", ht.highlight("val x: Double = 1.0").mnemonics())
@@ -64,14 +64,14 @@ class KotlinHighlighterTest : ReplTestBase() {
 
     @Test
     fun testString() {
-        val ht = KotlinHighlighter(repl.state, repl.compiler.checker,
+        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
                 styles.filter(listOf(string, stringTemplate)))
         assertEquals("sssssss\$\$world\$s\$xs", ht.highlight("\"hello \${world} \$x\"").mnemonics())
     }
 
     @Test
     fun testNumber() {
-        val ht = KotlinHighlighter(repl.state, repl.compiler.checker,
+        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
                 styles.filter(listOf(number)))
         assertEquals("val x: Double = nnn", ht.highlight("val x: Double = 1.0").mnemonics())
         assertEquals("val x: Double = nnnn", ht.highlight("val x: Double = 1.0f").mnemonics())
@@ -80,7 +80,7 @@ class KotlinHighlighterTest : ReplTestBase() {
 
     @Test
     fun testOffset() {
-        val ht = KotlinHighlighter(repl.state, repl.compiler.checker,
+        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
                 styles.filter(listOf(number)))
         assertEquals(":t n + n", ht.highlight(":t 1 + 1", 2).mnemonics())
     }

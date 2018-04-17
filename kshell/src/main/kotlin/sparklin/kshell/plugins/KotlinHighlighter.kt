@@ -2,21 +2,25 @@ package sparklin.kshell.plugins
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.lexer.KtKeywordToken
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtUserType
 import sparklin.kshell.org.jline.utils.AttributedString
 import sparklin.kshell.org.jline.utils.AttributedStringBuilder
 import sparklin.kshell.org.jline.utils.AttributedStyle
-import sparklin.kshell.repl.*
-import java.util.concurrent.atomic.AtomicInteger
+import sparklin.kshell.repl.ReplChecker
+import sparklin.kshell.repl.ReplState
+import sparklin.kshell.repl.Result
+import sparklin.kshell.repl.SourceCode
 
-class KotlinHighlighter(private val state: ReplState,
-                        private val checker: ReplChecker,
+class KotlinHighlighter(private val state: ReplState, private val checker: () -> ReplChecker,
                         private val styles: SyntaxPlugin.HighlightStyles): BaseHighlighter {
+
+
     override fun highlight(buffer: String, offset: Int): AttributedString {
         require(offset >= 0)
         val code = buffer.substring(offset)
         val fragment = CodeFragment(code)
-        val lineResult = checker.check(state, fragment, true)
+        val lineResult = checker().check(state, fragment, true)
 
         val psi = when (lineResult) {
             is Result.Error -> lineResult.error.psiFile

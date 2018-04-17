@@ -52,11 +52,11 @@ class SyntaxPlugin: Plugin {
     lateinit var repl: KShell
     lateinit var kotlinHighlighter: KotlinHighlighter
 
-    override fun init(repl: KShell, conf: Configuration) {
+    override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
-        kotlinHighlighter = KotlinHighlighter(repl.state, repl.compiler.checker, HighlightStylesFromConfiguration(conf))
+        kotlinHighlighter = KotlinHighlighter(repl.state, { repl.compiler.checker }, HighlightStylesFromConfiguration(config))
 
-        repl.registerCommand(Syntax(conf))
+        repl.registerCommand(Syntax(config))
     }
 
     override fun cleanUp() { }
