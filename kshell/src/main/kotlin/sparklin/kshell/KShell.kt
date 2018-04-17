@@ -160,7 +160,7 @@ open class KShell(val disposable: Disposable,
             is EvalError.RuntimeError -> {
                 if (error.cause != null) error.cause?.printStackTrace() else println("Runtime Error: ${error.message}")
             }
-            is EvalError.CompileError -> println("Compile Error: ${error.message}")
+            is EvalError.CompileError -> println(error.message)
         }
 
     fun handleSuccess(result: EvalResult) {
