@@ -5,6 +5,7 @@ import org.apache.hadoop.fs.Path
 import sparklin.kshell.BaseCommand
 import sparklin.kshell.KShell
 import sparklin.kshell.Plugin
+import sparklin.kshell.calcHumanReadableSize
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.plugins.SparkPlugin
 import kotlin.reflect.KClass
@@ -65,14 +66,6 @@ class HdfsBrowserPlugin : Plugin {
             val size = if (isHumanReadable) calcHumanReadableSize(summary.length) else summary.length.toString()
             println(String.format("%-20s%s", size, it.path))
         }
-    }
-
-    private fun calcHumanReadableSize(bytes: Long, si: Boolean = false): String {
-        val unit = if (si) 1000 else 1024
-        if (bytes < unit) return "$bytes B"
-        val exp = (Math.log(bytes.toDouble()) / Math.log(unit.toDouble())).toInt()
-        val pre = (if (si) "kMGTPE" else "KMGTPE")[exp - 1] + if (si) "" else "i"
-        return String.format("%.1f %sB", bytes / Math.pow(unit.toDouble(), exp.toDouble()), pre)
     }
 
     override fun cleanUp() { }

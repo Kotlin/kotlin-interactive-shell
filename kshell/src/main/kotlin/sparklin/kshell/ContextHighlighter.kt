@@ -8,12 +8,10 @@ import sparklin.kshell.plugins.BaseHighlighter
 
 class ContextHighlighter(private val isSyntaxMode: (String) -> Boolean,
                          private val findCommand: (String) -> Command?): Highlighter {
-    var enabled: Boolean = false
 
     var syntaxHighlighter: BaseHighlighter = DEFAULT
 
     override fun highlight(reader: LineReader, buffer: String): AttributedString {
-        if (!enabled) return DEFAULT.highlight(reader, buffer)
         if (isSyntaxMode(buffer)) return syntaxHighlighter.highlight(reader, buffer)
         val highlighter = findCommand(buffer)?.highlighter() ?: DEFAULT
         return highlighter.highlight(reader, buffer)

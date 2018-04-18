@@ -6,6 +6,7 @@ import sparklin.kshell.Plugin
 import sparklin.kshell.configuration.BooleanConverter
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.configuration.Converter
+import sparklin.kshell.org.jline.reader.LineReader
 import sparklin.kshell.org.jline.utils.AttributedStyle
 import sparklin.kshell.org.jline.utils.AttributedStyle.*
 
@@ -21,7 +22,7 @@ class SyntaxPlugin: Plugin {
         init {
             repl.highlighter.apply {
                 syntaxHighlighter = kotlinHighlighter
-                enabled = on
+                reader.option(LineReader.Option.DISABLE_HIGHLIGHTER, !on)
             }
         }
 
@@ -34,8 +35,8 @@ class SyntaxPlugin: Plugin {
             }
 
             when (args[1]) {
-                "on" -> repl.highlighter.enabled = true
-                "off" -> repl.highlighter.enabled = false
+                "on" -> reader.option(LineReader.Option.DISABLE_HIGHLIGHTER, false)
+                "off" -> reader.option(LineReader.Option.DISABLE_HIGHLIGHTER, true)
                 else -> {
                     println("Unknown option ${args[1]}")
                     println(help())
@@ -51,10 +52,12 @@ class SyntaxPlugin: Plugin {
 
     lateinit var repl: KShell
     lateinit var kotlinHighlighter: KotlinHighlighter
+    lateinit var reader: LineReader
 
     override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
-        kotlinHighlighter = KotlinHighlighter(repl.state, { repl.compiler.checker }, HighlightStylesFromConfiguration(config))
+        this.reader = repl.reader
+        kotlinHighlighter = KotlinHighlighter(repl.state, repl::checker, HighlightStylesFromConfiguration(config))
 
         repl.registerCommand(Syntax(config))
     }

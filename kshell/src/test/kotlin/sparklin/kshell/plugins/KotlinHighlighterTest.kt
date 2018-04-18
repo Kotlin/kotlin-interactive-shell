@@ -1,4 +1,4 @@
-package sparklin.kshell.console
+package sparklin.kshell.plugins
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -6,8 +6,6 @@ import sparklin.kshell.repl.ReplTestBase
 import sparklin.kshell.org.jline.utils.AttributedString
 import sparklin.kshell.org.jline.utils.AttributedStyle
 import sparklin.kshell.org.jline.utils.AttributedStyle.*
-import sparklin.kshell.plugins.KotlinHighlighter
-import sparklin.kshell.plugins.SyntaxPlugin
 
 class KotlinHighlighterTest : ReplTestBase() {
     private val keyword = "keyword"

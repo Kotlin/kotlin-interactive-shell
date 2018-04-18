@@ -16,16 +16,12 @@ interface Command {
     fun highlighter(): Highlighter? = null
 }
 
-fun Command.match(line: String): Boolean {
-    val ind = line.indexOf(' ')
-    val command = if (ind < 0) line else line.substring(0, ind)
-    return (short != null && command.equals(":$short", ignoreCase = true)) ||
-            command.equals(":$name", ignoreCase = true)
-}
+fun Command.match(line: String): Boolean = match(line, { x, y -> x.equals(y, ignoreCase = true) })
 
-fun Command.weakMatch(line: String): Boolean {
+fun Command.weakMatch(line: String): Boolean = match(line, { x, y -> x.startsWith(y, ignoreCase = true) })
+
+inline fun Command.match(line: String, func: (String, String) -> Boolean): Boolean {
     val ind = line.indexOf(' ')
     val command = if (ind < 0) line else line.substring(0, ind)
-    return (short != null && command.startsWith(":$short", ignoreCase = true)) ||
-            command.startsWith(":$name", ignoreCase = true)
+    return (short != null && func(command, ":$short")) || func(command, ":$name")
 }

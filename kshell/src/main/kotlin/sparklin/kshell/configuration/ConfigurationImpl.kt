@@ -8,9 +8,11 @@ import java.util.*
 
 class ConfigurationImpl : PropertyBasedConfiguration(Properties(),
         listOf(LoadFilePlugin::class.qualifiedName!!,
-        RuntimePlugin::class.qualifiedName!!,
-        HelpPlugin::class.qualifiedName!!,
-        PastePlugin::class.qualifiedName!!, SyntaxPlugin::class.qualifiedName!!))  {
+                RuntimePlugin::class.qualifiedName!!,
+                HelpPlugin::class.qualifiedName!!,
+                PastePlugin::class.qualifiedName!!,
+                SyntaxPlugin::class.qualifiedName!!,
+                PromptPlugin::class.qualifiedName!!)) {
     override fun load() {
         val path = configPath()
 
@@ -21,6 +23,5 @@ class ConfigurationImpl : PropertyBasedConfiguration(Properties(),
         super.load()
     }
 
-    private fun configPath() = System.getProperty("config.path") ?:
-        (System.getProperty("user.home") ?: "") + File.separator + ".kshell"
+    private fun configPath() = System.getProperty("config.path") ?: (System.getProperty("user.home") ?: "") + File.separator+".kshell"
 }

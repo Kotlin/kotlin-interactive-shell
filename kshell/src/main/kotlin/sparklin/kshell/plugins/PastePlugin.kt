@@ -27,7 +27,6 @@ class PastePlugin : Plugin {
                 }
             } catch (e: EndOfFileException) { }
             val code = buf.toString()
-//            console.addHistoryItem(source)
             println("// Exiting paste mode, now interpreting.")
             val result = repl.eval(code).result
             when (result) {
@@ -45,6 +44,7 @@ class PastePlugin : Plugin {
         this.repl = repl
         this.console = repl.reader
         this.pasteConsole = repl.readerBuilder.highlighter(console.highlighter).build()
+        pasteConsole.option(LineReader.Option.DISABLE_HIGHLIGHTER, console.isSet(LineReader.Option.DISABLE_HIGHLIGHTER))
 
         repl.registerCommand(Paste(config))
     }

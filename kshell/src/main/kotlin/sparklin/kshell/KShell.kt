@@ -12,6 +12,7 @@ import sparklin.kshell.org.jline.reader.LineReaderBuilder
 import sparklin.kshell.org.jline.terminal.TerminalBuilder
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.org.jline.reader.LineReader
+import sparklin.kshell.org.jline.reader.impl.history.DefaultHistory
 import sparklin.kshell.repl.*
 import sparklin.kshell.wrappers.ResultWrapper
 import java.io.Closeable
@@ -25,7 +26,7 @@ open class KShell(val disposable: Disposable,
                   val messageCollector: MessageCollector,
                   val classpath: List<File>,
                   val moduleName: String,
-                  val classLoader: ClassLoader) : Closeable {
+                  val classLoader: ClassLoader) {
 
     private val compilerConfiguration = CompilerConfiguration().apply {
         addJvmClasspathRoots(PathUtil.getJdkClassesRoots(File(System.getProperty("java.home"))))
@@ -56,6 +57,13 @@ open class KShell(val disposable: Disposable,
 
     var invokeWrapper: InvokeWrapper? = null
 
+    var prompt = {
+        if (incompleteLines.isEmpty())
+        "kotlin> "
+        else
+        "... "
+    }
+
     private class FakeQuit: sparklin.kshell.BaseCommand() {
         override val name: String = "quit"
         override val short: String = "q"
@@ -74,6 +82,9 @@ open class KShell(val disposable: Disposable,
         configuration.load()
         configuration.plugins().forEach { it.init(this, configuration) }
 
+        reader.setVariable(LineReader.HISTORY_FILE, configuration.get(LineReader.HISTORY_FILE,
+                System.getProperty("user.home") + File.separator + ".kshell_history"))
+
         compiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
         evaluator = ReplEvaluator(classpath, baseClassloader)
     }
@@ -86,7 +97,7 @@ open class KShell(val disposable: Disposable,
         initEngine()
 
         do {
-            val line = reader.readLine(getPrompt())
+            val line = reader.readLine(prompt())
 
             if (line == null || isQuitAction(line)) break
 
@@ -168,23 +179,15 @@ open class KShell(val disposable: Disposable,
             println(result.toString())
     }
 
-    fun getPrompt() =
-        if (incompleteLines.isEmpty())
-            "kotlin [${state.lineIndex.get()}]> "
-        else
-            "... "
-
-
-    open fun commandError(e: Exception) {
+    private fun commandError(e: Exception) {
         e.printStackTrace()
     }
 
-    override fun close() {
-        disposable.dispose()
+    fun cleanUp() {
+        reader.history.save()
     }
 
-    open fun cleanUp() {
-    }
+    fun checker() = compiler.checker
 }
 
 class OnCompile(private val data: CompilationData) : Event<CompilationData> {
