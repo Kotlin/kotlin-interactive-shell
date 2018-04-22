@@ -45,6 +45,7 @@ class PastePlugin : Plugin {
         this.console = repl.reader
         this.pasteConsole = repl.readerBuilder.highlighter(console.highlighter).build()
         pasteConsole.option(LineReader.Option.DISABLE_HIGHLIGHTER, console.isSet(LineReader.Option.DISABLE_HIGHLIGHTER))
+        pasteConsole.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "")
 
         repl.registerCommand(Paste(config))
     }

@@ -17,6 +17,19 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.valueParameters
 
 class RuntimePlugin : Plugin {
+    inner class Imports(conf: Configuration): BaseCommand() {
+        override val name: String by conf.get(default = "imports ")
+        override val short: String by conf.get(default = "i")
+
+        override val description: String = "Show imports"
+
+        override fun execute(line: String) {
+            repl.state.history
+                    .filterIsInstance<ImportSnippet>()
+                    .forEach { println(it.psi.text) }
+        }
+    }
+
     inner class InferType(conf: Configuration): BaseCommand() {
         override val name: String by conf.get(default = "type")
         override val short: String by conf.get(default = "t")
@@ -85,6 +98,7 @@ class RuntimePlugin : Plugin {
 
         repl.registerCommand(InferType(config))
         repl.registerCommand(ListSymbols(config))
+        repl.registerCommand(Imports(config))
     }
 
     override fun cleanUp() { }

@@ -14,8 +14,8 @@ class PromptPlugin: Plugin {
         override val description: String = "customize prompt"
         override val params: String = "[pattern]"
 
-        private val pattern: String by conf.get(default = "[%l] ")
-        private val incomplete: String by conf.get(default = "... ")
+        private val pattern: String by conf.get(default = "[%l]")
+        private val incomplete: String by conf.get(default = "...")
 
         init {
             this@PromptPlugin.pattern = pattern
@@ -25,7 +25,7 @@ class PromptPlugin: Plugin {
         override fun execute(line: String) {
             val p = line.indexOf(' ')
             if (p > 0) {
-                this@PromptPlugin.pattern = line.substring(p + 1)
+                this@PromptPlugin.pattern = line.substring(p + 1).trim()
             } else {
                 help()
             }
@@ -64,7 +64,7 @@ class PromptPlugin: Plugin {
 
     private fun maxMemory() = calcHumanReadableSize(Runtime.getRuntime().maxMemory())
 
-    private fun promptFunc(): String = if (repl.incompleteLines.isNotEmpty()) incomplete else format(pattern, types)
+    private fun promptFunc(): String = if (repl.incompleteLines.isNotEmpty()) incomplete else format("$pattern ", types)
 
     fun registerCustomType(type: String, display: ()  -> String) {
         // TODO: check conflicts
