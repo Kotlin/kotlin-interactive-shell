@@ -14,6 +14,7 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KVariance
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.valueParameters
 
 class RuntimePlugin : Plugin {
@@ -21,7 +22,7 @@ class RuntimePlugin : Plugin {
         override val name: String by conf.get(default = "imports ")
         override val short: String by conf.get(default = "i")
 
-        override val description: String = "Show imports"
+        override val description: String = "show imports"
 
         override fun execute(line: String) {
             repl.state.history
@@ -116,7 +117,9 @@ sealed class Symbol(val namespace: String, val name: String, val kind: SymbolKin
 
 class ClassSymbol(namespace: String, name: String, private val clazz: KClass<*>): Symbol(namespace, name, SymbolKind.CLASS) {
     override fun show(): String {
-        return "class $name"
+        val constructor = clazz.primaryConstructor?.let { FunctionSymbol.show(it, true) } ?: ""
+        val data = if (clazz.isData) "data " else ""
+        return "${data}class $name$constructor"
     }
 }
 
@@ -129,17 +132,21 @@ class InstanceSymbol(namespace: String, name: String, private val obj: Any?, pri
 }
 
 class FunctionSymbol(namespace: String, name: String, private val func: KFunction<*>): Symbol(namespace, name, SymbolKind.FUNCTION) {
-    override fun show(): String {
-        val tp = if (func.typeParameters.isNotEmpty()) "<" + func.typeParameters.joinToString(separator = ",") {
-            (if (it.variance != KVariance.INVARIANT) "${it.variance} ${it.name}" else it.name) +
-                    (if (it.upperBounds.isNotEmpty()) ": ${it.upperBounds.joinToString(separator = ",")}" else "")
+    override fun show(): String  = Companion.show(func)
+
+    companion object {
+        fun show(func: KFunction<*>, isConstructor: Boolean = false): String {
+            val tp = if (func.typeParameters.isNotEmpty()) "<" + func.typeParameters.joinToString(separator = ",") {
+                (if (it.variance != KVariance.INVARIANT) "${it.variance} ${it.name}" else it.name) +
+                        (if (it.upperBounds.isNotEmpty()) ": ${it.upperBounds.joinToString(separator = ",")}" else "")
             } + "> " else ""
 
-        val vp = func.valueParameters.joinToString(separator = ",") {
-            it.name + ": " + it.type
-        }
+            val vp = func.valueParameters.joinToString(separator = ", ") {
+                it.name + ": " + it.type
+            }
 
-        return "fun $tp$name($vp): ${func.returnType}"
+            return if (isConstructor) "${tp.trim()}($vp)" else "fun $tp${func.name}($vp): ${func.returnType}"
+        }
     }
 }
 
@@ -157,15 +164,16 @@ class SymbolsTable(val history: List<Snippet>) {
     fun list(pattern: String? = null, kinds: List<SymbolKind> =
             listOf(SymbolKind.INSTANCE, SymbolKind.FUNCTION, SymbolKind.CLASS)): List<String> {
         val regex = pattern?.let { Regex(it) }
-        return symbols.filter { kinds.contains(it.kind) && !isShadowed(it)
+        return symbols.filter { kinds.contains(it.kind) && !isShadowed(it) &&
                 (regex == null || it.name.matches(regex)) }.map {
             it.show()
         }
     }
 
-    fun isShadowed(symbol: Symbol) =
-        history.filterIsInstance<NamedSnippet>().findLast { it.klass == symbol.namespace && it.name == symbol.name } != null
-
+    fun isShadowed(symbol: Symbol): Boolean = history
+            .filterIsInstance<DeclarationSnippet>()
+            .findLast { it.klass == symbol.namespace && it.name == symbol.name }
+            ?.shadowed ?: false
 }
 
 class ExtractSymbols(private val wrapper: InvokeWrapper?, private val table: SymbolsTable): InvokeWrapper {
