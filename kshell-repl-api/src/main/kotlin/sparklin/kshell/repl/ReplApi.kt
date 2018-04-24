@@ -9,14 +9,13 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 sealed class Result<S,E> {
-    class Incomplete<S,E>: Result<S,E>()
     data class Error<S,E>(val error: E): Result<S,E>()
     data class Success<S,E>(val data: S): Result<S,E>()
 }
 
-sealed class EvalError(val message: String) {
-    class CompileError(message: String, val location: CompilerMessageLocation? = null) : EvalError(message)
-    class RuntimeError(message: String, val cause: Exception? = null): EvalError(message)
+sealed class EvalError(val isIncomplete: Boolean, val message: String?) {
+    class CompileError(val psiFile: KtFile, isIncomplete: Boolean, message: String? = null, val location: CompilerMessageLocation? = null) : EvalError(isIncomplete, message)
+    class RuntimeError(message: String, val cause: Exception? = null) : EvalError(false, message)
 }
 
 sealed class EvalResult {
@@ -86,7 +85,20 @@ open class ReplState(val lock: ReentrantReadWriteLock) {
     val history: MutableList<Snippet> = mutableListOf()
 }
 
-data class CodeLine(val no: Int, val code: String, val part: Int = 0)
+interface SourceCode {
+    fun mkFileName(): String
+    fun nextPart(codePart: String): SourceCode
+    fun replace(code: String): SourceCode
+    val no: Int
+    val code: String
+    val part: Int
+}
+
+data class CodeLine(override val no: Int, override val code: String, override val part: Int = 0): SourceCode {
+    override fun mkFileName(): String = "Line_$no" + if (part != 0) "_$part" else ""
+    override fun nextPart(codePart: String): CodeLine = CodeLine(no, codePart, part + 1)
+    override fun replace(code: String): CodeLine = CodeLine(no, code, part)
+}
 
 data class CompilationData(val snippets: List<Snippet>, val classes: CompiledClasses)
 

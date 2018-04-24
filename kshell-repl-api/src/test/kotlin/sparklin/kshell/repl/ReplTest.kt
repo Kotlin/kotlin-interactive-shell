@@ -1,43 +1,10 @@
 package sparklin.kshell.repl
 
-import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
-import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
-import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
-import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.utils.PathUtil
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
-import org.junit.Before
 import org.junit.Test
-import java.io.File
-import java.net.URLClassLoader
 
-class ReplTest {
-    private lateinit var repl: Repl
-
-    @Before
-    fun setup() {
-        val messageCollector: MessageCollector = PrintingMessageCollector(System.out, MessageRenderer.WITHOUT_PATHS, false)
-        val moduleName = "my-module"
-
-        val classpath = listOf(PathUtil.stdlibPathForJar())
-
-        val conf = CompilerConfiguration().apply {
-            addJvmClasspathRoots(PathUtil.getJdkClassesRoots(File(System.getProperty("java.home"))))
-            addJvmClasspathRoots(classpath)
-            put(CommonConfigurationKeys.MODULE_NAME, moduleName)
-            put<MessageCollector>(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
-        }
-
-        val baseClassloader = URLClassLoader(conf.jvmClasspathRoots.map { it.toURI().toURL() }
-                .toTypedArray(), javaClass.classLoader)
-
-        repl = Repl(conf, messageCollector, classpath, baseClassloader)
-    }
+class ReplTest : ReplTestBase() {
 
     @Test
     fun testSimpleValue() {
@@ -165,6 +132,19 @@ class ReplTest {
         assertSuccess(repl.eval("fun g(x: JFile)=f(x)"))
         assertSuccess(repl.eval("import java.io.FileInputStream as JFile"))
         assertSuccess(repl.eval("fun f(v: JFile)=v.close()"))
+    }
+
+    @Test
+    fun testWhile() {
+        assertValue(2, repl.eval("""
+           var i = 10
+           var x = 0
+           while (i > 0) {
+                x = 2 * i
+                i --
+           }
+           x
+        """))
     }
 
     private fun assertValue(expected: Any?, result: Result<EvalResult, EvalError>) {

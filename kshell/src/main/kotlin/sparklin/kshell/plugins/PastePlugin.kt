@@ -1,11 +1,12 @@
 package sparklin.kshell.plugins
 
+import sparklin.kshell.org.jline.reader.EndOfFileException
+import sparklin.kshell.org.jline.reader.LineReader
 import sparklin.kshell.BaseCommand
 import sparklin.kshell.KShell
 import sparklin.kshell.Plugin
-import sparklin.kshell.configuration.CachedInstance
 import sparklin.kshell.configuration.Configuration
-import sparklin.kshell.console.ConsoleReader
+import sparklin.kshell.repl.Result
 
 class PastePlugin : Plugin {
     inner class Paste(conf: Configuration): BaseCommand() {
@@ -17,42 +18,37 @@ class PastePlugin : Plugin {
             println("// Entering paste mode (ctrl-D to finish)")
             val buf = StringBuilder()
             var lineCount = 0
-            while(true) {
-                val s = pasteConsole.readLine()
-                if (s == null) {
-                    break
-                } else {
+            try {
+                while (true) {
+                    val s = pasteConsole.readLine("")
                     buf.append(s)
                     buf.append('\n')
-                    lineCount ++
+                    lineCount++
                 }
-            }
+            } catch (e: EndOfFileException) { }
             val code = buf.toString()
-            console.addHistoryItem(code)
             println("// Exiting paste mode, now interpreting.")
-            repl.eval(code)
+            val result = repl.eval(code).result
+            when (result) {
+                is Result.Error -> repl.handleError(result.error)
+                is Result.Success -> repl.handleSuccess(result.data)
+            }
         }
     }
 
     lateinit var repl: KShell
-    lateinit var console: ConsoleReader
-    lateinit var pasteConsole: ConsoleReader
+    lateinit var console: LineReader
+    lateinit var pasteConsole: LineReader
 
     override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
-        this.console = config.getConsoleReader()
-        this.pasteConsole = getPasteConsoleReader(config)
+        this.console = repl.reader
+        this.pasteConsole = repl.readerBuilder.highlighter(console.highlighter).build()
+        pasteConsole.option(LineReader.Option.DISABLE_HIGHLIGHTER, console.isSet(LineReader.Option.DISABLE_HIGHLIGHTER))
+        pasteConsole.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "")
 
         repl.registerCommand(Paste(config))
     }
 
     override fun cleanUp() { }
-
-    private fun getPasteConsoleReader(config: Configuration): ConsoleReader {
-        val klassName = config.get("console.class","sparklin.kshell.console.jline2.ConsoleReaderImpl")
-        val reader = CachedInstance<ConsoleReader>().
-                load(klassName, ConsoleReader::class)
-        reader.init(config)
-        return reader
-    }
 }

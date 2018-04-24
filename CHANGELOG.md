@@ -3,17 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [0.2]
 ### Added
+- Syntax highlight.
 - JShell-like Kotlin snippets.
 - Completely new REPL architecture with object based class layout `kshell-repl-api`.
 - HDFS browser plugin.
 - Kotlin interpreter for Zeppelin.
 
 ### Changed
+- Switch to JLine3
 - Kotlin version 1.2.20 -> 1.2.30.
 - Unit testes moved to `kshell-repl-api`.
 
 ### Fixed
-- Custom REPL fixes [#7](https://github.com/khud/sparklin/issues/7)
+- Custom REPL fixes [#7](https://github.com/khud/sparklin/issues/7).
 - Problem with custom commands which start with the same letter.
 
 ### Removed
@@ -30,8 +32,8 @@ All notable changes to this project will be documented in this file.
 - Added 2 methods to `ConsoleReader` to support history changes.
 
 ### Fixed
-- Problem with multiline code [#9](https://github.com/khud/sparklin/issues/9)
-- Doubled colon problem [#10](https://github.com/khud/sparklin/issues/10)
+- Problem with multiline code [#9](https://github.com/khud/sparklin/issues/9).
+- Doubled colon problem [#10](https://github.com/khud/sparklin/issues/10).
 
 ## [0.1.1] - 2018-02-08
 ### Added

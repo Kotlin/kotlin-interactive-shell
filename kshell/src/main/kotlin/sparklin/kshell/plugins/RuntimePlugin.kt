@@ -2,42 +2,67 @@ package sparklin.kshell.plugins
 
 import sparklin.kshell.*
 import sparklin.kshell.configuration.Configuration
-import sparklin.kshell.console.ConsoleReader
+import sparklin.kshell.org.jline.reader.Highlighter
+import sparklin.kshell.org.jline.reader.LineReader
+import sparklin.kshell.org.jline.utils.AttributedString
 import sparklin.kshell.repl.*
 import sparklin.kshell.repl.ReplCompiler.Companion.RESULT_FIELD_NAME
 import sparklin.kshell.repl.ReplCompiler.Companion.RUN_FIELD_NAME
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KVariance
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.valueParameters
 
 class RuntimePlugin : Plugin {
+    inner class Imports(conf: Configuration): BaseCommand() {
+        override val name: String by conf.get(default = "imports ")
+        override val short: String by conf.get(default = "i")
+
+        override val description: String = "show imports"
+
+        override fun execute(line: String) {
+            repl.state.history
+                    .filterIsInstance<ImportSnippet>()
+                    .forEach { println(it.psi.text) }
+        }
+    }
+
     inner class InferType(conf: Configuration): BaseCommand() {
         override val name: String by conf.get(default = "type")
         override val short: String by conf.get(default = "t")
         override val description: String = "display the type of an expression without evaluating it"
 
         override val params = "<expr>"
-
         override fun execute(line: String) {
             val p = line.indexOf(' ')
             val expr = line.substring(p + 1).trim()
 
-            val compileResult = repl.compile(expr)
+            val compileResult = repl.compile(CodeExpr(counter.getAndIncrement(), expr))
             when (compileResult) {
-                is Result.Incomplete ->
-                    console.println("Incomplete line")
-                is Result.Error ->
-                    repl.handleError(EvalError.CompileError(compileResult.error.message))
-                is Result.Success -> {
-                    compileResult.data.classes.type?.let {
-                        console.println(it)
-                    }
-                }
+                is Result.Error -> repl.handleError(compileResult.error)
+                is Result.Success -> compileResult.data.classes.type?.let { println(it) }
             }
         }
+
+        override fun highlighter(): Highlighter = customHighlighter
+    }
+
+    private class CustomHighlighter(val baseHighlighter: () -> BaseHighlighter): Highlighter {
+        override fun highlight(reader: LineReader, buffer: String): AttributedString {
+            val p = buffer.indexOf(' ')
+            return baseHighlighter().highlight(buffer, p + 1)
+        }
+    }
+
+    private data class CodeExpr(override val no: Int, override val code: String): SourceCode {
+        override val part: Int = 0
+        override fun mkFileName(): String = "TypeInference_$no"
+        override fun nextPart(codePart: String): SourceCode = throw UnsupportedOperationException("Should never happen")
+        override fun replace(code: String): CodeExpr = CodeExpr(no, code)
     }
 
     inner class ListSymbols(conf: Configuration) : sparklin.kshell.BaseCommand() {
@@ -53,13 +78,13 @@ class RuntimePlugin : Plugin {
     }
 
     private lateinit var repl: KShell
-    private lateinit var console: ConsoleReader
     private var lastCompiledClasses: CompiledClasses? = null
     private lateinit var table: SymbolsTable
+    private lateinit var customHighlighter: CustomHighlighter
+    private val counter = AtomicInteger(0)
 
     override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
-        this.console = config.getConsoleReader()
         this.table = SymbolsTable(repl.state.history)
 
 
@@ -70,9 +95,11 @@ class RuntimePlugin : Plugin {
         })
 
         repl.invokeWrapper = ExtractSymbols(repl.invokeWrapper, table)
+        customHighlighter = CustomHighlighter({ repl.highlighter.syntaxHighlighter })
 
         repl.registerCommand(InferType(config))
         repl.registerCommand(ListSymbols(config))
+        repl.registerCommand(Imports(config))
     }
 
     override fun cleanUp() { }
@@ -90,7 +117,9 @@ sealed class Symbol(val namespace: String, val name: String, val kind: SymbolKin
 
 class ClassSymbol(namespace: String, name: String, private val clazz: KClass<*>): Symbol(namespace, name, SymbolKind.CLASS) {
     override fun show(): String {
-        return "class $name"
+        val constructor = clazz.primaryConstructor?.let { FunctionSymbol.show(it, true) } ?: ""
+        val data = if (clazz.isData) "data " else ""
+        return "${data}class $name$constructor"
     }
 }
 
@@ -103,17 +132,21 @@ class InstanceSymbol(namespace: String, name: String, private val obj: Any?, pri
 }
 
 class FunctionSymbol(namespace: String, name: String, private val func: KFunction<*>): Symbol(namespace, name, SymbolKind.FUNCTION) {
-    override fun show(): String {
-        val tp = if (func.typeParameters.isNotEmpty()) "<" + func.typeParameters.joinToString(separator = ",") {
-            (if (it.variance != KVariance.INVARIANT) "${it.variance} ${it.name}" else it.name) +
-                    (if (it.upperBounds.isNotEmpty()) ": ${it.upperBounds.joinToString(separator = ",")}" else "")
+    override fun show(): String  = Companion.show(func)
+
+    companion object {
+        fun show(func: KFunction<*>, isConstructor: Boolean = false): String {
+            val tp = if (func.typeParameters.isNotEmpty()) "<" + func.typeParameters.joinToString(separator = ",") {
+                (if (it.variance != KVariance.INVARIANT) "${it.variance} ${it.name}" else it.name) +
+                        (if (it.upperBounds.isNotEmpty()) ": ${it.upperBounds.joinToString(separator = ",")}" else "")
             } + "> " else ""
 
-        val vp = func.valueParameters.joinToString(separator = ",") {
-            it.name + ": " + it.type
-        }
+            val vp = func.valueParameters.joinToString(separator = ", ") {
+                it.name + ": " + it.type
+            }
 
-        return "fun $tp$name($vp): ${func.returnType}"
+            return if (isConstructor) "${tp.trim()}($vp)" else "fun $tp${func.name}($vp): ${func.returnType}"
+        }
     }
 }
 
@@ -131,15 +164,16 @@ class SymbolsTable(val history: List<Snippet>) {
     fun list(pattern: String? = null, kinds: List<SymbolKind> =
             listOf(SymbolKind.INSTANCE, SymbolKind.FUNCTION, SymbolKind.CLASS)): List<String> {
         val regex = pattern?.let { Regex(it) }
-        return symbols.filter { kinds.contains(it.kind) && !isShadowed(it)
+        return symbols.filter { kinds.contains(it.kind) && !isShadowed(it) &&
                 (regex == null || it.name.matches(regex)) }.map {
             it.show()
         }
     }
 
-    fun isShadowed(symbol: Symbol) =
-        history.filterIsInstance<NamedSnippet>().findLast { it.klass == symbol.namespace && it.name == symbol.name } != null
-
+    fun isShadowed(symbol: Symbol): Boolean = history
+            .filterIsInstance<DeclarationSnippet>()
+            .findLast { it.klass == symbol.namespace && it.name == symbol.name }
+            ?.shadowed ?: false
 }
 
 class ExtractSymbols(private val wrapper: InvokeWrapper?, private val table: SymbolsTable): InvokeWrapper {

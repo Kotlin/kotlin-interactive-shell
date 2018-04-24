@@ -4,7 +4,6 @@ import sparklin.kshell.BaseCommand
 import sparklin.kshell.KShell
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.Plugin
-import sparklin.kshell.console.Completer
 import java.io.File
 
 class LoadFilePlugin: Plugin {
@@ -22,7 +21,6 @@ class LoadFilePlugin: Plugin {
             repl.eval(content)
         }
 
-        override fun completer(): Completer = FileCompleter()
     }
 
     lateinit var repl: KShell

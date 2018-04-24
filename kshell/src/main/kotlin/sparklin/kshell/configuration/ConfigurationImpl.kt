@@ -1,9 +1,6 @@
 package sparklin.kshell.configuration
 
-import sparklin.kshell.plugins.HelpPlugin
-import sparklin.kshell.plugins.LoadFilePlugin
-import sparklin.kshell.plugins.PastePlugin
-import sparklin.kshell.plugins.RuntimePlugin
+import sparklin.kshell.plugins.*
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -11,9 +8,11 @@ import java.util.*
 
 class ConfigurationImpl : PropertyBasedConfiguration(Properties(),
         listOf(LoadFilePlugin::class.qualifiedName!!,
-        RuntimePlugin::class.qualifiedName!!,
-        HelpPlugin::class.qualifiedName!!,
-        PastePlugin::class.qualifiedName!!))  {
+                RuntimePlugin::class.qualifiedName!!,
+                HelpPlugin::class.qualifiedName!!,
+                PastePlugin::class.qualifiedName!!,
+                SyntaxPlugin::class.qualifiedName!!,
+                PromptPlugin::class.qualifiedName!!)) {
     override fun load() {
         val path = configPath()
 
@@ -24,6 +23,5 @@ class ConfigurationImpl : PropertyBasedConfiguration(Properties(),
         super.load()
     }
 
-    private fun configPath() = System.getProperty("config.path") ?:
-        (System.getProperty("user.home") ?: "") + File.separator + ".kshell"
+    private fun configPath() = System.getProperty("config.path") ?: (System.getProperty("user.home") ?: "") + File.separator+".kshell"
 }

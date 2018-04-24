@@ -12,7 +12,7 @@ KOTLIN_REFLECT=${MAVEN_REPO_BASE}/kotlin-reflect/${KOTLIN_VERSION}/kotlin-reflec
 
 # JLine2 console support
 FUSE_JANSI=$HOME/.m2/repository/org/fusesource/jansi/jansi/1.15/jansi-1.15.jar
-KSHELL_CONSOLE_JLINE2=$HOME/.m2/repository/sparklin/kshell-console-jline2/${SPARKLIN_VERSION}/kshell-console-jline2-${SPARKLIN_VERSION}.jar
+KSHELL_CONSOLE_JLINE3=$HOME/.m2/repository/sparklin/jline3-shaded/${SPARKLIN_VERSION}/jline3-shaded-${SPARKLIN_VERSION}.jar
 KSHELL_REPL_API=$HOME/.m2/repository/sparklin/kshell-repl-api/${SPARKLIN_VERSION}/kshell-repl-api-${SPARKLIN_VERSION}.jar
 
 # Spark 1.x support
@@ -30,7 +30,7 @@ KSHELL=$HOME/.m2/repository/sparklin/kshell/${SPARKLIN_VERSION}/kshell-${SPARKLI
 # Apache Spark home directory must point to Spark version 1.x > 1.6
 SPARK_HOME=$HOME/Programs/spark-1.6.1-bin-hadoop2.6
 
-JARS=${KOTLIN_COMPILER},${KOTLIN_STDLIB},${KOTLIN_REFLECT},${KOTLIN_SCRIPT_RUNTIME},${KSHELL_CONSOLE_JLINE2},${KSHELL_REPL_API},${SPARKLIN_PLUGIN},${HDFS_BROWSER_PLUGIN}
+JARS=${KOTLIN_COMPILER},${KOTLIN_STDLIB},${KOTLIN_REFLECT},${KOTLIN_SCRIPT_RUNTIME},${KSHELL_CONSOLE_JLINE3},${KSHELL_REPL_API},${SPARKLIN_PLUGIN},${HDFS_BROWSER_PLUGIN}
 
 ${SPARK_HOME}/bin/spark-submit --jars=${JARS} --conf "spark.driver.extraJavaOptions=-Dconfig.path=${SPARKLIN_CONFIG}" \
         --master "local[2]" --class "sparklin.kshell.KotlinShell" \
