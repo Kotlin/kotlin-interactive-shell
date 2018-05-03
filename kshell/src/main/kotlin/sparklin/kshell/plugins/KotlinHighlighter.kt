@@ -38,6 +38,8 @@ class KotlinHighlighter(private val state: ReplState, private val checker: () ->
                     element.isString() -> styles.string
                     element.isStringTemplate() -> styles.stringTemplate
                     element.isType() -> styles.type
+                    element.isParenthesis() -> styles.parenthesis
+                    element.isTypeParameter() -> styles.typeParameter
                     else -> null
                 } ?: AttributedStyle.DEFAULT
                 sb.style(st)
@@ -54,6 +56,8 @@ class KotlinHighlighter(private val state: ReplState, private val checker: () ->
     private fun PsiElement.isString() = checkElementType("REGULAR_STRING_PART", "OPEN_QUOTE", "CLOSING_QUOTE")
     private fun PsiElement.isStringTemplate() = node?.elementType.toString().contains("TEMPLATE_ENTRY")
     private fun PsiElement.isIdentifier() = checkElementType("IDENTIFIER")
+    private fun PsiElement.isParenthesis() = checkElementType("LPAR", "RPAR")
+    private fun PsiElement.isTypeParameter() = isIdentifier() && parent.checkElementType("TYPE_PARAMETER")
 
     private fun PsiElement.checkElementType(s: String, vararg ss: String): Boolean {
         val e = node?.elementType.toString()

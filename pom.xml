@@ -17,6 +17,7 @@
 
 	<modules>
         <module>kshell-repl-api</module>
+        <!--<module>jline3-shaded</module>-->
 		<module>kshell</module>
         <module>sparklin-spark-1.x</module>
         <module>sparklin-spark-2.x</module>
