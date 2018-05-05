@@ -28,7 +28,9 @@ class PastePlugin : Plugin {
             } catch (e: EndOfFileException) { }
             val code = buf.toString()
             println("// Exiting paste mode, now interpreting.")
+            val time = System.nanoTime()
             val result = repl.eval(code).result
+            repl.evaluationTimeMillis = (System.nanoTime() - time) / 1_000_000
             when (result) {
                 is Result.Error -> repl.handleError(result.error)
                 is Result.Success -> repl.handleSuccess(result.data)

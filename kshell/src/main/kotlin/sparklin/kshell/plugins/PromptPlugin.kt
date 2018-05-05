@@ -5,6 +5,7 @@ import sparklin.kshell.KShell
 import sparklin.kshell.Plugin
 import sparklin.kshell.calcHumanReadableSize
 import sparklin.kshell.configuration.Configuration
+import java.net.InetAddress
 import java.time.LocalTime
 
 class PromptPlugin: Plugin {
@@ -46,9 +47,11 @@ class PromptPlugin: Plugin {
     private val types = mutableMapOf(
             "l" to { "${repl.state.lineIndex.get()}" },
             "u" to { System.getProperty("user.name") },
+            "h" to { InetAddress.getLocalHost().hostName },
             "d" to ::formattedTime,
             "t" to ::totalMemory,
-            "m" to ::maxMemory)
+            "m" to ::maxMemory,
+            "e" to ::evalTime)
 
     override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
@@ -63,6 +66,8 @@ class PromptPlugin: Plugin {
     private fun totalMemory() = calcHumanReadableSize(Runtime.getRuntime().totalMemory())
 
     private fun maxMemory() = calcHumanReadableSize(Runtime.getRuntime().maxMemory())
+
+    private fun evalTime() = String.format("%.2fs", repl.evaluationTimeMillis / 1000.0)
 
     private fun promptFunc(): String = if (repl.incompleteLines.isNotEmpty()) incomplete else format("$pattern ", types)
 
