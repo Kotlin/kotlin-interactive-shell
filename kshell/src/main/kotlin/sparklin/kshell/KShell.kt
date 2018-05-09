@@ -64,6 +64,8 @@ open class KShell(val disposable: Disposable,
         "... "
     }
 
+    var evaluationTimeMillis: Long = 0
+
     private class FakeQuit: sparklin.kshell.BaseCommand() {
         override val name: String = "quit"
         override val short: String = "q"
@@ -118,7 +120,9 @@ open class KShell(val disposable: Disposable,
                     println("You typed two blank lines. Starting a new command.")
                 } else {
                     val source = (incompleteLines + line).joinToString(separator = "\n")
+                    val time = System.nanoTime()
                     val result = eval(source).result
+                    evaluationTimeMillis = (System.nanoTime() - time) / 1_000_000
                     when (result) {
                         is Result.Error -> {
                             if (result.error.isIncomplete) {

@@ -14,6 +14,8 @@ class KotlinHighlighterTest : ReplTestBase() {
     private val string = "string"
     private val stringTemplate = "stringTemplate"
     private val number = "number"
+    private val parenthesis = "parenthesis"
+    private val typeParameter = "typeParameter"
 
     private val styles: Map<String, AttributedStyle?> = mapOf(
             keyword to BOLD.foreground(RED),
@@ -21,7 +23,9 @@ class KotlinHighlighterTest : ReplTestBase() {
             type to DEFAULT.foreground(MAGENTA),
             string to DEFAULT.foreground(GREEN),
             stringTemplate to BOLD.foreground(YELLOW),
-            number to DEFAULT.foreground(CYAN))
+            number to DEFAULT.foreground(CYAN),
+            parenthesis to DEFAULT.foreground(BRIGHT),
+            typeParameter to DEFAULT.foreground(BLUE))
 
     private val mnemonics = listOf(
         'k' to keyword,
@@ -29,7 +33,9 @@ class KotlinHighlighterTest : ReplTestBase() {
         't' to type,
         's' to string,
         '$' to stringTemplate,
-        'n' to number
+        'n' to number,
+        'p' to parenthesis,
+        'T' to typeParameter
     )
 
     class HighlightStylesFromMap(styles: Map<String, AttributedStyle?>): SyntaxPlugin.HighlightStyles {
@@ -39,6 +45,8 @@ class KotlinHighlighterTest : ReplTestBase() {
         override val string: AttributedStyle? by styles
         override val stringTemplate: AttributedStyle? by styles
         override val number: AttributedStyle? by styles
+        override val parenthesis: AttributedStyle? by styles
+        override val typeParameter: AttributedStyle? by styles
     }
 
     private val stylesToMnemonics = mnemonics.map {
@@ -81,6 +89,20 @@ class KotlinHighlighterTest : ReplTestBase() {
         val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
                 styles.filter(listOf(number)))
         assertEquals(":t n + n", ht.highlight(":t 1 + 1", 2).mnemonics())
+    }
+
+    @Test
+    fun testBrackets() {
+        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
+                styles.filter(listOf(parenthesis)))
+        assertEquals("2 * p1 + 1p", ht.highlight("2 * (1 + 1)").mnemonics())
+    }
+
+    @Test
+    fun testTypeParameter() {
+        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
+                styles.filter(listOf(typeParameter)))
+        assertEquals("fun <T, T> const(x: P, y: K): P = x", ht.highlight("fun <P, K> const(x: P, y: K): P = x").mnemonics())
     }
 
     private fun  Map<String, AttributedStyle?>.filter(list: List<String>): HighlightStylesFromMap =

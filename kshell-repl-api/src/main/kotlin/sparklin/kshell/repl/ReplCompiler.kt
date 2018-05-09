@@ -151,7 +151,9 @@ class ReplCompiler(disposable: Disposable,
 
         return func.psi.valueParameters
                 .joinToString(separator = ",") { p ->
-                    mkString(p.typeReference!!.getChildOfType()!!, history, typeParameters)
+                    val ref =  p.typeReference!!
+                    val typeEl = ref.getChildOfType<KtNullableType>()?.getChildOfType() ?: ref.getChildOfType<KtUserType>()!!
+                    mkString(typeEl, history, typeParameters)
                 }
     }
 

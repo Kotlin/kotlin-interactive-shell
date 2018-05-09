@@ -19,7 +19,7 @@ import kotlin.reflect.full.valueParameters
 
 class RuntimePlugin : Plugin {
     inner class Imports(conf: Configuration): BaseCommand() {
-        override val name: String by conf.get(default = "imports ")
+        override val name: String by conf.get(default = "imports")
         override val short: String by conf.get(default = "i")
 
         override val description: String = "show imports"
