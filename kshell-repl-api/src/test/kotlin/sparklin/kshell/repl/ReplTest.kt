@@ -147,6 +147,11 @@ class ReplTest : ReplTestBase() {
         """))
     }
 
+    @Test
+    fun testNullable() {
+        assertSuccess(repl.eval("fun f(x: Int?) = 10"))
+    }
+
     private fun assertValue(expected: Any?, result: Result<EvalResult, EvalError>) {
         when (result) {
             is Result.Error -> fail(result.error.message)
