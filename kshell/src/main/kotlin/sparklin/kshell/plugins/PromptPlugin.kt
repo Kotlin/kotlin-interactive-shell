@@ -28,12 +28,22 @@ class PromptPlugin: Plugin {
             if (p > 0) {
                 this@PromptPlugin.pattern = line.substring(p + 1).trim()
             } else {
-                help()
+                println(this@PromptPlugin.pattern)
             }
         }
 
         override fun help(): String {
-            return "no available"
+            val help = types.toSortedMap().map {
+                val type = it.value
+                "%${type.type}\t${type.help}"
+            }.joinToString(separator = "\n|")
+            return """
+                |:prompt [format]
+                |
+                |The command customizes prompt.
+                |Format can contain following specials:
+                |$help
+                """.trimMargin()
         }
 
     }
@@ -44,14 +54,17 @@ class PromptPlugin: Plugin {
     lateinit var pattern: String
     lateinit var incomplete: String
 
+    data class PromptType(val type: String, val display: () -> String, val help: String)
+
     private val types = mutableMapOf(
-            "l" to { "${repl.state.lineIndex.get()}" },
-            "u" to { System.getProperty("user.name") },
-            "h" to { InetAddress.getLocalHost().hostName },
-            "d" to ::formattedTime,
-            "t" to ::totalMemory,
-            "m" to ::maxMemory,
-            "e" to ::evalTime)
+            "l" to PromptType("l", { "${repl.state.lineIndex.get()}" }, "line number"),
+            "u" to PromptType("u", { System.getProperty("user.name") }, "user name"),
+            "h" to PromptType("h", { InetAddress.getLocalHost().hostName }, "host name"),
+            "d" to PromptType("d", ::formattedTime, "current time"),
+            "t" to PromptType("t", ::totalMemory, "total memory"),
+            "m" to PromptType("m", ::maxMemory, "maximum memory"),
+            "e" to PromptType("e", ::evalTime, "evaluation time")
+    )
 
     override fun init(repl: KShell, config: Configuration) {
         this.repl = repl
@@ -69,11 +82,11 @@ class PromptPlugin: Plugin {
 
     private fun evalTime() = String.format("%.2fs", repl.evaluationTimeMillis / 1000.0)
 
-    private fun promptFunc(): String = if (repl.incompleteLines.isNotEmpty()) incomplete else format("$pattern ", types)
+    private fun promptFunc(): String = if (repl.incompleteLines.isNotEmpty()) incomplete else format("$pattern ", types.mapValues { it.value.display })
 
-    fun registerCustomType(type: String, display: ()  -> String) {
+    fun registerCustomType(promptType: PromptType) {
         // TODO: check conflicts
-        types[type] = display
+        types[promptType.type] = promptType
     }
 
     override fun cleanUp() { }
