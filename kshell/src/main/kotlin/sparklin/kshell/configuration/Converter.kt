@@ -21,3 +21,7 @@ object TrimConverter: Converter<String> {
 object BooleanConverter: Converter<Boolean> {
     override fun convert(s: String): Boolean = s.toBoolean()
 }
+
+object IntConverter: Converter<Int> {
+    override fun convert(s: String): Int = s.toInt()
+}
