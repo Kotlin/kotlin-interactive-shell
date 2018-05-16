@@ -6,11 +6,11 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.2</version>
     </parent>
 
     <artifactId>kshell</artifactId>
-	<version>0.2-SNAPSHOT</version>
+	<version>0.2</version>
 
     <dependencies>
         <dependency>
@@ -46,7 +46,7 @@
         <dependency>
             <groupId>sparklin</groupId>
             <artifactId>kshell-repl-api</artifactId>
-            <version>0.2-SNAPSHOT</version>
+            <version>0.2</version>
         </dependency>
         <dependency>
             <groupId>sparklin</groupId>

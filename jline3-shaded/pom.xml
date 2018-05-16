@@ -6,12 +6,12 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.2</version>
     </parent>
 
 
     <artifactId>jline3-shaded</artifactId>
-	<version>0.2-SNAPSHOT</version>
+	<version>0.2</version>
 
     <dependencies>
         <dependency>

@@ -2,7 +2,7 @@
 
 MAVEN_REPO_BASE=$HOME/.m2/repository/org/jetbrains/kotlin
 KOTLIN_VERSION=1.2.30
-SPARKLIN_VERSION=0.2-SNAPSHOT
+SPARKLIN_VERSION=0.2
 
 # Kotlin libraries
 KOTLIN_STDLIB=${MAVEN_REPO_BASE}/kotlin-stdlib/${KOTLIN_VERSION}/kotlin-stdlib-${KOTLIN_VERSION}.jar
