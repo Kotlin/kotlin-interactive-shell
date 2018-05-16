@@ -29,7 +29,7 @@ for example `kotlin` and configure interpreter according this
 [instruction](https://zeppelin.apache.org/docs/latest/development/writingzeppelininterpreter.html). 
 Some times you need to delete file `$ZEPPELIN/conf/interpreter.json` to make interpreter available. 
 To switch Kotlin syntax highlight on you should copy `mode-kotlin.js` from Zeppelin sources to 
-`webapps/webapp` directory.
+`$ZEPPELIN_HOME/webapps/webapp` directory.
 
 # Spark 1.x
 By default `KShell` don't need a configuration file, but if you want to try Spark you need to enable plugin.
