@@ -99,22 +99,6 @@ class Spark2xPlugin : Logging(), SparkPlugin {
         return Utils.resolveURIs(jars).split(",").filter { s -> s.trim() != "" }
     }
 
-    private fun replJars(jars: List<String>): List<File> {
-        // to get Spark related libraries and so on
-        val jvmClasspath = System.getProperty("java.class.path")
-        val systemJars = jvmClasspath.split(File.pathSeparatorChar).map(::File)
-
-        return jars.filter {
-                // exclude all Kotlin stuff from REPL classpath
-                it -> !it.contains(Regex("/kotlin-(runtime|stdlib|compiler|reflect)(-.*)?\\.jar"))
-            }.map {
-                // remove "file:"
-                it ->
-                val p = it.indexOf(':')
-                File(it.substring(p + 1))
-            } + systemJars
-    }
-
     private fun getMaster(): String {
         val propMaster = System.getProperty("spark.master")
         return propMaster ?: System.getenv()["MASTER"] ?: "local[*]"
