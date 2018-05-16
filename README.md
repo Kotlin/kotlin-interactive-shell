@@ -57,4 +57,4 @@ Sparklin version 0.2 is tested in following environment:
 * Kotlin 1.2.30
 * Hadoop 2.7
 * Spark 1.6.1
-* Spark 2.2.0 / 2.2.1 
+* Spark 2.2.0
