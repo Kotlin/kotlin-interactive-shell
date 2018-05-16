@@ -19,7 +19,17 @@ In order to install Kotlin to Zeppelin, change directory to `zeppelin-interprete
 ```bash
 mvn clean install
 ```
-Maven will produce 2 jars: the first one is interpreter itself, the second one is for dependencies due to [KT-24453](https://youtrack.jetbrains.com/issue/KT-24453).
+Maven will produce 2 jars: the first one is interpreter itself, the second one is for dependencies due to 
+[KT-24453](https://youtrack.jetbrains.com/issue/KT-24453). 
+
+Right now interpreter can not be install 
+via `install-interpreter.sh`.
+You need to install it manually. In order to do that copy jars to appropriate subdirectory of `$ZEPPELIN_HOME/interpreter`,
+for example `kotlin` and configure interpreter according this
+[instruction](https://zeppelin.apache.org/docs/latest/development/writingzeppelininterpreter.html). 
+Some times you need to delete file `$ZEPPELIN/conf/interpreter.json` to make interpreter available. 
+To switch Kotlin syntax highlight on you should copy `mode-kotlin.js` from Zeppelin sources to 
+`$ZEPPELIN_HOME/webapps/webapp` directory.
 
 # Spark 1.x
 By default `KShell` don't need a configuration file, but if you want to try Spark you need to enable plugin.
@@ -39,12 +49,12 @@ At the moment Sparklin does not have additional Spark runtime support for Kotlin
 But it will be available soon.
 
 # Environment Configuration
-Sparklin version 0.1 is tested in following environment:
+Sparklin version 0.2 is tested in following environment:
 
-* Mac OS X 10.11.6
+* Mac OS X 10.11.6 / CentOS Linux (Kernel 3.10)
 * Java 1.8.0_152
-* Maven 3.3.3
-* Kotlin 1.2.20
+* Maven 3.3.3 / 3.5.3
+* Kotlin 1.2.30
+* Hadoop 2.7
 * Spark 1.6.1
-* Spark 2.2.0 
-
+* Spark 2.2.0
