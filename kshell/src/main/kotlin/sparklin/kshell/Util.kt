@@ -9,5 +9,5 @@ fun calcHumanReadableSize(bytes: Long, si: Boolean = false): String {
 }
 
 fun String.bound(maxLength: Int): String {
-    return if (length > maxLength) substring(0, maxLength - 5) + " ..." else this
+    return if (length > maxLength) substring(0, maxLength - 1) + " ..." else this
 }

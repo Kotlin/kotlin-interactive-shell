@@ -8,15 +8,13 @@ import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.utils.PathUtil
-import sparklin.kshell.org.jline.reader.LineReaderBuilder
-import sparklin.kshell.org.jline.terminal.TerminalBuilder
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.configuration.IntConverter
 import sparklin.kshell.org.jline.reader.LineReader
-import sparklin.kshell.org.jline.reader.impl.history.DefaultHistory
+import sparklin.kshell.org.jline.reader.LineReaderBuilder
+import sparklin.kshell.org.jline.terminal.TerminalBuilder
 import sparklin.kshell.repl.*
 import sparklin.kshell.wrappers.ResultWrapper
-import java.io.Closeable
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.locks.ReentrantReadWriteLock
