@@ -190,9 +190,10 @@
                             <classesDirectory>${project.build.directory}/unpack/temp</classesDirectory>
                             <excludes>
                                 <exclude>**/org/apache/log4j/**</exclude>
+                                <exclude>**/org/apache/zeppelin/**</exclude>
                             </excludes>
                             <outputDirectory>${project.build.directory}</outputDirectory>
-                            <finalName>zeppelin-interpreter-0.1.3-dependencies-repackaged</finalName> <!-- give a proper name here -->
+                            <finalName>zeppelin-interpreter-${sparklin.version}-dependencies-repackaged</finalName> <!-- give a proper name here -->
                         </configuration>
                     </execution>
                 </executions>

@@ -8,14 +8,13 @@ import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.utils.PathUtil
+import sparklin.kshell.configuration.Configuration
+import sparklin.kshell.configuration.IntConverter
+import sparklin.kshell.org.jline.reader.LineReader
 import sparklin.kshell.org.jline.reader.LineReaderBuilder
 import sparklin.kshell.org.jline.terminal.TerminalBuilder
-import sparklin.kshell.configuration.Configuration
-import sparklin.kshell.org.jline.reader.LineReader
-import sparklin.kshell.org.jline.reader.impl.history.DefaultHistory
 import sparklin.kshell.repl.*
 import sparklin.kshell.wrappers.ResultWrapper
-import java.io.Closeable
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -50,6 +49,8 @@ open class KShell(val disposable: Disposable,
     val term = TerminalBuilder.builder().build()
     lateinit var readerBuilder: LineReaderBuilder
     lateinit var reader: LineReader
+    private var maxResultLength: Int = 500
+
     val highlighter = ContextHighlighter({ s -> !isCommandMode(s)}, { s -> commands.firstOrNull { it.weakMatch(s) } })
 
     val commands = mutableListOf<sparklin.kshell.Command>(FakeQuit())
@@ -84,6 +85,7 @@ open class KShell(val disposable: Disposable,
         configuration.load()
         configuration.plugins().forEach { it.init(this, configuration) }
 
+        maxResultLength = configuration.get("maxResultLength", IntConverter, 500)
         reader.setVariable(LineReader.HISTORY_FILE, configuration.get(LineReader.HISTORY_FILE,
                 System.getProperty("user.home") + File.separator + ".kshell_history"))
         reader.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "")
@@ -181,7 +183,7 @@ open class KShell(val disposable: Disposable,
 
     fun handleSuccess(result: EvalResult) {
         if (result is EvalResult.ValueResult)
-            println(result.toString())
+            println(result.toString().bound(maxResultLength))
     }
 
     private fun commandError(e: Exception) {

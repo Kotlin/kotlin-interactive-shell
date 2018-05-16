@@ -13,7 +13,14 @@ mvn clean install
 One can run `KShell` out of box by following command from sparklin home directory in the terminal:
 ```bash
 bin/kshell.sh
+``` 
+# Install Zeppelin interpreter
+In order to install Kotlin to Zeppelin, change directory to `zeppelin-interpreter` and run
+```bash
+mvn clean install
 ```
+Maven will produce 2 jars: the first one is interpreter itself, the second one is for dependencies due to [KT-24453](https://youtrack.jetbrains.com/issue/KT-24453).
+
 # Spark 1.x
 By default `KShell` don't need a configuration file, but if you want to try Spark you need to enable plugin.
 It can be done by passing system property `config.path` to JVM. Example of Spark 1.x plugin configuration you may

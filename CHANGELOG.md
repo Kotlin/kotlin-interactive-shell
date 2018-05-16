@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [0.2]
 ### Added
+- Customized prompt.
 - Syntax highlight.
 - JShell-like Kotlin snippets.
 - Completely new REPL architecture with object based class layout `kshell-repl-api`.

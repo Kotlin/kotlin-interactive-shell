@@ -7,3 +7,7 @@ fun calcHumanReadableSize(bytes: Long, si: Boolean = false): String {
     val pre = (if (si) "kMGTPE" else "KMGTPE")[exp - 1] + if (si) "" else "i"
     return String.format("%.1f %sB", bytes / Math.pow(unit.toDouble(), exp.toDouble()), pre)
 }
+
+fun String.bound(maxLength: Int): String {
+    return if (length > maxLength) substring(0, maxLength - 1) + " ..." else this
+}
