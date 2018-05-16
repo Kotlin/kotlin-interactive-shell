@@ -51,7 +51,7 @@
         <dependency>
             <groupId>sparklin</groupId>
             <artifactId>jline3-shaded</artifactId>
-            <version>0.2-SNAPSHOT</version>
+            <version>0.2</version>
         </dependency>
     </dependencies>
 
