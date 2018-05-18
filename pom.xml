@@ -6,18 +6,18 @@
 	<properties>
         <kotlin.version>1.2.30</kotlin.version>
         <jvm.version>1.8</jvm.version>
-        <sparklin.version>0.2</sparklin.version>
+        <sparklin.version>0.2-SNAPSHOT</sparklin.version>
 	</properties>
 
 	<groupId>sparklin</groupId>
 	<artifactId>sparklin</artifactId>
-	<version>0.2</version>
+	<version>0.2-SNAPSHOT</version>
 	
 	<packaging>pom</packaging>
 
 	<modules>
         <module>kshell-repl-api</module>
-        <module>jline3-shaded</module>
+        <!--<module>jline3-shaded</module>-->
         <module>kshell</module>
         <module>sparklin-spark-1.x</module>
         <module>sparklin-spark-2.x</module>

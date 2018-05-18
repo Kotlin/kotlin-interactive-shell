@@ -6,12 +6,12 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>0.2</version>
+        <version>0.2-SNAPSHOT</version>
     </parent>
 
 
     <artifactId>hdfs-browser</artifactId>
-	<version>0.2</version>
+	<version>0.2-SNAPSHOT</version>
 
     <dependencies>
         <dependency>

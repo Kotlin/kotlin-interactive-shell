@@ -8,10 +8,14 @@ import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.utils.PathUtil
+import sparklin.kshell.configuration.BooleanConverter
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.configuration.IntConverter
+import sparklin.kshell.org.jline.reader.EndOfFileException
 import sparklin.kshell.org.jline.reader.LineReader
 import sparklin.kshell.org.jline.reader.LineReaderBuilder
+import sparklin.kshell.org.jline.reader.UserInterruptException
+import sparklin.kshell.org.jline.terminal.Terminal
 import sparklin.kshell.org.jline.terminal.TerminalBuilder
 import sparklin.kshell.repl.*
 import sparklin.kshell.wrappers.ResultWrapper
@@ -46,10 +50,8 @@ open class KShell(val disposable: Disposable,
 
     val incompleteLines = arrayListOf<String>()
 
-    val term = TerminalBuilder.builder().build()
     lateinit var readerBuilder: LineReaderBuilder
     lateinit var reader: LineReader
-    private var maxResultLength: Int = 500
 
     val highlighter = ContextHighlighter({ s -> !isCommandMode(s)}, { s -> commands.firstOrNull { it.weakMatch(s) } })
 
@@ -67,6 +69,24 @@ open class KShell(val disposable: Disposable,
 
     var evaluationTimeMillis: Long = 0
 
+    class EvalThread: Thread() {
+        lateinit var evalBlock: () -> ResultWrapper
+        var result: ResultWrapper = ResultWrapper(Result.Error(EvalError.RuntimeError("Interrupted")))
+
+        override fun run() {
+            result = evalBlock()
+        }
+    }
+
+    var evalThread = EvalThread()
+
+    class Settings(conf: Configuration) {
+        val overrideSignals: Boolean by conf.get(BooleanConverter, default = true)
+        val maxResultLength: Int by conf.get(IntConverter, default = 500)
+    }
+
+    lateinit var settings: Settings
+
     private class FakeQuit: sparklin.kshell.BaseCommand() {
         override val name: String = "quit"
         override val short: String = "q"
@@ -79,19 +99,36 @@ open class KShell(val disposable: Disposable,
     fun addClasspathRoots(files: List<File>) = compilerConfiguration.addJvmClasspathRoots(files)
 
     fun initEngine() {
+        configuration.load()
+
+        settings = Settings(configuration)
+
+        val term = if (settings.overrideSignals) {
+            TerminalBuilder.builder().nativeSignals(true).signalHandler({
+                if (it == Terminal.Signal.INT) {
+                    interrupt()
+                }
+            }).build()
+        } else {
+            TerminalBuilder.builder().build()
+        }
+
         readerBuilder = LineReaderBuilder.builder().terminal(term).highlighter(highlighter)
         reader = readerBuilder.build()
 
-        configuration.load()
         configuration.plugins().forEach { it.init(this, configuration) }
 
-        maxResultLength = configuration.get("maxResultLength", IntConverter, 500)
         reader.setVariable(LineReader.HISTORY_FILE, configuration.get(LineReader.HISTORY_FILE,
                 System.getProperty("user.home") + File.separator + ".kshell_history"))
         reader.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "")
 
         compiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
         evaluator = ReplEvaluator(classpath, baseClassloader)
+    }
+
+    private fun interrupt() {
+        evalThread.interrupt()
+        evalThread = EvalThread()
     }
 
     private fun isCommandMode(buffer: String): Boolean = incompleteLines.isEmpty()
@@ -102,6 +139,7 @@ open class KShell(val disposable: Disposable,
         initEngine()
 
         do {
+            try {
             val line = reader.readLine(prompt())
 
             if (line == null || isQuitAction(line)) break
@@ -140,7 +178,9 @@ open class KShell(val disposable: Disposable,
                         }
                     }
                 }
-            }
+            } }
+            catch (e: UserInterruptException) { if (settings.overrideSignals) state.lineIndex.getAndIncrement() else break }
+            catch (ee: EndOfFileException) { break }
         } while (true)
 
         cleanUp()
@@ -160,7 +200,22 @@ open class KShell(val disposable: Disposable,
 
     fun compile(code: SourceCode) = compiler.compile(state, code)
 
-    fun eval(source: String): ResultWrapper =
+    fun eval(source: String): ResultWrapper {
+        return if (settings.overrideSignals) {
+            evalThread.apply {
+                evalBlock = { compileAndEval(source) }
+                start()
+                join()
+            }
+            val result = evalThread.result
+            evalThread = EvalThread()
+            result
+        } else {
+            compileAndEval(source)
+        }
+    }
+
+    fun compileAndEval(source: String): ResultWrapper =
         state.lock.write {
             val compileResult = compile(source)
             ResultWrapper(when (compileResult) {
@@ -183,7 +238,7 @@ open class KShell(val disposable: Disposable,
 
     fun handleSuccess(result: EvalResult) {
         if (result is EvalResult.ValueResult)
-            println(result.toString().bound(maxResultLength))
+            println(result.toString().bound(settings.maxResultLength))
     }
 
     private fun commandError(e: Exception) {
