@@ -6,12 +6,12 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.2.1</version>
     </parent>
 
 
     <artifactId>kshell-repl-api</artifactId>
-	<version>0.2-SNAPSHOT</version>
+	<version>0.2.1</version>
 
     <properties>
         <kotlin.version>1.2.31</kotlin.version>
