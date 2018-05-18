@@ -103,7 +103,6 @@ open class KShell(val disposable: Disposable,
 
         settings = Settings(configuration)
 
-        println(">>>>>>>>>>>>>>>> OVERRIDE:" + settings.overrideSignals)
         val term = if (settings.overrideSignals) {
             TerminalBuilder.builder().nativeSignals(true).signalHandler({
                 if (it == Terminal.Signal.INT) {
