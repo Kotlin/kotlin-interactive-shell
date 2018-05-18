@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.2.1]
+### Added
+- Trap Ctrl-C [#18](https://github.com/khud/sparklin/issues/18)
+
+### Fixed
+- Custom dependencies for KShell [#17](https://github.com/khud/sparklin/issues/17)
+
 ## [0.2]
 ### Added
 - Customized prompt.
@@ -54,6 +61,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Old spark stuff: separate main class and so on.
 
-[0.2]: https://github.com/khud/sparklin/compare/0.2...0.1.2
+[0.2.1]: https://github.com/khud/sparklin/compare/0.1.2...0.2
+[0.2]: https://github.com/khud/sparklin/compare/0.1.2...0.2
 [0.1.2]: https://github.com/khud/sparklin/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/khud/sparklin/compare/0.1...0.1.1
