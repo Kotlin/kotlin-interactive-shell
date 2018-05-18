@@ -84,7 +84,7 @@ public class KotlinInterpreter extends Interpreter {
                     .put("CURRENT_THREAD", Thread.currentThread()); //to be able to terminate thread
 
             out.setInterpreterOutput(interpreterContext.out);
-            ResultWrapper result = repl.eval(line);
+            ResultWrapper result = repl.compileAndEval(line);
             ResultWrapper.Status status = result.getStatus();
             if (status == ERROR || status == INCOMPLETE) {
                 Exception e = result.getErrorCause();

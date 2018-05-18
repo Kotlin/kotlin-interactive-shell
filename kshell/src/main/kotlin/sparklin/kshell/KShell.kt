@@ -23,7 +23,6 @@ import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
-import sun.misc.Signal
 
 open class KShell(val disposable: Disposable,
                   val configuration: Configuration,
@@ -205,7 +204,7 @@ open class KShell(val disposable: Disposable,
     fun eval(source: String): ResultWrapper {
         return if (settings.overrideSignals) {
             evalThread.apply {
-                evalBlock = { evalInternal(source) }
+                evalBlock = { compileAndEval(source) }
                 start()
                 join()
             }
@@ -213,11 +212,11 @@ open class KShell(val disposable: Disposable,
             evalThread = EvalThread()
             result
         } else {
-            evalInternal(source)
+            compileAndEval(source)
         }
     }
 
-    private fun evalInternal(source: String): ResultWrapper =
+    fun compileAndEval(source: String): ResultWrapper =
         state.lock.write {
             val compileResult = compile(source)
             ResultWrapper(when (compileResult) {
