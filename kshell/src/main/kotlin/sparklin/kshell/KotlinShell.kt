@@ -8,8 +8,7 @@ import org.jetbrains.kotlin.utils.PathUtil
 import sparklin.kshell.configuration.CachedInstance
 import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.configuration.ConfigurationImpl
-import sparklin.kshell.org.jline.reader.UserInterruptException
-import sparklin.kshell.repl.stdlibPathForJar
+import org.github.khud.kshell.repl.stdlibPathForJar
 
 object KotlinShell {
     @JvmStatic

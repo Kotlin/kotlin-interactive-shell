@@ -10,7 +10,6 @@ import org.apache.zeppelin.scheduler.Job;
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer;
 import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector;
-import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.jetbrains.kotlin.utils.PathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

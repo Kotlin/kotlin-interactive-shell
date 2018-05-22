@@ -6,12 +6,12 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>0.2.1</version>
+        <version>0.2-SNAPSHOT</version>
     </parent>
 
 
     <artifactId>zeppelin-interpreter</artifactId>
-	<version>0.2.1</version>
+	<version>0.2-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
