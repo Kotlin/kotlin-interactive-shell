@@ -6,7 +6,7 @@ import sparklin.kshell.BaseCommand
 import sparklin.kshell.KShell
 import sparklin.kshell.Plugin
 import sparklin.kshell.configuration.Configuration
-import org.github.khud.kshell.repl.Result
+import com.github.khud.kshell.repl.Result
 
 class PastePlugin : Plugin {
     inner class Paste(conf: Configuration): BaseCommand() {

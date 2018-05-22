@@ -17,7 +17,7 @@ import sparklin.kshell.org.jline.reader.LineReaderBuilder
 import sparklin.kshell.org.jline.reader.UserInterruptException
 import sparklin.kshell.org.jline.terminal.Terminal
 import sparklin.kshell.org.jline.terminal.TerminalBuilder
-import org.github.khud.kshell.repl.*
+import com.github.khud.kshell.repl.*
 import sparklin.kshell.wrappers.ResultWrapper
 import java.io.File
 import java.net.URLClassLoader

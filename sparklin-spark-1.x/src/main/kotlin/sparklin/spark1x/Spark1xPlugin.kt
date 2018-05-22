@@ -10,7 +10,7 @@ import org.apache.spark.util.Utils
 import sparklin.core.Logging
 import sparklin.kshell.*
 import sparklin.kshell.plugins.SparkPlugin
-import org.github.khud.kshell.repl.SyntheticImportSnippet
+import com.github.khud.kshell.repl.SyntheticImportSnippet
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream

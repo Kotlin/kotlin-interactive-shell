@@ -7,10 +7,10 @@ import org.jetbrains.kotlin.psi.KtUserType
 import sparklin.kshell.org.jline.utils.AttributedString
 import sparklin.kshell.org.jline.utils.AttributedStringBuilder
 import sparklin.kshell.org.jline.utils.AttributedStyle
-import org.github.khud.kshell.repl.ReplChecker
-import org.github.khud.kshell.repl.ReplState
-import org.github.khud.kshell.repl.Result
-import org.github.khud.kshell.repl.SourceCode
+import com.github.khud.kshell.repl.ReplChecker
+import com.github.khud.kshell.repl.ReplState
+import com.github.khud.kshell.repl.Result
+import com.github.khud.kshell.repl.SourceCode
 
 class KotlinHighlighter(private val state: ReplState, private val checker: () -> ReplChecker,
                         private val styles: SyntaxPlugin.HighlightStyles): BaseHighlighter {

@@ -1,8 +1,8 @@
 package sparklin.kshell.wrappers
 
-import org.github.khud.kshell.repl.EvalError
-import org.github.khud.kshell.repl.EvalResult
-import org.github.khud.kshell.repl.Result
+import com.github.khud.kshell.repl.EvalError
+import com.github.khud.kshell.repl.EvalResult
+import com.github.khud.kshell.repl.Result
 
 
 class ResultWrapper(val result: Result<EvalResult, EvalError>) {

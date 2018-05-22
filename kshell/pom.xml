@@ -44,7 +44,7 @@
             <version>2.7.0</version>
         </dependency>
         <dependency>
-            <groupId>org.github.khud</groupId>
+            <groupId>com.github.khud</groupId>
             <artifactId>kshell-repl-api</artifactId>
             <version>0.2.2-1.2.30</version>
         </dependency>

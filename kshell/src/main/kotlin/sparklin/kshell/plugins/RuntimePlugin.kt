@@ -5,9 +5,9 @@ import sparklin.kshell.configuration.Configuration
 import sparklin.kshell.org.jline.reader.Highlighter
 import sparklin.kshell.org.jline.reader.LineReader
 import sparklin.kshell.org.jline.utils.AttributedString
-import org.github.khud.kshell.repl.*
-import org.github.khud.kshell.repl.ReplCompiler.Companion.RESULT_FIELD_NAME
-import org.github.khud.kshell.repl.ReplCompiler.Companion.RUN_FIELD_NAME
+import com.github.khud.kshell.repl.*
+import com.github.khud.kshell.repl.ReplCompiler.Companion.RESULT_FIELD_NAME
+import com.github.khud.kshell.repl.ReplCompiler.Companion.RUN_FIELD_NAME
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
