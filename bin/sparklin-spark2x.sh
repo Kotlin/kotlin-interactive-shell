@@ -14,7 +14,7 @@ KOTLIN_REFLECT=${MAVEN_REPO_BASE}/kotlin-reflect/${KOTLIN_VERSION}/kotlin-reflec
 # JLine2 console support
 FUSE_JANSI=$HOME/.m2/repository/org/fusesource/jansi/jansi/1.15/jansi-1.15.jar
 KSHELL_CONSOLE_JLINE3=$HOME/.m2/repository/sparklin/jline3-shaded/${SPARKLIN_VERSION}/jline3-shaded-${SPARKLIN_VERSION}.jar
-KSHELL_REPL_API=$HOME/.m2/repository/org/github/khud/kshell-repl-api/${KSHELL_REPL_API_VERSION}/kshell-repl-api-${KSHELL_REPL_API_VERSION}.jar
+KSHELL_REPL_API=$HOME/.m2/repository/com/github/khud/kshell-repl-api/${KSHELL_REPL_API_VERSION}/kshell-repl-api-${KSHELL_REPL_API_VERSION}.jar
 
 # Spark 2.x support
 SPARKLIN_PLUGIN=$HOME/.m2/repository/sparklin/sparklin-spark-2.x/${SPARKLIN_VERSION}/sparklin-spark-2.x-${SPARKLIN_VERSION}.jar
