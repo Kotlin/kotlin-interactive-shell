@@ -21,8 +21,7 @@ class PastePlugin : Plugin {
             try {
                 while (true) {
                     val s = pasteConsole.readLine("")
-                    buf.append(s)
-                    buf.append('\n')
+                    buf.appendln(s)
                     lineCount++
                 }
             } catch (e: EndOfFileException) { }

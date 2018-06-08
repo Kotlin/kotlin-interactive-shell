@@ -82,7 +82,8 @@ open class KShell(val disposable: Disposable,
 
     class Settings(conf: Configuration) {
         val overrideSignals: Boolean by conf.get(BooleanConverter, default = true)
-        val maxResultLength: Int by conf.get(IntConverter, default = 500)
+        val maxResultLength: Int by conf.get(IntConverter, default = 10000)
+        val blankLinesAllowed: Int by  conf.get(IntConverter, default = 2)
     }
 
     lateinit var settings: Settings
@@ -138,6 +139,8 @@ open class KShell(val disposable: Disposable,
     fun doRun() {
         initEngine()
 
+        var blankLines = 0
+
         do {
             try {
             val line = reader.readLine(prompt())
@@ -155,9 +158,11 @@ open class KShell(val disposable: Disposable,
                     commandError(e)
                 }
             } else {
-                if (line.isBlank() && (incompleteLines.isNotEmpty() && incompleteLines.last().isBlank())) {
-                    incompleteLines.clear()
-                    println("You typed two blank lines. Starting a new command.")
+                if (line.isBlank() && incompleteLines.isNotEmpty()) {
+                    if (blankLines == settings.blankLinesAllowed - 1) {
+                        incompleteLines.clear()
+                        println("You typed ${settings.blankLinesAllowed} blank lines. Starting a new command.")
+                    } else blankLines ++
                 } else {
                     val source = (incompleteLines + line).joinToString(separator = "\n")
                     val time = System.nanoTime()
