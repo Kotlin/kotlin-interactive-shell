@@ -1,7 +1,7 @@
 package sparklin.zeppelin;
 
 import org.jetbrains.annotations.NotNull;
-import sparklin.kshell.configuration.PropertyBasedConfiguration;
+import com.github.khud.sparklin.kshell.configuration.PropertyBasedConfiguration;
 
 import java.util.Collections;
 import java.util.Properties;

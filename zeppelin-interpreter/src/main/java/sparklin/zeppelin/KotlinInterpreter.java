@@ -13,10 +13,10 @@ import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector;
 import org.jetbrains.kotlin.utils.PathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sparklin.kshell.KShell;
-import sparklin.kshell.configuration.Configuration;
-import sparklin.kshell.wrappers.ResultWrapper;
-import static sparklin.kshell.wrappers.ResultWrapper.Status.*;
+import com.github.khud.sparklin.kshell.KShell;
+import com.github.khud.sparklin.kshell.configuration.Configuration;
+import com.github.khud.sparklin.kshell.wrappers.ResultWrapper;
+import static com.github.khud.sparklin.kshell.wrappers.ResultWrapper.Status.*;
 
 import java.io.File;
 import java.io.PrintStream;

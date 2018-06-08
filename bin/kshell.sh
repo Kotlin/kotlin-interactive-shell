@@ -21,4 +21,4 @@ KSHELL=$HOME/.m2/repository/sparklin/kshell/${SPARKLIN_VERSION}/kshell-${SPARKLI
 
 JARS=${KOTLIN_COMPILER}:${KOTLIN_STDLIB}:${KOTLIN_REFLECT}:${KOTLIN_SCRIPT_RUNTIME}:${KSHELL_CONSOLE_JLINE3}:${KSHELL_REPL_API}
 
-java -classpath ${JARS}:${KSHELL} sparklin.kshell.KotlinShell $@
+java -classpath ${JARS}:${KSHELL} com.github.khud.sparklin.kshell.KotlinShell $@

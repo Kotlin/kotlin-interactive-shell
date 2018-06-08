@@ -34,6 +34,6 @@ SPARK_HOME=$HOME/Programs/spark-2.2.0-bin-hadoop2.7
 JARS=${KOTLIN_COMPILER},${KOTLIN_STDLIB},${KOTLIN_REFLECT},${KOTLIN_SCRIPT_RUNTIME},${KSHELL_CONSOLE_JLINE3},${KSHELL_REPL_API},${SPARKLIN_PLUGIN},${HDFS_BROWSER_PLUGIN}
 
 ${SPARK_HOME}/bin/spark-submit --jars=${JARS} --conf "spark.driver.extraJavaOptions=-Dconfig.path=${SPARKLIN_CONFIG}" \
-        --master "local[2]" --class "sparklin.kshell.KotlinShell" \
+        --master "local[2]" --class "com.github.khud.sparklin.kshell.KotlinShell" \
 		${KSHELL} \
 		$@

@@ -1,13 +1,13 @@
-package sparklin.hdfsbrowser
+package com.github.khud.sparklin.hdfsbrowser
 
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
-import sparklin.kshell.BaseCommand
-import sparklin.kshell.KShell
-import sparklin.kshell.Plugin
-import sparklin.kshell.calcHumanReadableSize
-import sparklin.kshell.configuration.Configuration
-import sparklin.kshell.plugins.SparkPlugin
+import com.github.khud.sparklin.kshell.BaseCommand
+import com.github.khud.sparklin.kshell.KShell
+import com.github.khud.sparklin.kshell.Plugin
+import com.github.khud.sparklin.kshell.calcHumanReadableSize
+import com.github.khud.sparklin.kshell.configuration.Configuration
+import com.github.khud.sparklin.kshell.plugins.SparkPlugin
 import kotlin.reflect.KClass
 import org.apache.hadoop.conf.Configuration as HadoopConfiguration
 
@@ -45,8 +45,8 @@ class HdfsBrowserPlugin : Plugin {
     }
 
     private fun findHadoopConfiguration(config: Configuration): HadoopConfiguration {
-        val spark1 = config.getPluginByClass("sparklin.spark1x.Spark1xPlugin", SparkPlugin::class)
-        val spark2 = config.getPluginByClass("sparklin.spark2x.Spark2xPlugin", SparkPlugin::class)
+        val spark1 = config.getPluginByClass("com.github.khud.sparklin.spark1x.Spark1xPlugin", SparkPlugin::class)
+        val spark2 = config.getPluginByClass("com.github.khud.sparklin.spark2x.Spark2xPlugin", SparkPlugin::class)
 
         return when {
             spark1 != null -> spark1.hadoopConfiguration()
