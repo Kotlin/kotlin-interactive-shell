@@ -1,4 +1,4 @@
-package sparklin.zeppelin;
+package com.github.khud.sparklin.zeppelin;
 
 import com.intellij.openapi.util.Disposer;
 import kotlin.Pair;

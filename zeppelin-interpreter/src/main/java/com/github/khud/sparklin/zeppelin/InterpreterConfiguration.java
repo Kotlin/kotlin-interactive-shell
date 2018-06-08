@@ -1,4 +1,4 @@
-package sparklin.zeppelin;
+package com.github.khud.sparklin.zeppelin;
 
 import org.jetbrains.annotations.NotNull;
 import com.github.khud.sparklin.kshell.configuration.PropertyBasedConfiguration;

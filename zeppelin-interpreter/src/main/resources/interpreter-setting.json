@@ -2,7 +2,7 @@
   {
     "group": "kotlin",
     "name": "kotlin",
-    "className": "sparklin.zeppelin.KotlinInterpreter",
+    "className": "com.github.khud.sparklin.zeppelin.KotlinInterpreter",
     "defaultInterpreter": true,
     "properties": {
     },
