@@ -44,4 +44,8 @@ class HelpPlugin: Plugin {
     }
 
     override fun cleanUp() { }
+
+    override fun sayHello() {
+        println("type :h for help")
+    }
 }

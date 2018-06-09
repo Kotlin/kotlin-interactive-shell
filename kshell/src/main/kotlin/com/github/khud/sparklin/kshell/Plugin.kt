@@ -6,4 +6,6 @@ interface Plugin {
     fun init(repl: KShell, config: Configuration)
 
     fun cleanUp()
+
+    fun sayHello() { }
 }

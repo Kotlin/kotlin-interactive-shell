@@ -84,6 +84,7 @@ open class KShell(val disposable: Disposable,
         val overrideSignals: Boolean by conf.get(BooleanConverter, default = true)
         val maxResultLength: Int by conf.get(IntConverter, default = 10000)
         val blankLinesAllowed: Int by  conf.get(IntConverter, default = 2)
+        val sayHello: Boolean by conf.get(BooleanConverter, default = true)
     }
 
     lateinit var settings: Settings
@@ -138,6 +139,8 @@ open class KShell(val disposable: Disposable,
 
     fun doRun() {
         initEngine()
+
+        if (settings.sayHello) sayHello()
 
         var blankLines = 0
 
@@ -255,6 +258,15 @@ open class KShell(val disposable: Disposable,
     }
 
     fun checker() = compiler.checker
+
+    private fun sayHello() {
+        println("kshell $VERSION/${KotlinVersion.CURRENT}")
+        configuration.plugins().forEach { it.sayHello() }
+    }
+
+    companion object {
+        const val VERSION: String = "0.2.2"
+    }
 }
 
 class OnCompile(private val data: CompilationData) : Event<CompilationData> {
