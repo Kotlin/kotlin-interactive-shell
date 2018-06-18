@@ -11,6 +11,13 @@ open class PropertyBasedConfiguration(protected val props: Properties, protected
         return strValue?.let { converter.convert(strValue) }
     }
 
+    override fun set(key: String, value: String) {
+        check(key, value)
+        props.setProperty(key, value)
+    }
+
+    override fun list(): List<String> = data.keys.toList()
+
     override fun load() {
         val pluginClasses = get("plugins", ListConverter(TrimConverter), defaultPlugins)
 

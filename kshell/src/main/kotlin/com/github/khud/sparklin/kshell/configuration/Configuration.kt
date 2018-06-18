@@ -4,15 +4,48 @@ import com.github.khud.sparklin.kshell.Plugin
 import kotlin.reflect.KProperty
 
 abstract class Configuration {
+    data class ValueWithConverter<T>(val value: T?, val converter: Converter<T>) {
+        fun valueToString() = value?.let { converter.toString(it) }
+    }
+
+    protected val data: MutableMap<String, ValueWithConverter<*>> = mutableMapOf()
+
     abstract fun <T : Any> get(key: String, converter: Converter<T>): T?
 
-    fun <T : Any> get(key: String, converter: Converter<T>, default: () -> T): T = get(key, converter) ?: default()
+    fun <T : Any> getWithConverter(key: String, converter: Converter<T>, default: () -> T): T {
+        val v = get(key, converter) ?: default()
+        data[key] = ValueWithConverter(v, converter)
+        return v
+    }
 
-    fun <T : Any> get(key: String, converter: Converter<T>, default: T): T = get(key, converter, { default })
+    fun <T : Any> getWithConverterNullable(key: String, converter: Converter<T>): T? {
+        val v = get(key, converter)
+        data[key] = ValueWithConverter(v, converter)
+        return v
+    }
 
-    fun get(key: String, default: () -> String) = get(key, IdentityConverter, default)
+    fun check(key: String, value: String) {
+        if (data.containsKey(key)) {
+            data[key]!!.converter.convert(value)
+        } else {
+            throw IllegalArgumentException("Converter not found for $key")
+        }
+    }
+
+    fun getTouched(key: String): String? = data[key]!!.valueToString()
+
+    abstract fun list(): Iterable<String>
+
+    // should be renamed back to get() in the future (see https://youtrack.jetbrains.com/issue/KT-24900)
+    fun <T : Any> get1(key: String, converter: Converter<T>, default: () -> T): T = getWithConverter(key, converter, default)
+
+    fun <T : Any> get(key: String, converter: Converter<T>, default: T): T = get1(key, converter, { default })
+
+    fun get(key: String, default: () -> String) = get1(key, IdentityConverter, default)
 
     fun get(key: String, default: String) = get(key, IdentityConverter, default)
+
+    abstract fun set(key: String, value: String)
 
     abstract fun load()
 
@@ -23,14 +56,14 @@ abstract class Configuration {
     inner class DelegateProvider<out T : Any>(private val converter: Converter<T>, val default: () -> T) {
         operator fun <R : Any> getValue(thisRef: R, property: KProperty<*>): T {
             val p = "${thisRef.javaClass.kotlin.qualifiedName}.${property.name}"
-            return this@Configuration.get(p, converter, default)
+            return this@Configuration.get1(p, converter, default)
         }
     }
 
     inner class DelegateProviderForNullables<out T : Any>(private val converter: Converter<T>) {
         operator fun <R : Any> getValue(thisRef: R, property: KProperty<*>): T? {
             val p = "${thisRef.javaClass.kotlin.qualifiedName}.${property.name}"
-            return this@Configuration.get(p, converter)
+            return this@Configuration.getWithConverterNullable(p, converter)
         }
     }
 

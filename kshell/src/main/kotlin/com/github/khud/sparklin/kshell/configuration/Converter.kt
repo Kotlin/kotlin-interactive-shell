@@ -1,13 +1,16 @@
 package com.github.khud.sparklin.kshell.configuration
 
-interface Converter<out T> {
+interface Converter<T> {
     fun convert(s: String): T
+    fun toString(t: T): String = t.toString()
 }
 
-class ListConverter<out T>(private val itemConverter: Converter<T>):  Converter<List<T>> {
+class ListConverter<T>(private val itemConverter: Converter<T>):  Converter<List<T>> {
     override fun convert(s: String): List<T> {
         return s.split(",").map { itemConverter.convert(it) }
     }
+
+    override fun toString(t: List<T>): String = t.joinToString(separator = ",")
 }
 
 object IdentityConverter: Converter<String> {

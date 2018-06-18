@@ -1,4 +1,4 @@
-package sparklin.kshell.plugins
+package com.github.khud.sparklin.kshell.plugins
 
 import org.junit.Assert.*
 import org.junit.Test

@@ -29,3 +29,16 @@ fun replJars(jars: List<String> = listOf()): List<File> {
         File(it.substring(p + 1))
     } + systemJars
 }
+
+fun globToRegex(line: String): String {
+    val sb = StringBuilder()
+    line.forEach {
+        when (it) {
+            '*' -> sb.append("[a-zA-Z_0-9.]*")
+            '?' -> sb.append("[a-zA-Z_0-9.]")
+            '.' -> sb.append("\\.")
+            else -> sb.append(it)
+        }
+    }
+    return sb.toString()
+}

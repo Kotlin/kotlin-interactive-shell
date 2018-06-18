@@ -1,8 +1,8 @@
-package sparklin.kshell.plugins
+package com.github.khud.sparklin.kshell.plugins
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import sparklin.kshell.repl.ReplTestBase
+import com.github.khud.kshell.repl.ReplTestBase
 import sparklin.kshell.org.jline.utils.AttributedString
 import sparklin.kshell.org.jline.utils.AttributedStyle
 import sparklin.kshell.org.jline.utils.AttributedStyle.*

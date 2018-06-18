@@ -5,6 +5,7 @@ import com.github.khud.sparklin.kshell.Plugin
 import com.github.khud.sparklin.kshell.KShell
 import com.github.khud.sparklin.kshell.configuration.Configuration
 import com.github.khud.sparklin.kshell.match
+import kotlinx.cli.HelpPrinter
 
 class HelpPlugin: Plugin {
     inner class Help(conf: Configuration): BaseCommand() {
@@ -47,5 +48,29 @@ class HelpPlugin: Plugin {
 
     override fun sayHello() {
         println("type :h for help")
+    }
+
+    class StringHelpPrinter(private val syntaxWidth: Int = 24): HelpPrinter {
+        private val sb = StringBuilder()
+
+        override fun printText(text: String) {
+            sb.appendln(text)
+        }
+
+        override fun printSeparator() {
+            sb.appendln()
+        }
+
+        override fun printEntry(helpEntry: String, description: String) {
+            if (helpEntry.length <= syntaxWidth) {
+                sb.appendln("  ${helpEntry.padEnd(syntaxWidth)}  $description")
+            }
+            else {
+                sb.appendln("  $helpEntry")
+                sb.appendln("  ${"".padEnd(syntaxWidth)}  $description")
+            }
+        }
+
+        override fun toString(): String = sb.toString()
     }
 }
