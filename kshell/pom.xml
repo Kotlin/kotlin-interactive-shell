@@ -46,7 +46,7 @@
         <dependency>
             <groupId>com.github.khud</groupId>
             <artifactId>kshell-repl-api</artifactId>
-            <version>0.2.2-1.2.41</version>
+            <version>0.2.3-1.2.41</version>
         </dependency>
         <dependency>
             <groupId>sparklin</groupId>

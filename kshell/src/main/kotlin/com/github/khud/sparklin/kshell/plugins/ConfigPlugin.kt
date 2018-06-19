@@ -18,7 +18,7 @@ class ConfigPlugin: Plugin {
 
         override fun execute(line: String) {
             val args = line.split(' ')
-            val (k, v) = args[1].split('=')
+            val (k, v) = args.drop(1)
             val params = conf.list().filter { it.endsWith(k) }
             if (params.size > 1) {
                 println("Please specify configuration parameter more precisely, found ${params.size}:")
@@ -27,6 +27,7 @@ class ConfigPlugin: Plugin {
                 val key = params.first()
                 try {
                     conf.set(key, v)
+                    println("$key is set to $v")
                 } catch (e: Exception) {
                     println(e)
                 }
@@ -40,7 +41,7 @@ class ConfigPlugin: Plugin {
         override val description: String = "list configuration parameters"
 
         private val cli = CommandLineInterface("conf", printHelpByDefault = false)
-        private val group by cli.flagArgument("-g", "Groups parameters")
+        private val group by cli.flagArgument("-g", "Groups by class")
         private val withValues by cli.flagArgument("-v", "Prints with values")
         private val glob by cli.positionalArgument("GLOB", "Glob pattern to match parameter (i.e. *.name)", minArgs = 0)
 
@@ -54,7 +55,17 @@ class ConfigPlugin: Plugin {
             }
             val regex = glob?.let { globToRegex(it).toRegex() }
             val params = if (regex == null) conf.list() else conf.list().filter { regex.matches(it) }
-            params.forEach { if (withValues) println("$it=${conf.getTouched(it)}") else println(it) }
+            if (group) {
+                groupByClass(params).forEach { (groupName, list) ->
+                    if (groupName != null) println("[$groupName]")
+                    list.forEach {
+                        val realName = if (groupName != null) "$groupName.$it" else it
+                        if (withValues) println("$it=${conf.getTouched(realName)}") else println(it)
+                    }
+                }
+            } else {
+                params.forEach { if (withValues) println("$it=${conf.getTouched(it)}") else println(it) }
+            }
         }
 
         override fun help(): String {
@@ -71,5 +82,18 @@ class ConfigPlugin: Plugin {
 
     override fun cleanUp() {
 
+    }
+
+    companion object {
+        fun groupByClass(iterable: Iterable<String>): Map<String?, List<String>> =
+            iterable.groupBy {
+                val p = it.lastIndexOf('.')
+                if (p < 0) null else it.substring(0, p)
+            }.mapValues {
+                it.value.map { v ->
+                    val p = v.lastIndexOf('.')
+                    if (p < 0) v else v.substring(p + 1)
+                }
+            }
     }
 }
