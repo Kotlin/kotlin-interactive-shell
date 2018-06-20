@@ -106,11 +106,11 @@ open class KShell(val disposable: Disposable,
         settings = Settings(configuration)
 
         val term = if (settings.overrideSignals) {
-            TerminalBuilder.builder().nativeSignals(true).signalHandler({
+            TerminalBuilder.builder().nativeSignals(true).signalHandler {
                 if (it == Terminal.Signal.INT) {
                     interrupt()
                 }
-            }).build()
+            }.build()
         } else {
             TerminalBuilder.builder().build()
         }
@@ -265,7 +265,7 @@ open class KShell(val disposable: Disposable,
     }
 
     companion object {
-        const val VERSION: String = "0.2.2"
+        const val VERSION: String = "0.2.3"
     }
 }
 

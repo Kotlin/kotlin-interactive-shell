@@ -1,10 +1,7 @@
 package com.github.khud.sparklin.kshell.plugins
 
-import com.github.khud.sparklin.kshell.BaseCommand
-import com.github.khud.sparklin.kshell.KShell
-import com.github.khud.sparklin.kshell.Plugin
+import com.github.khud.sparklin.kshell.*
 import com.github.khud.sparklin.kshell.configuration.Configuration
-import com.github.khud.sparklin.kshell.globToRegex
 import kotlinx.cli.CommandLineInterface
 import kotlinx.cli.flagArgument
 import kotlinx.cli.parse
@@ -17,7 +14,7 @@ class ConfigPlugin: Plugin {
         override val description: String = "set configuration parameter"
 
         override fun execute(line: String) {
-            val args = line.split(' ')
+            val args = smartSplit(line)
             val (k, v) = args.drop(1)
             val params = conf.list().filter { it.endsWith(k) }
             if (params.size > 1) {

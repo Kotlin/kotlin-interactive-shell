@@ -5,6 +5,11 @@ import org.junit.Test
 import org.junit.Assert.*
 
 class UtilTest {
+    @Test
+    fun testSmartSplit() {
+        assertEquals(listOf("Location", "Welcome  to india",
+                "Bangalore", "Channai", "IT city", "Mysore"), smartSplit("Location \"Welcome  to india\" Bangalore Channai \"IT city\"  Mysore"))
+    }
 
     @Test
     fun testGlobToRegex() {

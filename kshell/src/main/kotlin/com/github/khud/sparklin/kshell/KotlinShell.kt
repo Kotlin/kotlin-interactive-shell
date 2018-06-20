@@ -23,10 +23,10 @@ object KotlinShell {
                 KShell::class.java.classLoader)
 
         repl.addClasspathRoots(replJars())
-        Runtime.getRuntime().addShutdownHook(Thread({
+        Runtime.getRuntime().addShutdownHook(Thread {
             println("\nBye!")
             repl.cleanUp()
-        }))
+        })
 
         repl.doRun()
     }

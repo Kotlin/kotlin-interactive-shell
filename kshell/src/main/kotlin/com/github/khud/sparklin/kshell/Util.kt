@@ -1,6 +1,9 @@
 package com.github.khud.sparklin.kshell
 
 import java.io.File
+import java.util.ArrayList
+import java.util.regex.Pattern
+
 
 fun calcHumanReadableSize(bytes: Long, si: Boolean = false): String {
     val unit = if (si) 1000 else 1024
@@ -42,3 +45,13 @@ fun globToRegex(line: String): String {
     }
     return sb.toString()
 }
+
+fun smartSplit(line: String): List<String> {
+    val list = ArrayList<String>()
+    val m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(line)
+    while (m.find())
+        list.add(m.group(1).unquote())
+    return list
+}
+
+fun String.unquote(): String = if (startsWith("\"") && endsWith("\"")) substring(1, length - 1) else this

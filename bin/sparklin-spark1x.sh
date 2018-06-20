@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 MAVEN_REPO_BASE=$HOME/.m2/repository/org/jetbrains/kotlin
-KOTLIN_VERSION=1.2.41
-KSHELL_REPL_API_VERSION=0.2.2-1.2.41
+KOTLIN_VERSION=1.2.50
+KSHELL_REPL_API_VERSION=0.2.3-1.2.41
 SPARKLIN_VERSION=0.2-SNAPSHOT
 
 # Kotlin libraries
