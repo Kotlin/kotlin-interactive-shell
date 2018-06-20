@@ -9,12 +9,14 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Jline3 is now bundled to `kshell.jar`.
 - Small API changes to improve configuration support.
+- Move `kshell-repl-api` to separate [repository](https://github.com/khud/kshell-repl-api).
+- Repackaging according convention `com.github.khud`.
 
 ### Fixed
-- Kotlin NPE if result is null [#24](https://github.com/khud/sparklin/issues/24)
-- The shell should not truncate output after 2 lines already [#23](https://github.com/khud/sparklin/issues/23)
-- You typed two blank lines. Starting a new command. [#22](https://github.com/khud/sparklin/issues/22)
-- Kotlin v.1.2.41/v.1.2.50 compatibility [#21](https://github.com/khud/sparklin/issues/21)
+- Kotlin NPE if result is null [#24](https://github.com/khud/sparklin/issues/24).
+- The shell should not truncate output after 2 lines already [#23](https://github.com/khud/sparklin/issues/23).
+- You typed two blank lines. Starting a new command. [#22](https://github.com/khud/sparklin/issues/22).
+- Kotlin v.1.2.41/v.1.2.50 compatibility [#21](https://github.com/khud/sparklin/issues/21).
 
 ## [0.2.1]
 ### Added

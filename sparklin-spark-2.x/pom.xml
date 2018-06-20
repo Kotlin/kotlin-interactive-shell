@@ -6,12 +6,12 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.2.3</version>
     </parent>
 
 
     <artifactId>sparklin-spark-2.x</artifactId>
-	<version>0.2-SNAPSHOT</version>
+	<version>0.2.3</version>
 
     <dependencies>
         <dependency>

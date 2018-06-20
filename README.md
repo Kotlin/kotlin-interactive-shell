@@ -54,7 +54,7 @@ Sparklin version 0.2 is tested in following environment:
 * Mac OS X 10.11.6 / CentOS Linux (Kernel 3.10)
 * Java 1.8.0_152
 * Maven 3.3.3 / 3.5.3
-* Kotlin 1.2.30
+* Kotlin 1.2.30/1.2.41/1.2.50
 * Hadoop 2.7
 * Spark 1.6.1
 * Spark 2.2.0
