@@ -2,10 +2,7 @@ package com.github.khud.sparklin.kshell.plugins
 
 import com.github.khud.sparklin.kshell.*
 import com.github.khud.sparklin.kshell.configuration.Configuration
-import kotlinx.cli.CommandLineInterface
-import kotlinx.cli.flagArgument
-import kotlinx.cli.parse
-import kotlinx.cli.positionalArgument
+import kotlinx.cli.*
 
 class ConfigPlugin: Plugin {
     inner class Set(val conf: Configuration): BaseCommand() {
@@ -46,6 +43,8 @@ class ConfigPlugin: Plugin {
             val args = line.split(' ').drop(1)
             try {
                 cli.parse(args)
+            } catch (e: HelpPrintedException) {
+                return
             } catch (e: Exception) {
                 println(e)
                 return
