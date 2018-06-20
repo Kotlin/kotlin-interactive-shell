@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.2.3]
+### Added
+- `:conf` and `:set` commands to deal with configuration without restart.
+- `sayHello()` method to receive greetings from plugins.
+
+### Changed
+- Jline3 is now bundled to `kshell.jar`.
+- Small API changes to improve configuration support.
+
+### Fixed
+- Kotlin NPE if result is null [#24](https://github.com/khud/sparklin/issues/24)
+- The shell should not truncate output after 2 lines already [#23](https://github.com/khud/sparklin/issues/23)
+- You typed two blank lines. Starting a new command. [#22](https://github.com/khud/sparklin/issues/22)
+- Kotlin v.1.2.41/v.1.2.50 compatibility [#21](https://github.com/khud/sparklin/issues/21)
+
 ## [0.2.1]
 ### Added
 - Trap Ctrl-C [#18](https://github.com/khud/sparklin/issues/18)
@@ -61,6 +76,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Old spark stuff: separate main class and so on.
 
+[0.2.3]: https://github.com/khud/sparklin/compare/v0.2.1...v0.2.3
 [0.2.1]: https://github.com/khud/sparklin/compare/v0.2...v0.2.1
 [0.2]: https://github.com/khud/sparklin/compare/0.1.2...v0.2
 [0.1.2]: https://github.com/khud/sparklin/compare/0.1.1...0.1.2

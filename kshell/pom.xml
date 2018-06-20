@@ -6,11 +6,11 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>0.2.1</version>
+        <version>0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>kshell</artifactId>
-	<version>0.2.1</version>
+	<version>0.2-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
@@ -44,14 +44,14 @@
             <version>2.7.0</version>
         </dependency>
         <dependency>
-            <groupId>sparklin</groupId>
+            <groupId>com.github.khud</groupId>
             <artifactId>kshell-repl-api</artifactId>
-            <version>0.2.1</version>
+            <version>0.2.3-1.2.41</version>
         </dependency>
         <dependency>
             <groupId>sparklin</groupId>
             <artifactId>jline3-shaded</artifactId>
-            <version>0.2.1</version>
+            <version>0.2-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -130,6 +130,26 @@
                         </manifest>
                     </archive>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <artifactSet>
+                                <includes>
+                                    <include>sparklin:jline3-shaded</include>
+                                </includes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
