@@ -6,7 +6,7 @@
 	<properties>
         <kotlin.version>1.2.50</kotlin.version>
         <jvm.version>1.8</jvm.version>
-        <sparklin.version>0.2-SNAPSHOT</sparklin.version>
+        <sparklin.version>0.2.3</sparklin.version>
 	</properties>
 
 	<groupId>sparklin</groupId>
