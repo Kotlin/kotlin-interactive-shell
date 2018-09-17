@@ -6,11 +6,11 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>0.2.3</version>
+        <version>0.2.4</version>
     </parent>
 
     <artifactId>kshell</artifactId>
-	<version>0.2.3</version>
+	<version>0.2.4</version>
 
     <dependencies>
         <dependency>
@@ -46,12 +46,12 @@
         <dependency>
             <groupId>com.github.khud</groupId>
             <artifactId>kshell-repl-api</artifactId>
-            <version>0.2.3-1.2.41</version>
+            <version>0.2.4-1.2.60</version>
         </dependency>
         <dependency>
             <groupId>sparklin</groupId>
             <artifactId>jline3-shaded</artifactId>
-            <version>0.2.3</version>
+            <version>0.2.4</version>
         </dependency>
     </dependencies>
 

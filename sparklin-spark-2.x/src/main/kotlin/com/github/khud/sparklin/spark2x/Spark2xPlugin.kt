@@ -15,6 +15,8 @@ import java.io.FileOutputStream
 import java.util.*
 
 class Spark2xPlugin : Logging(), SparkPlugin {
+    lateinit var version: String
+
     override fun init(repl: KShell, config: Configuration) {
         val jars = getAddedJars()
         val conf = SparkConf()
@@ -32,7 +34,10 @@ class Spark2xPlugin : Logging(), SparkPlugin {
         repl.eventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
             override fun handle(event: OnCompile) {
                 event.data().classes.classes.forEach {
-                    writeClass(outputDir.absolutePath + File.separator + it.path, it.bytes)
+                    if (it.path.contains('/')) {
+                        // Right now it is not needed and we can skip WEB-INF/$MODULE_NAME.kotlin_module here
+                        // because it will be empty anyway
+                    } else writeClass(outputDir.absolutePath + File.separator + it.path, it.bytes)
                 }
             }
         })
@@ -88,6 +93,7 @@ class Spark2xPlugin : Logging(), SparkPlugin {
             sparkSession = builder.getOrCreate()
             logInfo("Created Spark session")
         }
+        version = sparkSession.version()
         return sparkSession
     }
 
@@ -124,4 +130,6 @@ class Spark2xPlugin : Logging(), SparkPlugin {
     }
 
     override fun hadoopConfiguration() = Holder.sc.hadoopConfiguration()
+
+    override fun getSparkVersion(): String = version
 }
