@@ -265,7 +265,7 @@ open class KShell(val disposable: Disposable,
     }
 
     companion object {
-        const val VERSION: String = "0.2.3"
+        const val VERSION: String = "0.2.4"
     }
 }
 
