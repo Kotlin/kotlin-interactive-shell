@@ -28,7 +28,7 @@ SPARKLIN_CONFIG=$HOME/Documents/research_projects/sparklin/conf/spark2x.properti
 KSHELL=$HOME/.m2/repository/sparklin/kshell/${SPARKLIN_VERSION}/kshell-${SPARKLIN_VERSION}.jar
 
 # Apache Spark home directory must point to Spark version 2.x
-SPARK_HOME=$HOME/Programs/spark-2.2.0-bin-hadoop2.7
+SPARK_HOME=$HOME/Programs/spark-2.3.1-bin-hadoop2.7
 
 JARS=${KOTLIN_COMPILER},${KOTLIN_STDLIB},${KOTLIN_REFLECT},${KOTLIN_SCRIPT_RUNTIME},${KSHELL_REPL_API},${SPARKLIN_PLUGIN},${HDFS_BROWSER_PLUGIN}
 
