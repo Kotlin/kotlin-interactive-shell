@@ -19,6 +19,7 @@ import sparklin.kshell.org.jline.terminal.Terminal
 import sparklin.kshell.org.jline.terminal.TerminalBuilder
 import com.github.khud.kshell.repl.*
 import com.github.khud.sparklin.kshell.wrappers.ResultWrapper
+import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -102,6 +103,8 @@ open class KShell(val disposable: Disposable,
 
     fun initEngine() {
         configuration.load()
+
+        setIdeaIoUseFallback()
 
         settings = Settings(configuration)
 
