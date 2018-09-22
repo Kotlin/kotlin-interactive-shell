@@ -1,8 +1,8 @@
 @echo off
 set MAVEN_REPO_BASE=%USERPROFILE%\.m2\repository\org\jetbrains\kotlin
 set KOTLIN_VERSION=1.2.61
-set KSHELL_REPL_API_VERSION=0.2.4-1.2.60
-set SPARKLIN_VERSION=0.2.4
+set KSHELL_REPL_API_VERSION=0.2.5-1.2.60
+set SPARKLIN_VERSION=0.2.5
 
 rem Kotlin libraries
 set KOTLIN_STDLIB=%MAVEN_REPO_BASE%\kotlin-stdlib\%KOTLIN_VERSION%\kotlin-stdlib-%KOTLIN_VERSION%.jar

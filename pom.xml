@@ -6,12 +6,12 @@
 	<properties>
         <kotlin.version>1.2.61</kotlin.version>
         <jvm.version>1.8</jvm.version>
-        <sparklin.version>0.2.4</sparklin.version>
+        <sparklin.version>0.2.5</sparklin.version>
 	</properties>
 
 	<groupId>sparklin</groupId>
 	<artifactId>sparklin</artifactId>
-	<version>0.2.4</version>
+	<version>0.2.5</version>
 	
 	<packaging>pom</packaging>
 
