@@ -192,6 +192,7 @@ open class KShell(val disposable: Disposable,
             } }
             catch (e: UserInterruptException) { if (settings.overrideSignals) state.lineIndex.getAndIncrement() else break }
             catch (ee: EndOfFileException) { break }
+            catch (ex: Exception) { ex.printStackTrace() }
         } while (true)
 
         cleanUp()

@@ -126,7 +126,7 @@
                     <archive>
                         <manifest>
                             <!-- addClasspath>true</addClasspath> -->
-                            <mainClass>sparklin.repl.Main</mainClass>
+                            <mainClass>com.github.khud.sparklin.kshell.KotlinShell</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
