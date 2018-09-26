@@ -126,6 +126,7 @@ open class KShell(val disposable: Disposable,
         reader.setVariable(LineReader.HISTORY_FILE, configuration.get(LineReader.HISTORY_FILE,
                 System.getProperty("user.home") + File.separator + ".kshell_history"))
         reader.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "")
+        reader.option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
 
         compiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
         evaluator = ReplEvaluator(classpath, baseClassloader)
