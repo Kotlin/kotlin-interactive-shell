@@ -8,6 +8,7 @@ SPARKLIN_VERSION=0.2.5
 # Kotlin libraries
 KOTLIN_STDLIB=${MAVEN_REPO_BASE}/kotlin-stdlib/${KOTLIN_VERSION}/kotlin-stdlib-${KOTLIN_VERSION}.jar
 KOTLIN_COMPILER=${MAVEN_REPO_BASE}/kotlin-compiler/${KOTLIN_VERSION}/kotlin-compiler-${KOTLIN_VERSION}.jar
+KOTLIN_COMPILER_SHADED=kotlin-compiler-shaded/target/kotlin-compiler-shaded-${KOTLIN_VERSION}.jar
 KOTLIN_SCRIPT_RUNTIME=${MAVEN_REPO_BASE}/kotlin-script-runtime/${KOTLIN_VERSION}/kotlin-script-runtime-${KOTLIN_VERSION}.jar
 KOTLIN_REFLECT=${MAVEN_REPO_BASE}/kotlin-reflect/${KOTLIN_VERSION}/kotlin-reflect-${KOTLIN_VERSION}.jar
 
@@ -32,7 +33,7 @@ SPARK_HOME=$HOME/Programs/spark-2.3.1-bin-hadoop2.7
 
 JARS=${KOTLIN_COMPILER},${KOTLIN_STDLIB},${KOTLIN_REFLECT},${KOTLIN_SCRIPT_RUNTIME},${KSHELL_REPL_API},${SPARKLIN_PLUGIN},${HDFS_BROWSER_PLUGIN}
 
-${SPARK_HOME}/bin/spark-submit --jars=${JARS} --conf "spark.driver.extraJavaOptions=-Dconfig.path=${SPARKLIN_CONFIG}" \
+${SPARK_HOME}/bin/spark-submit --driver-class-path $KOTLIN_COMPILER_SHADED --conf "spark.driver.extraJavaOptions=-Dconfig.path=${SPARKLIN_CONFIG}" \
         --master "local[2]" --class "com.github.khud.sparklin.kshell.KotlinShell" \
-		${KSHELL} \
+		${SPARKLIN_PLUGIN} \
 		$@

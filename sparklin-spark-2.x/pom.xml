@@ -20,6 +20,11 @@
             <version>${sparklin.version}</version>
         </dependency>
         <dependency>
+            <groupId>sparklin</groupId>
+            <artifactId>hdfs-browser</artifactId>
+            <version>${sparklin.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
@@ -32,6 +37,11 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-compiler</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-script-runtime</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
         <dependency>
@@ -140,17 +150,53 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.6</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <!-- addClasspath>true</addClasspath> -->
-                            <mainClass>sparklin.spark1x.Main</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <artifactSet>
+                                <includes>
+                                    <include>sparklin:kshell</include>
+                                    <include>sparklin:hdfs-browser</include>
+                                    <include>com.github.khud:kshell-repl-api</include>
+                                    <!--<include>org.jetbrains.kotlin:kotlin-compiler</include>-->
+                                    <include>org.jetbrains.kotlin:kotlin-stdlib-jdk8</include>
+                                    <include>org.jetbrains.kotlin:kotlin-reflect</include>
+                                    <include>org.jetbrains.kotlin:kotlin-script-runtime</include>
+                                </includes>
+                            </artifactSet>
+                            <!--<relocations>-->
+                                <!--<relocation>-->
+                                    <!--<pattern>org.apache.log4j</pattern>-->
+                                    <!--<shadedPattern>org.jetbrains.kotlin.shaded.log4j</shadedPattern>-->
+                                <!--</relocation>-->
+                                <!--<relocation>-->
+                                    <!--<pattern>com.google</pattern>-->
+                                    <!--<shadedPattern>org.jetbrains.kotlin.shaded.com.google</shadedPattern>-->
+                                <!--</relocation>-->
+                            <!--</relocations>-->
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-jar-plugin</artifactId>-->
+                <!--<version>2.6</version>-->
+                <!--<configuration>-->
+                    <!--<archive>-->
+                        <!--<manifest>-->
+                            <!--&lt;!&ndash; addClasspath>true</addClasspath> &ndash;&gt;-->
+                            <!--<mainClass>sparklin.spark1x.Main</mainClass>-->
+                        <!--</manifest>-->
+                    <!--</archive>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
         </plugins>
     </build>
 </project>
