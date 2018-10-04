@@ -24,6 +24,8 @@ class ConfigurationImpl : PropertyBasedConfiguration(Properties(),
         super.load()
     }
 
-    private fun configPath() = System.getProperty("config.path") ?: (System.getProperty("user.home") ?: "") +
-        File.separator + ".kshell"
+    private fun configPath() =
+            System.getProperty("config.path") ?:
+            System.getenv("SPARKLIN_CONFIG") ?:
+            (System.getProperty("user.home") ?: "") + File.separator + ".kshell"
 }

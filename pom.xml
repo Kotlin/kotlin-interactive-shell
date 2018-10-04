@@ -17,6 +17,7 @@
 
 	<modules>
         <!--<module>jline3-shaded</module>-->
+        <module>kotlin-compiler-shaded</module>
         <module>kshell</module>
         <module>hdfs-browser</module>
         <module>sparklin-spark-1.x</module>
