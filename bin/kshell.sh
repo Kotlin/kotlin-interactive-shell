@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
 MAVEN_REPO_BASE=$HOME/.m2/repository/org/jetbrains/kotlin
-KOTLIN_VERSION=1.2.61
-KSHELL_REPL_API_VERSION=0.2.5-1.2.60
-SPARKLIN_VERSION=0.2.5
+KOTLIN_VERSION=1.3.31
+KSHELL_REPL_API_VERSION=0.2.7-1.3.31
+SPARKLIN_VERSION=0.2.7-SNAPSHOT
+TROVE4J=$HOME/.m2/repository/org/jetbrains/intellij/deps/trove4j/1.0.20190215/trove4j-1.0.20190215.jar
+ANNOTATIONS=$HOME/.m2/repository/org/jetbrains/annotations/17.0.0/annotations-17.0.0.jar
 
 # Kotlin libraries
 KOTLIN_STDLIB=${MAVEN_REPO_BASE}/kotlin-stdlib/${KOTLIN_VERSION}/kotlin-stdlib-${KOTLIN_VERSION}.jar
@@ -19,7 +21,7 @@ KSHELL_REPL_API=$HOME/.m2/repository/com/github/khud/kshell-repl-api/${KSHELL_RE
 
 KSHELL=$HOME/.m2/repository/sparklin/kshell/${SPARKLIN_VERSION}/kshell-${SPARKLIN_VERSION}.jar
 
-JARS=${KOTLIN_COMPILER}:${KOTLIN_STDLIB}:${KOTLIN_REFLECT}:${KOTLIN_SCRIPT_RUNTIME}:${KSHELL_REPL_API}
+JARS=${KOTLIN_COMPILER}:${KOTLIN_STDLIB}:${KOTLIN_REFLECT}:${KOTLIN_SCRIPT_RUNTIME}:${KSHELL_REPL_API}:${TROVE4J}:${ANNOTATIONS}
 
 echo $JARS
 
