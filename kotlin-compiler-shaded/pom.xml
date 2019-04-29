@@ -6,7 +6,7 @@
     <parent>
         <groupId>sparklin</groupId>
         <artifactId>sparklin</artifactId>
-        <version>0.2.5</version>
+        <version>0.2.7-SNAPSHOT</version>
     </parent>
 
 

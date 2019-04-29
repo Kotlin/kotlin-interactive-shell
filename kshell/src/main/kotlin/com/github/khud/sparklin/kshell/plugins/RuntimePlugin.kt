@@ -16,6 +16,7 @@ import kotlin.reflect.KVariance
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.valueParameters
+import kotlin.reflect.jvm.javaField
 
 class RuntimePlugin : Plugin {
     inner class Imports(conf: Configuration): BaseCommand() {
@@ -209,6 +210,8 @@ class ExtractSymbols(private val wrapper: InvokeWrapper?, private val table: Sym
 
     private fun readProperty(instance: Any, propertyName: String): Any? {
         val klass = instance.javaClass.kotlin
-        return klass.declaredMemberProperties.first { it.name == propertyName }.get(instance)
+        return klass.declaredMemberProperties.first { it.name == propertyName }.apply {
+            if (isConst) javaField!!.get(null) else get(instance)
+        }
     }
 }

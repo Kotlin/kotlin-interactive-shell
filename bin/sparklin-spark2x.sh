@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
 MAVEN_REPO_BASE=$HOME/.m2/repository/org/jetbrains/kotlin
-KOTLIN_VERSION=1.2.61
-KSHELL_REPL_API_VERSION=0.2.5-1.2.60
-SPARKLIN_VERSION=0.2.5
+KOTLIN_VERSION=1.3.31
+KSHELL_REPL_API_VERSION=0.2.7-1.3.31
+SPARKLIN_VERSION=0.2.7-SNAPSHOT
 SPARKLIN_HOME=$HOME/Documents/research_projects/sparklin
+TROVE4J=$HOME/.m2/repository/org/jetbrains/intellij/deps/trove4j/1.0.20190215/trove4j-1.0.20190215.jar
+ANNOTATIONS=$HOME/.m2/repository/org/jetbrains/annotations/17.0.0/annotations-17.0.0.jar
 
 # Kotlin libraries
 KOTLIN_STDLIB=${MAVEN_REPO_BASE}/kotlin-stdlib/${KOTLIN_VERSION}/kotlin-stdlib-${KOTLIN_VERSION}.jar
@@ -30,9 +32,9 @@ export SPARKLIN_CONFIG=$HOME/Documents/research_projects/sparklin/conf/spark2x.p
 KSHELL=$HOME/.m2/repository/sparklin/kshell/${SPARKLIN_VERSION}/kshell-${SPARKLIN_VERSION}.jar
 
 # Apache Spark home directory must point to Spark version 2.x
-SPARK_HOME=$HOME/Programs/spark-2.3.1-bin-hadoop2.7
+SPARK_HOME=$HOME/Programs/spark-2.3.3-bin-hadoop2.7
 
-JARS=${KOTLIN_COMPILER},${KOTLIN_STDLIB},${KOTLIN_REFLECT},${KOTLIN_SCRIPT_RUNTIME},${KSHELL_REPL_API},${SPARKLIN_PLUGIN},${HDFS_BROWSER_PLUGIN}
+JARS=${KOTLIN_COMPILER},${KOTLIN_STDLIB},${KOTLIN_REFLECT},${KOTLIN_SCRIPT_RUNTIME},${KSHELL_REPL_API},${SPARKLIN_PLUGIN},${HDFS_BROWSER_PLUGIN},${TROVE4J},${ANNOTATIONS}
 
 ${SPARK_HOME}/bin/spark-submit --driver-class-path $KOTLIN_COMPILER_SHADED \
         --conf spark.ui.showConsoleProgress=true \
