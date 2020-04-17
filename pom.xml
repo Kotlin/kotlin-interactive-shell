@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 	<properties>
-        <kotlin.version>1.3.31</kotlin.version>
+        <kotlin.version>1.4.0-dev-6132</kotlin.version>
         <jvm.version>1.8</jvm.version>
         <sparklin.version>0.2.7-SNAPSHOT</sparklin.version>
 	</properties>
@@ -15,8 +15,23 @@
 	
 	<packaging>pom</packaging>
 
+    <repositories>
+        <repository>
+            <id>kotlin-dev</id>
+            <name>Kotlin dev builds</name>
+            <url>https://dl.bintray.com/kotlin/kotlin-dev</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>kotlin-dev</id>
+            <name>Kotlin dev builds</name>
+            <url>https://dl.bintray.com/kotlin/kotlin-dev</url>
+        </pluginRepository>
+    </pluginRepositories>
+
 	<modules>
-        <module>jline3-shaded</module>
+<!--        <module>jline3-shaded</module>-->
         <module>kotlin-compiler-shaded</module>
         <module>kshell</module>
         <module>hdfs-browser</module>
