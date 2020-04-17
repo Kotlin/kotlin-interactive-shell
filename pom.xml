@@ -20,7 +20,7 @@
         <module>kotlin-compiler-shaded</module>
         <module>kshell</module>
         <module>hdfs-browser</module>
-        <module>sparklin-spark-1.x</module>
+<!--        <module>sparklin-spark-1.x</module>-->
         <module>sparklin-spark-2.x</module>
         <!--<module>zeppelin-interpreter</module>-->
     </modules>
