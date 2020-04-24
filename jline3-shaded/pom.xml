@@ -37,7 +37,7 @@
                             <relocations>
                                 <relocation>
                                     <pattern>org.jline</pattern>
-                                    <shadedPattern>sparklin.kshell.org.jline</shadedPattern>
+                                    <shadedPattern>org.jline</shadedPattern>
                                 </relocation>
                             </relocations>
                             <transformers>

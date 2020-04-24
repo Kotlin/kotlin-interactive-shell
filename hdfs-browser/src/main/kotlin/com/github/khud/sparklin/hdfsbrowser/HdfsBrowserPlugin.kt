@@ -6,7 +6,7 @@ import com.github.khud.sparklin.kshell.BaseCommand
 import com.github.khud.sparklin.kshell.KShell
 import com.github.khud.sparklin.kshell.Plugin
 import com.github.khud.sparklin.kshell.calcHumanReadableSize
-import com.github.khud.sparklin.kshell.configuration.Configuration
+import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
 import com.github.khud.sparklin.kshell.plugins.SparkPlugin
 import kotlin.reflect.KClass
 import org.apache.hadoop.conf.Configuration as HadoopConfiguration
@@ -17,7 +17,7 @@ class HdfsBrowserPlugin : Plugin {
     private lateinit var fs: FileSystem
     private var workingDirectory = "."
 
-    inner class LsCommand(conf: Configuration) : BaseCommand() {
+    inner class LsCommand(conf: ReplConfiguration) : BaseCommand() {
         override val name: String by conf.get(default = "hdfs.ls")
         override val short: String? by conf.getNullable()
         override val description: String = "list files in HDFS directory"
@@ -37,14 +37,14 @@ class HdfsBrowserPlugin : Plugin {
         }
     }
 
-    override fun init(repl: KShell, config: Configuration) {
+    override fun init(repl: KShell, config: ReplConfiguration) {
         this.repl = repl
         this.fs = FileSystem.get(findHadoopConfiguration(config))
 
         repl.registerCommand(LsCommand(config))
     }
 
-    private fun findHadoopConfiguration(config: Configuration): HadoopConfiguration {
+    private fun findHadoopConfiguration(config: ReplConfiguration): HadoopConfiguration {
         val spark1 = config.getPluginByClass("com.github.khud.sparklin.spark1x.Spark1xPlugin", SparkPlugin::class)
         val spark2 = config.getPluginByClass("com.github.khud.sparklin.spark2x.Spark2xPlugin", SparkPlugin::class)
 
@@ -56,7 +56,7 @@ class HdfsBrowserPlugin : Plugin {
     }
 
 
-    private inline fun <reified T: Plugin> Configuration.getPluginByClass(klassName: String, type: KClass<T>): T? {
+    private inline fun <reified T: Plugin> ReplConfiguration.getPluginByClass(klassName: String, type: KClass<T>): T? {
         return this.getPlugin(klassName) as? T
     }
 

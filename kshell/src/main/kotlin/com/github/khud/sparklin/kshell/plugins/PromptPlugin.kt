@@ -4,12 +4,12 @@ import com.github.khud.sparklin.kshell.BaseCommand
 import com.github.khud.sparklin.kshell.KShell
 import com.github.khud.sparklin.kshell.Plugin
 import com.github.khud.sparklin.kshell.calcHumanReadableSize
-import com.github.khud.sparklin.kshell.configuration.Configuration
+import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
 import java.net.InetAddress
 import java.time.LocalTime
 
 class PromptPlugin: Plugin {
-    inner class Prompt(conf: Configuration): BaseCommand() {
+    inner class Prompt(conf: ReplConfiguration): BaseCommand() {
         override val name: String by conf.get(default = "prompt")
         override val short: String? by conf.getNullable()
         override val description: String = "customize prompt"
@@ -49,7 +49,7 @@ class PromptPlugin: Plugin {
     }
 
     lateinit var repl: KShell
-    lateinit var conf: Configuration
+    lateinit var conf: ReplConfiguration
 
     lateinit var pattern: String
     lateinit var incomplete: String
@@ -57,16 +57,16 @@ class PromptPlugin: Plugin {
     data class PromptType(val type: String, val display: () -> String, val help: String)
 
     private val types = mutableMapOf(
-            "l" to PromptType("l", { "${repl.state.lineIndex.get()}" }, "line number"),
+            "l" to PromptType("l", { "${repl.currentSnippetNo.get()}" }, "line number"),
             "u" to PromptType("u", { System.getProperty("user.name") }, "user name"),
             "h" to PromptType("h", { InetAddress.getLocalHost().hostName }, "host name"),
-            "d" to PromptType("d", ::formattedTime, "current time"),
-            "t" to PromptType("t", ::totalMemory, "total memory"),
-            "m" to PromptType("m", ::maxMemory, "maximum memory"),
-            "e" to PromptType("e", ::evalTime, "evaluation time")
+            "d" to PromptType("d", { formattedTime() }, "current time"),
+            "t" to PromptType("t", { totalMemory() }, "total memory"),
+            "m" to PromptType("m", { maxMemory() }, "maximum memory"),
+            "e" to PromptType("e", { evalTime() }, "evaluation time")
     )
 
-    override fun init(repl: KShell, config: Configuration) {
+    override fun init(repl: KShell, config: ReplConfiguration) {
         this.repl = repl
         this.conf = config
 

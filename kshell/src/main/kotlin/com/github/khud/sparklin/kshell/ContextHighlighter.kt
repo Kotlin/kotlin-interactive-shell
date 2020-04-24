@@ -1,9 +1,9 @@
 package com.github.khud.sparklin.kshell
 
-import sparklin.kshell.org.jline.reader.Highlighter
-import sparklin.kshell.org.jline.reader.LineReader
-import sparklin.kshell.org.jline.utils.AttributedString
-import sparklin.kshell.org.jline.utils.AttributedStringBuilder
+import org.jline.reader.Highlighter
+import org.jline.reader.LineReader
+import org.jline.utils.AttributedString
+import org.jline.utils.AttributedStringBuilder
 import com.github.khud.sparklin.kshell.plugins.BaseHighlighter
 
 class ContextHighlighter(private val isSyntaxMode: (String) -> Boolean,

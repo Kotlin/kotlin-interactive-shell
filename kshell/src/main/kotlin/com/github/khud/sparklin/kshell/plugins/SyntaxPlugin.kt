@@ -1,17 +1,18 @@
+/*
 package com.github.khud.sparklin.kshell.plugins
 
 import com.github.khud.sparklin.kshell.BaseCommand
 import com.github.khud.sparklin.kshell.KShell
 import com.github.khud.sparklin.kshell.Plugin
 import com.github.khud.sparklin.kshell.configuration.BooleanConverter
-import com.github.khud.sparklin.kshell.configuration.Configuration
+import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
 import com.github.khud.sparklin.kshell.configuration.Converter
-import sparklin.kshell.org.jline.reader.LineReader
-import sparklin.kshell.org.jline.utils.AttributedStyle
-import sparklin.kshell.org.jline.utils.AttributedStyle.*
+import org.jline.reader.LineReader
+import org.jline.utils.AttributedStyle
+import org.jline.utils.AttributedStyle.*
 
 class SyntaxPlugin: Plugin {
-    inner class Syntax(conf: Configuration): BaseCommand() {
+    inner class Syntax(conf: ReplConfiguration): BaseCommand() {
         override val name: String by conf.get(default = "syntax")
         override val short: String? by conf.getNullable()
         override val description: String = "syntax highlighting"
@@ -54,7 +55,7 @@ class SyntaxPlugin: Plugin {
     lateinit var kotlinHighlighter: KotlinHighlighter
     lateinit var reader: LineReader
 
-    override fun init(repl: KShell, config: Configuration) {
+    override fun init(repl: KShell, config: ReplConfiguration) {
         this.repl = repl
         this.reader = repl.reader
         kotlinHighlighter = KotlinHighlighter(repl.state, repl::checker, HighlightStylesFromConfiguration(config))
@@ -75,7 +76,7 @@ class SyntaxPlugin: Plugin {
         val typeParameter: AttributedStyle?
     }
 
-    class HighlightStylesFromConfiguration(conf: Configuration): HighlightStyles {
+    class HighlightStylesFromConfiguration(conf: ReplConfiguration): HighlightStyles {
         override val keyword: AttributedStyle by conf.get(StyleConverter, BOLD.foreground(RED))
         override val function: AttributedStyle by conf.get(StyleConverter, DEFAULT.foreground(YELLOW))
         override val type: AttributedStyle by conf.get(StyleConverter, DEFAULT.foreground(MAGENTA))
@@ -119,4 +120,4 @@ class SyntaxPlugin: Plugin {
             else -> throw IllegalArgumentException("Unsupported color: $s")
         }
     }
-}
+}*/
