@@ -223,7 +223,7 @@ open class KShell(val replConfiguration: ReplConfiguration,
     fun handleError(result: ResultWithDiagnostics<*>) = printDiagnostics(result)
 
     private fun printDiagnostics(result: ResultWithDiagnostics<*>) {
-        result.reports.forEach { it.render(withStackTrace = true) }
+        result.reports.forEach { println(it.render(withStackTrace = true)) }
     }
 
     fun handleSuccess(result: ResultWithDiagnostics.Success<*>) {
