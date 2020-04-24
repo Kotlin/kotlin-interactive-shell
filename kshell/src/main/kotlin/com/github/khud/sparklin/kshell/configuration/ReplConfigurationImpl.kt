@@ -8,7 +8,7 @@ import java.util.*
 
 class ReplConfigurationImpl : PropertyBasedReplConfiguration(Properties(),
         listOf(LoadFilePlugin::class.qualifiedName!!,
-//                RuntimePlugin::class.qualifiedName!!,
+                RuntimePlugin::class.qualifiedName!!,
                 HelpPlugin::class.qualifiedName!!,
                 PastePlugin::class.qualifiedName!!,
 //                SyntaxPlugin::class.qualifiedName!!,
