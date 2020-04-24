@@ -4,7 +4,7 @@ MAVEN_REPO_BASE=$HOME/.m2/repository/org/jetbrains/kotlin
 KOTLIN_VERSION=1.3.31
 KSHELL_REPL_API_VERSION=0.2.7-1.3.31
 SPARKLIN_VERSION=0.2.7-SNAPSHOT
-TROVE4J=$HOME/.m2/repository/org/jetbrains/intellij/deps/trove4j/1.0.20190215/trove4j-1.0.20190215.jar
+TROVE4J=$HOME/.m2/repository/org/jetbrains/intellij/deps/trove4j/1.0.20181211/trove4j-1.0.20181211.jar
 ANNOTATIONS=$HOME/.m2/repository/org/jetbrains/annotations/17.0.0/annotations-17.0.0.jar
 
 # Kotlin libraries

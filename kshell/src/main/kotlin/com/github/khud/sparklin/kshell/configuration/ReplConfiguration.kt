@@ -3,7 +3,7 @@ package com.github.khud.sparklin.kshell.configuration
 import com.github.khud.sparklin.kshell.Plugin
 import kotlin.reflect.KProperty
 
-abstract class Configuration {
+abstract class ReplConfiguration {
     data class ValueWithConverter<T>(val value: T?, val converter: Converter<T>) {
         fun valueToString() = value?.let { converter.toString(it) }
     }
@@ -56,14 +56,14 @@ abstract class Configuration {
     inner class DelegateProvider<out T : Any>(private val converter: Converter<T>, val default: () -> T) {
         operator fun <R : Any> getValue(thisRef: R, property: KProperty<*>): T {
             val p = "${thisRef.javaClass.kotlin.qualifiedName}.${property.name}"
-            return this@Configuration.get1(p, converter, default)
+            return this@ReplConfiguration.get1(p, converter, default)
         }
     }
 
     inner class DelegateProviderForNullables<out T : Any>(private val converter: Converter<T>) {
         operator fun <R : Any> getValue(thisRef: R, property: KProperty<*>): T? {
             val p = "${thisRef.javaClass.kotlin.qualifiedName}.${property.name}"
-            return this@Configuration.getWithConverterNullable(p, converter)
+            return this@ReplConfiguration.getWithConverterNullable(p, converter)
         }
     }
 

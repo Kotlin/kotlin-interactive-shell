@@ -3,7 +3,7 @@ package com.github.khud.sparklin.kshell.configuration
 import com.github.khud.sparklin.kshell.Plugin
 import java.util.*
 
-open class PropertyBasedConfiguration(protected val props: Properties, protected val defaultPlugins: List<String>) : Configuration() {
+open class PropertyBasedReplConfiguration(protected val props: Properties, protected val defaultPlugins: List<String>) : ReplConfiguration() {
     private val plugins = linkedMapOf<String, CachedInstance<Plugin>>()
 
     override fun <T : Any> get(key: String, converter: Converter<T>): T? {

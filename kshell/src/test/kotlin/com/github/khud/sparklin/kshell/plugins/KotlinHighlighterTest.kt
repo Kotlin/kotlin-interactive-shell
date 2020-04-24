@@ -3,9 +3,9 @@ package com.github.khud.sparklin.kshell.plugins
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import com.github.khud.kshell.repl.ReplTestBase
-import sparklin.kshell.org.jline.utils.AttributedString
-import sparklin.kshell.org.jline.utils.AttributedStyle
-import sparklin.kshell.org.jline.utils.AttributedStyle.*
+import org.jline.utils.AttributedString
+import org.jline.utils.AttributedStyle
+import org.jline.utils.AttributedStyle.*
 
 class KotlinHighlighterTest : ReplTestBase() {
     private val keyword = "keyword"

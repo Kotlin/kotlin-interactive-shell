@@ -1,10 +1,11 @@
+/*
 package com.github.khud.sparklin.kshell.plugins
 
 import com.github.khud.sparklin.kshell.*
-import com.github.khud.sparklin.kshell.configuration.Configuration
-import sparklin.kshell.org.jline.reader.Highlighter
-import sparklin.kshell.org.jline.reader.LineReader
-import sparklin.kshell.org.jline.utils.AttributedString
+import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
+import org.jline.reader.Highlighter
+import org.jline.reader.LineReader
+import org.jline.utils.AttributedString
 import com.github.khud.kshell.repl.*
 import com.github.khud.kshell.repl.ReplCompiler.Companion.RESULT_FIELD_NAME
 import com.github.khud.kshell.repl.ReplCompiler.Companion.RUN_FIELD_NAME
@@ -19,7 +20,7 @@ import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.javaField
 
 class RuntimePlugin : Plugin {
-    inner class Imports(conf: Configuration): BaseCommand() {
+    inner class Imports(conf: ReplConfiguration): BaseCommand() {
         override val name: String by conf.get(default = "imports")
         override val short: String by conf.get(default = "i")
 
@@ -32,7 +33,7 @@ class RuntimePlugin : Plugin {
         }
     }
 
-    inner class InferType(conf: Configuration): BaseCommand() {
+    inner class InferType(conf: ReplConfiguration): BaseCommand() {
         override val name: String by conf.get(default = "type")
         override val short: String by conf.get(default = "t")
         override val description: String = "display the type of an expression without evaluating it"
@@ -66,7 +67,7 @@ class RuntimePlugin : Plugin {
         override fun replace(code: String): CodeExpr = CodeExpr(no, code)
     }
 
-    inner class ListSymbols(conf: Configuration) : com.github.khud.sparklin.kshell.BaseCommand() {
+    inner class ListSymbols(conf: ReplConfiguration) : com.github.khud.sparklin.kshell.BaseCommand() {
         override val name: String by conf.get(default = "list")
         override val short: String? by conf.get(default = "ls")
         override val description: String = "list defined symbols"
@@ -84,7 +85,7 @@ class RuntimePlugin : Plugin {
     private lateinit var customHighlighter: CustomHighlighter
     private val counter = AtomicInteger(0)
 
-    override fun init(repl: KShell, config: Configuration) {
+    override fun init(repl: KShell, config: ReplConfiguration) {
         this.repl = repl
         this.table = SymbolsTable(repl.state.history)
 
@@ -214,4 +215,4 @@ class ExtractSymbols(private val wrapper: InvokeWrapper?, private val table: Sym
             if (isConst) javaField!!.get(null) else get(instance)
         }
     }
-}
+}*/

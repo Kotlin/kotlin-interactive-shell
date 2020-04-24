@@ -1,11 +1,11 @@
 package com.github.khud.sparklin.kshell.plugins
 
 import com.github.khud.sparklin.kshell.*
-import com.github.khud.sparklin.kshell.configuration.Configuration
+import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
 import kotlinx.cli.*
 
 class ConfigPlugin: Plugin {
-    inner class Set(val conf: Configuration): BaseCommand() {
+    inner class Set(val conf: ReplConfiguration): BaseCommand() {
         override val name: String by conf.get(default = "set")
         override val short: String? by conf.getNullable()
         override val description: String = "set configuration parameter"
@@ -29,7 +29,7 @@ class ConfigPlugin: Plugin {
         }
     }
 
-    inner class Conf(val conf: Configuration): BaseCommand() {
+    inner class Conf(val conf: ReplConfiguration): BaseCommand() {
         override val name: String by conf.get(default = "conf")
         override val short: String? by conf.getNullable()
         override val description: String = "list configuration parameters"
@@ -71,7 +71,7 @@ class ConfigPlugin: Plugin {
         }
     }
 
-    override fun init(repl: KShell, config: Configuration) {
+    override fun init(repl: KShell, config: ReplConfiguration) {
         repl.registerCommand(Set(config))
         repl.registerCommand(Conf(config))
     }

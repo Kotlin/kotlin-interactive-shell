@@ -1,53 +1,48 @@
 package com.github.khud.sparklin.kshell
 
-import com.intellij.openapi.Disposable
+import com.github.khud.sparklin.kshell.configuration.BooleanConverter
+import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
+import com.github.khud.sparklin.kshell.configuration.IntConverter
+import com.github.khud.sparklin.kshell.wrappers.ResultWrapper
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
+import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import org.jetbrains.kotlin.utils.PathUtil
-import com.github.khud.sparklin.kshell.configuration.BooleanConverter
-import com.github.khud.sparklin.kshell.configuration.Configuration
-import com.github.khud.sparklin.kshell.configuration.IntConverter
-import sparklin.kshell.org.jline.reader.EndOfFileException
-import sparklin.kshell.org.jline.reader.LineReader
-import sparklin.kshell.org.jline.reader.LineReaderBuilder
-import sparklin.kshell.org.jline.reader.UserInterruptException
-import sparklin.kshell.org.jline.terminal.Terminal
-import sparklin.kshell.org.jline.terminal.TerminalBuilder
-import com.github.khud.kshell.repl.*
-import com.github.khud.sparklin.kshell.wrappers.ResultWrapper
-import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
+import org.jline.reader.EndOfFileException
+import org.jline.reader.LineReader
+import org.jline.reader.LineReaderBuilder
+import org.jline.reader.UserInterruptException
+import org.jline.terminal.Terminal
+import org.jline.terminal.TerminalBuilder
 import java.io.File
 import java.net.URLClassLoader
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.write
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.script.experimental.api.*
+import kotlin.script.experimental.host.ScriptingHostConfiguration
+import kotlin.script.experimental.host.toScriptSource
+import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
+import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
+import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
+import kotlin.script.experimental.util.LinkedSnippet
 
-open class KShell(val disposable: Disposable,
-                  val configuration: Configuration,
-                  val messageCollector: MessageCollector,
-                  val classpath: List<File>,
-                  val moduleName: String,
-                  val classLoader: ClassLoader) {
+open class KShell(val replConfiguration: ReplConfiguration,
+                  val hostConfiguration: ScriptingHostConfiguration,
+                  val compilationConfiguration: ScriptCompilationConfiguration,
+                  val evaluationConfiguration: ScriptEvaluationConfiguration
+) {
 
-    private val compilerConfiguration = CompilerConfiguration().apply {
-        addJvmClasspathRoots(PathUtil.getJdkClassesRoots(File(System.getProperty("java.home"))))
-        addJvmClasspathRoots(classpath)
-        put(CommonConfigurationKeys.MODULE_NAME, moduleName)
-        put<MessageCollector>(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
-    }
-
-    private val baseClassloader = URLClassLoader(compilerConfiguration.jvmClasspathRoots.map { it.toURI().toURL() }
-            .toTypedArray(), classLoader)
-
-    lateinit var compiler: ReplCompiler
+    lateinit var compiler: KJvmReplCompilerWithIdeServices
         private set
 
-    private lateinit var evaluator: ReplEvaluator
+    private lateinit var evaluator: BasicJvmReplEvaluator
 
-    val state = ReplState(ReentrantReadWriteLock())
+    val currentSnippetNo = AtomicInteger()
 
     val incompleteLines = arrayListOf<String>()
 
@@ -58,8 +53,6 @@ open class KShell(val disposable: Disposable,
 
     val commands = mutableListOf<com.github.khud.sparklin.kshell.Command>(FakeQuit())
     val eventManager = EventManager()
-
-    var invokeWrapper: InvokeWrapper? = null
 
     var prompt = {
         if (incompleteLines.isEmpty())
@@ -72,7 +65,7 @@ open class KShell(val disposable: Disposable,
 
     class EvalThread: Thread() {
         lateinit var evalBlock: () -> ResultWrapper
-        var result: ResultWrapper = ResultWrapper(Result.Error(EvalError.RuntimeError("Interrupted")))
+        var result: ResultWrapper = ResultWrapper(ResultWithDiagnostics.Failure("Interrupted".asErrorDiagnostics()))
 
         override fun run() {
             result = evalBlock()
@@ -81,7 +74,7 @@ open class KShell(val disposable: Disposable,
 
     var evalThread = EvalThread()
 
-    class Settings(conf: Configuration) {
+    class Settings(conf: ReplConfiguration) {
         val overrideSignals: Boolean by conf.get(BooleanConverter, default = true)
         val maxResultLength: Int by conf.get(IntConverter, default = 10000)
         val blankLinesAllowed: Int by  conf.get(IntConverter, default = 2)
@@ -99,14 +92,12 @@ open class KShell(val disposable: Disposable,
 
     fun listCommands(): Iterable<com.github.khud.sparklin.kshell.Command> = commands.asIterable()
 
-    fun addClasspathRoots(files: List<File>) = compilerConfiguration.addJvmClasspathRoots(files)
-
     fun initEngine() {
-        configuration.load()
+        replConfiguration.load()
 
         setIdeaIoUseFallback()
 
-        settings = Settings(configuration)
+        settings = Settings(replConfiguration)
 
         val term = if (settings.overrideSignals) {
             TerminalBuilder.builder().nativeSignals(true).signalHandler {
@@ -121,15 +112,15 @@ open class KShell(val disposable: Disposable,
         readerBuilder = LineReaderBuilder.builder().terminal(term).highlighter(highlighter)
         reader = readerBuilder.build()
 
-        configuration.plugins().forEach { it.init(this, configuration) }
+        replConfiguration.plugins().forEach { it.init(this, replConfiguration) }
 
-        reader.setVariable(LineReader.HISTORY_FILE, configuration.get(LineReader.HISTORY_FILE,
+        reader.setVariable(LineReader.HISTORY_FILE, replConfiguration.get(LineReader.HISTORY_FILE,
                 System.getProperty("user.home") + File.separator + ".kshell_history"))
         reader.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "")
         reader.option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
 
-        compiler = ReplCompiler(disposable, compilerConfiguration, messageCollector)
-        evaluator = ReplEvaluator(classpath, baseClassloader)
+        compiler = KJvmReplCompilerWithIdeServices()
+        evaluator = BasicJvmReplEvaluator()
     }
 
     private fun interrupt() {
@@ -158,7 +149,7 @@ open class KShell(val disposable: Disposable,
                 try {
                     val action = commands.first { it.match(line) }
                     action.execute(line)
-                    state.lineIndex.getAndIncrement()
+                    currentSnippetNo.incrementAndGet()
                 } catch (_: NoSuchElementException) {
                     println("Unknown command $line")
                 } catch (e: Exception) {
@@ -173,25 +164,22 @@ open class KShell(val disposable: Disposable,
                 } else {
                     val source = (incompleteLines + line).joinToString(separator = "\n")
                     val time = System.nanoTime()
-                    val result = eval(source).result
+                    val result = eval(source)
                     evaluationTimeMillis = (System.nanoTime() - time) / 1_000_000
-                    when (result) {
-                        is Result.Error -> {
-                            if (result.error.isIncomplete) {
-                                incompleteLines.add(line)
-                            } else {
-                                incompleteLines.clear()
-                                handleError(result.error)
-                            }
-                        }
-                        is Result.Success -> {
+                    when (result.getStatus()) {
+                        ResultWrapper.Status.INCOMPLETE -> incompleteLines.add(line)
+                        ResultWrapper.Status.ERROR -> {
                             incompleteLines.clear()
-                            handleSuccess(result.data)
+                            handleError(result.result)
+                        }
+                        ResultWrapper.Status.SUCCESS -> {
+                            incompleteLines.clear()
+                            handleSuccess(result.result as ResultWithDiagnostics.Success<*>)
                         }
                     }
                 }
             } }
-            catch (e: UserInterruptException) { if (settings.overrideSignals) state.lineIndex.getAndIncrement() else break }
+            catch (e: UserInterruptException) { if (settings.overrideSignals) currentSnippetNo.incrementAndGet() else break }
             catch (ee: EndOfFileException) { break }
             catch (ex: Exception) { ex.printStackTrace() }
         } while (true)
@@ -207,11 +195,11 @@ open class KShell(val disposable: Disposable,
         return incompleteLines.isEmpty() && (line.equals(":quit", ignoreCase = true) || line.equals(":q", ignoreCase = true))
     }
 
-    private fun nextLine(code: String) = CodeLine(state.lineIndex.getAndIncrement(), code)
+    private fun nextLine(code: String) = code.toScriptSource("Line_${currentSnippetNo.incrementAndGet()}.${compilationConfiguration[ScriptCompilationConfiguration.fileExtension]}")
 
-    private fun compile(code: String) = compiler.compile(state, nextLine(code))
+    suspend fun compile(code: String) = compiler.compile(nextLine(code), compilationConfiguration)
 
-    fun compile(code: SourceCode) = compiler.compile(state, code)
+    fun compile(code: SourceCode) = runBlocking { compiler.compile(code, compilationConfiguration) }
 
     fun eval(source: String): ResultWrapper {
         return if (settings.overrideSignals) {
@@ -229,29 +217,36 @@ open class KShell(val disposable: Disposable,
     }
 
     fun compileAndEval(source: String): ResultWrapper =
-        state.lock.write {
-            val compileResult = compile(source)
+        runBlocking {
+            val compileResult: ResultWithDiagnostics<LinkedSnippet<KJvmCompiledScript>> = compile(source)
             ResultWrapper(when (compileResult) {
-                is Result.Error -> {
-                    Result.Error<EvalResult, EvalError>(compileResult.error)
-                }
-                is Result.Success -> {
-                    eventManager.emitEvent(OnCompile(compileResult.data))
-                    evaluator.eval(state, compileResult.data, invokeWrapper)
+                is ResultWithDiagnostics.Failure -> compileResult
+                is ResultWithDiagnostics.Success -> {
+                    eventManager.emitEvent(OnCompile(compileResult.value))
+                    evaluator.eval(compileResult.value, evaluationConfiguration)
                 }
             })
         }
 
-    fun handleError(error: EvalError) = when (error) {
-            is EvalError.RuntimeError -> {
-                if (error.cause != null) error.cause?.printStackTrace() else println("Runtime Error: ${error.message}")
-            }
-            is EvalError.CompileError -> println(error.message)
-        }
+    fun handleError(result: ResultWithDiagnostics<*>) = printDiagnostics(result)
 
-    fun handleSuccess(result: EvalResult) {
-        if (result is EvalResult.ValueResult)
-            println(result.toString().bound(settings.maxResultLength))
+    private fun printDiagnostics(result: ResultWithDiagnostics<*>) {
+        result.reports.forEach { it.render(withStackTrace = true) }
+    }
+
+    fun handleSuccess(result: ResultWithDiagnostics.Success<*>) {
+        printDiagnostics(result)
+        val snippets = result.value as LinkedSnippet<KJvmEvaluatedSnippet>
+        val evalResultValue = snippets.get().result
+        when (evalResultValue) {
+            is ResultValue.Value ->
+                println(evalResultValue.value.toString().bound(settings.maxResultLength))
+            is ResultValue.Error -> {
+                val error = evalResultValue.error
+                error.printStackTrace()
+//                if (error.cause != null) error.cause?.printStackTrace() else println("Runtime Error: ${error.message}")
+            }
+        }
     }
 
     private fun commandError(e: Exception) {
@@ -262,11 +257,9 @@ open class KShell(val disposable: Disposable,
         reader.history.save()
     }
 
-    fun checker() = compiler.checker
-
     private fun sayHello() {
         println("kshell $VERSION/${KotlinVersion.CURRENT}")
-        configuration.plugins().forEach { it.sayHello() }
+        replConfiguration.plugins().forEach { it.sayHello() }
     }
 
     companion object {
@@ -274,6 +267,6 @@ open class KShell(val disposable: Disposable,
     }
 }
 
-class OnCompile(private val data: CompilationData) : Event<CompilationData> {
-    override fun data(): CompilationData = data
+class OnCompile(private val data: LinkedSnippet<KJvmCompiledScript>) : Event<LinkedSnippet<KJvmCompiledScript>> {
+    override fun data(): LinkedSnippet<KJvmCompiledScript> = data
 }

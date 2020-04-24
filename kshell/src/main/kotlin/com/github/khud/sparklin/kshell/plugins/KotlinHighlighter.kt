@@ -1,12 +1,13 @@
+/*
 package com.github.khud.sparklin.kshell.plugins
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtUserType
-import sparklin.kshell.org.jline.utils.AttributedString
-import sparklin.kshell.org.jline.utils.AttributedStringBuilder
-import sparklin.kshell.org.jline.utils.AttributedStyle
+import org.jline.utils.AttributedString
+import org.jline.utils.AttributedStringBuilder
+import org.jline.utils.AttributedStyle
 import com.github.khud.kshell.repl.ReplChecker
 import com.github.khud.kshell.repl.ReplState
 import com.github.khud.kshell.repl.Result
@@ -72,4 +73,4 @@ class KotlinHighlighter(private val state: ReplState, private val checker: () ->
         override fun nextPart(codePart: String): SourceCode = throw UnsupportedOperationException("Should never happen")
         override fun replace(code: String): SourceCode = throw UnsupportedOperationException("Should never happen")
     }
-}
+}*/

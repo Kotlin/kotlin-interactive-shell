@@ -25,12 +25,37 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-compiler</artifactId>
+            <artifactId>kotlin-compiler-embeddable</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-script-runtime</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-scripting-common</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-scripting-jvm</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-scripting-jvm-host-embeddable</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-scripting-compiler-embeddable</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-scripting-ide-services-embeddable</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
         <dependency>
@@ -44,16 +69,6 @@
             <version>2.7.0</version>
         </dependency>
         <dependency>
-            <groupId>com.github.khud</groupId>
-            <artifactId>kshell-repl-api</artifactId>
-            <version>0.2.7-1.3.31</version>
-        </dependency>
-        <dependency>
-            <groupId>sparklin</groupId>
-            <artifactId>jline3-shaded</artifactId>
-            <version>0.2.7-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>org.jetbrains.intellij.deps</groupId>
             <artifactId>trove4j</artifactId>
             <version>1.0.20181211</version>
@@ -64,6 +79,12 @@
             <artifactId>annotations</artifactId>
             <version>17.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline</artifactId>
+            <version>3.9.0</version>
+        </dependency>
+
 
     </dependencies>
 

@@ -1,15 +1,16 @@
 package com.github.khud.sparklin.kshell.plugins
 
-import sparklin.kshell.org.jline.reader.EndOfFileException
-import sparklin.kshell.org.jline.reader.LineReader
+import org.jline.reader.EndOfFileException
+import org.jline.reader.LineReader
 import com.github.khud.sparklin.kshell.BaseCommand
 import com.github.khud.sparklin.kshell.KShell
 import com.github.khud.sparklin.kshell.Plugin
-import com.github.khud.sparklin.kshell.configuration.Configuration
-import com.github.khud.kshell.repl.Result
+import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
+import com.github.khud.sparklin.kshell.wrappers.ResultWrapper
+import kotlin.script.experimental.api.ResultWithDiagnostics
 
 class PastePlugin : Plugin {
-    inner class Paste(conf: Configuration): BaseCommand() {
+    inner class Paste(conf: ReplConfiguration): BaseCommand() {
         override val name: String by conf.get(default = "paste")
         override val short: String by conf.get(default = "p")
         override val description: String = "enter paste mode"
@@ -28,11 +29,11 @@ class PastePlugin : Plugin {
             val code = buf.toString()
             println("// Exiting paste mode, now interpreting.")
             val time = System.nanoTime()
-            val result = repl.eval(code).result
+            val result = repl.eval(code)
             repl.evaluationTimeMillis = (System.nanoTime() - time) / 1_000_000
-            when (result) {
-                is Result.Error -> repl.handleError(result.error)
-                is Result.Success -> repl.handleSuccess(result.data)
+            when (result.getStatus()) {
+                ResultWrapper.Status.ERROR -> repl.handleError(result.result)
+                ResultWrapper.Status.SUCCESS -> repl.handleSuccess(result.result as ResultWithDiagnostics.Success<*>)
             }
         }
     }
@@ -41,7 +42,7 @@ class PastePlugin : Plugin {
     lateinit var console: LineReader
     lateinit var pasteConsole: LineReader
 
-    override fun init(repl: KShell, config: Configuration) {
+    override fun init(repl: KShell, config: ReplConfiguration) {
         this.repl = repl
         this.console = repl.reader
         this.pasteConsole = repl.readerBuilder.highlighter(console.highlighter).build()

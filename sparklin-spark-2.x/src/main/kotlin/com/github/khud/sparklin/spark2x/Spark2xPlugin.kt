@@ -1,6 +1,6 @@
 package com.github.khud.sparklin.spark2x
 
-import com.github.khud.sparklin.kshell.configuration.Configuration
+import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
 import org.apache.spark.SparkConf
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.SparkSession
@@ -17,7 +17,7 @@ import java.util.*
 class Spark2xPlugin : Logging(), SparkPlugin {
     lateinit var version: String
 
-    override fun init(repl: KShell, config: Configuration) {
+    override fun init(repl: KShell, config: ReplConfiguration) {
         val jars = getAddedJars()
         val conf = SparkConf()
                 .setMaster(getMaster())
@@ -42,7 +42,7 @@ class Spark2xPlugin : Logging(), SparkPlugin {
             }
         })
 
-        repl.addClasspathRoots(replJars)
+//        repl.addClasspathRoots(replJars)
         repl.state.history.add(SyntheticImportSnippet(Holder::class.qualifiedName!!, "sc", "sc"))
         repl.state.history.add(SyntheticImportSnippet(Holder::class.qualifiedName!!, "spark", "spark"))
     }

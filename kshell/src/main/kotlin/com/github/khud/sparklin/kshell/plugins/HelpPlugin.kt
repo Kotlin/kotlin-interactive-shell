@@ -3,12 +3,12 @@ package com.github.khud.sparklin.kshell.plugins
 import com.github.khud.sparklin.kshell.BaseCommand
 import com.github.khud.sparklin.kshell.Plugin
 import com.github.khud.sparklin.kshell.KShell
-import com.github.khud.sparklin.kshell.configuration.Configuration
+import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
 import com.github.khud.sparklin.kshell.match
 import kotlinx.cli.HelpPrinter
 
 class HelpPlugin: Plugin {
-    inner class Help(conf: Configuration): BaseCommand() {
+    inner class Help(conf: ReplConfiguration): BaseCommand() {
         override val name: String by conf.get(default = "help")
         override val short: String by conf.get(default = "h")
         override val description: String = "print this summary or command-specific help"
@@ -38,7 +38,7 @@ class HelpPlugin: Plugin {
 
     lateinit var repl: KShell
 
-    override fun init(repl: KShell, config: Configuration) {
+    override fun init(repl: KShell, config: ReplConfiguration) {
         this.repl = repl
 
         repl.registerCommand(Help(config))

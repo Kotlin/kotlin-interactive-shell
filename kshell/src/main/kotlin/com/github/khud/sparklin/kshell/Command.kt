@@ -1,6 +1,6 @@
 package com.github.khud.sparklin.kshell
 
-import sparklin.kshell.org.jline.reader.Highlighter
+import org.jline.reader.Highlighter
 
 interface Command {
     fun execute(line: String)
