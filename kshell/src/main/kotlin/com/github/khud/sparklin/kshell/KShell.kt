@@ -1,19 +1,12 @@
 package com.github.khud.sparklin.kshell
 
 import com.github.khud.sparklin.kshell.configuration.BooleanConverter
-import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
 import com.github.khud.sparklin.kshell.configuration.IntConverter
+import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
 import com.github.khud.sparklin.kshell.wrappers.ResultWrapper
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
-import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
-import org.jetbrains.kotlin.utils.PathUtil
 import org.jline.reader.EndOfFileException
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
@@ -21,7 +14,6 @@ import org.jline.reader.UserInterruptException
 import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
 import java.io.File
-import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.ScriptingHostConfiguration
@@ -119,7 +111,7 @@ open class KShell(val replConfiguration: ReplConfiguration,
         reader.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "")
         reader.option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
 
-        compiler = KJvmReplCompilerWithIdeServices()
+        compiler = KJvmReplCompilerWithIdeServices(hostConfiguration)
         evaluator = BasicJvmReplEvaluator()
     }
 
@@ -236,7 +228,9 @@ open class KShell(val replConfiguration: ReplConfiguration,
 
     fun handleSuccess(result: ResultWithDiagnostics.Success<*>) {
         printDiagnostics(result)
+        // TODO: avoid unchecked cast
         val snippets = result.value as LinkedSnippet<KJvmEvaluatedSnippet>
+        eventManager.emitEvent(OnEval(snippets))
         val evalResultValue = snippets.get().result
         when (evalResultValue) {
             is ResultValue.Value ->
@@ -269,4 +263,8 @@ open class KShell(val replConfiguration: ReplConfiguration,
 
 class OnCompile(private val data: LinkedSnippet<KJvmCompiledScript>) : Event<LinkedSnippet<KJvmCompiledScript>> {
     override fun data(): LinkedSnippet<KJvmCompiledScript> = data
+}
+
+class OnEval(private val data: LinkedSnippet<KJvmEvaluatedSnippet>) : Event<LinkedSnippet<KJvmEvaluatedSnippet>> {
+    override fun data(): LinkedSnippet<KJvmEvaluatedSnippet> = data
 }

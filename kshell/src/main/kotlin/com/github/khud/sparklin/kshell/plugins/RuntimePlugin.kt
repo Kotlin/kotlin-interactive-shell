@@ -1,4 +1,3 @@
-/*
 package com.github.khud.sparklin.kshell.plugins
 
 import com.github.khud.sparklin.kshell.*
@@ -6,9 +5,6 @@ import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
 import org.jline.reader.Highlighter
 import org.jline.reader.LineReader
 import org.jline.utils.AttributedString
-import com.github.khud.kshell.repl.*
-import com.github.khud.kshell.repl.ReplCompiler.Companion.RESULT_FIELD_NAME
-import com.github.khud.kshell.repl.ReplCompiler.Companion.RUN_FIELD_NAME
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -18,6 +14,10 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.javaField
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.resultField
+import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
+import kotlin.script.experimental.util.LinkedSnippet
 
 class RuntimePlugin : Plugin {
     inner class Imports(conf: ReplConfiguration): BaseCommand() {
@@ -27,9 +27,11 @@ class RuntimePlugin : Plugin {
         override val description: String = "show imports"
 
         override fun execute(line: String) {
-            repl.state.history
-                    .filterIsInstance<ImportSnippet>()
-                    .forEach { println(it.psi.text) }
+            // TODO: restore
+//            repl.state.history
+//                    .filterIsInstance<ImportSnippet>()
+//                    .forEach { println(it.psi.text) }
+            println("!not implemented!")
         }
     }
 
@@ -43,11 +45,13 @@ class RuntimePlugin : Plugin {
             val p = line.indexOf(' ')
             val expr = line.substring(p + 1).trim()
 
-            val compileResult = repl.compile(CodeExpr(counter.getAndIncrement(), expr))
-            when (compileResult) {
-                is Result.Error -> repl.handleError(compileResult.error)
-                is Result.Success -> compileResult.data.classes.type?.let { println(it) }
-            }
+            // TODO: restore
+//            val compileResult = repl.compile(CodeExpr(counter.getAndIncrement(), expr))
+//            when (compileResult) {
+//                is Result.Error -> repl.handleError(compileResult.error)
+//                is Result.Success -> compileResult.data.classes.type?.let { println(it) }
+//            }
+            println("!not implemented!")
         }
 
         override fun highlighter(): Highlighter = customHighlighter
@@ -60,12 +64,12 @@ class RuntimePlugin : Plugin {
         }
     }
 
-    private data class CodeExpr(override val no: Int, override val code: String): SourceCode {
-        override val part: Int = 0
-        override fun mkFileName(): String = "TypeInference_$no"
-        override fun nextPart(codePart: String): SourceCode = throw UnsupportedOperationException("Should never happen")
-        override fun replace(code: String): CodeExpr = CodeExpr(no, code)
-    }
+//    private data class CodeExpr(override val no: Int, override val code: String): SourceCode {
+//        override val part: Int = 0
+//        override fun mkFileName(): String = "TypeInference_$no"
+//        override fun nextPart(codePart: String): SourceCode = throw UnsupportedOperationException("Should never happen")
+//        override fun replace(code: String): CodeExpr = CodeExpr(no, code)
+//    }
 
     inner class ListSymbols(conf: ReplConfiguration) : com.github.khud.sparklin.kshell.BaseCommand() {
         override val name: String by conf.get(default = "list")
@@ -80,23 +84,22 @@ class RuntimePlugin : Plugin {
     }
 
     private lateinit var repl: KShell
-    private var lastCompiledClasses: CompiledClasses? = null
     private lateinit var table: SymbolsTable
     private lateinit var customHighlighter: CustomHighlighter
     private val counter = AtomicInteger(0)
 
     override fun init(repl: KShell, config: ReplConfiguration) {
         this.repl = repl
-        this.table = SymbolsTable(repl.state.history)
+        this.table = SymbolsTable()
 
 
-        repl.eventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
-            override fun handle(event: OnCompile) {
-                lastCompiledClasses = event.data().classes
+        repl.eventManager.registerEventHandler(OnEval::class, object : EventHandler<OnEval> {
+            override fun handle(event: OnEval) {
+                table.addNewSnippets(event.data())
             }
         })
 
-        repl.invokeWrapper = ExtractSymbols(repl.invokeWrapper, table)
+
         customHighlighter = CustomHighlighter({ repl.highlighter.syntaxHighlighter })
 
         repl.registerCommand(InferType(config))
@@ -152,7 +155,7 @@ class FunctionSymbol(namespace: String, name: String, private val func: KFunctio
     }
 }
 
-class SymbolsTable(val history: List<Snippet>) {
+class SymbolsTable() {
     private val symbols = mutableListOf<Symbol>()
 
     fun add(symbol: Symbol) {
@@ -172,23 +175,23 @@ class SymbolsTable(val history: List<Snippet>) {
         }
     }
 
-    fun isShadowed(symbol: Symbol): Boolean = history
-            .filterIsInstance<DeclarationSnippet>()
-            .findLast { it.klass == symbol.namespace && it.name == symbol.name }
-            ?.shadowed ?: false
-}
+    fun isShadowed(symbol: Symbol): Boolean = false
+    // TODO: restore functionality
+//            history
+//            .filterIsInstance<DeclarationSnippet>()
+//            .findLast { it.klass == symbol.namespace && it.name == symbol.name }
+//            ?.shadowed ?: false
 
-class ExtractSymbols(private val wrapper: InvokeWrapper?, private val table: SymbolsTable): InvokeWrapper {
-    override fun <T> invoke(body: () -> T): T {
-        val r = wrapper?.invoke(body) ?: body()
-
+    fun addNewSnippets(snippets: LinkedSnippet<KJvmEvaluatedSnippet>): Unit {
+        val r = snippets.get().result.scriptInstance
+        val resultFieldName = snippets.get().compiledSnippet.compilationConfiguration[ScriptCompilationConfiguration.resultField]
         // cast carefully
         val embodiment = r as Any
         val namespace = embodiment::class.simpleName!!
 
         embodiment::class.nestedClasses.forEach { clazz ->
             clazz.simpleName?.let {
-                table.add(ClassSymbol(namespace, it, clazz))
+                add(ClassSymbol(namespace, it, clazz))
             }
         }
 
@@ -197,16 +200,15 @@ class ExtractSymbols(private val wrapper: InvokeWrapper?, private val table: Sym
             when (it) {
                 is KProperty1<*, *> -> {
                     val obj = readProperty(embodiment, it.name)
-                    if (it.name != RESULT_FIELD_NAME && it.name != RUN_FIELD_NAME)
-                        table.add(InstanceSymbol(namespace, it.name, obj, it))
+                    if (it.name != resultFieldName) // special names
+                        add(InstanceSymbol(namespace, it.name, obj, it))
                 }
                 is KFunction<*> -> {
-                    table.add(FunctionSymbol(namespace, it.name, it))
+                    add(FunctionSymbol(namespace, it.name, it))
                 }
                 else -> throw IllegalStateException("Unknown symbol: $it of ${it::class}")
             }
         }
-        return r
     }
 
     private fun readProperty(instance: Any, propertyName: String): Any? {
@@ -215,4 +217,4 @@ class ExtractSymbols(private val wrapper: InvokeWrapper?, private val table: Sym
             if (isConst) javaField!!.get(null) else get(instance)
         }
     }
-}*/
+}
