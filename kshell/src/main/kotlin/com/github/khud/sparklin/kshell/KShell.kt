@@ -5,7 +5,6 @@ import com.github.khud.sparklin.kshell.configuration.IntConverter
 import com.github.khud.sparklin.kshell.configuration.ReplConfiguration
 import com.github.khud.sparklin.kshell.wrappers.ResultWrapper
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import org.jline.reader.EndOfFileException
 import org.jline.reader.LineReader
@@ -14,6 +13,7 @@ import org.jline.reader.UserInterruptException
 import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
 import java.io.File
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.ScriptingHostConfiguration
@@ -86,8 +86,6 @@ open class KShell(val replConfiguration: ReplConfiguration,
 
     fun initEngine() {
         replConfiguration.load()
-
-        setIdeaIoUseFallback()
 
         settings = Settings(replConfiguration)
 
@@ -189,9 +187,13 @@ open class KShell(val replConfiguration: ReplConfiguration,
 
     private fun nextLine(code: String) = code.toScriptSource("Line_${currentSnippetNo.incrementAndGet()}.${compilationConfiguration[ScriptCompilationConfiguration.fileExtension]}")
 
+    private fun tempLine(code: String) = code.toScriptSource("\$\$tempLine_${UUID.randomUUID()}.${compilationConfiguration[ScriptCompilationConfiguration.fileExtension]}")
+
     suspend fun compile(code: String) = compiler.compile(nextLine(code), compilationConfiguration)
 
     fun compile(code: SourceCode) = runBlocking { compiler.compile(code, compilationConfiguration) }
+
+    fun analyze(code: String, pos: SourceCode.Position) = runBlocking { compiler.analyze(tempLine(code), pos, compilationConfiguration) }
 
     fun eval(source: String): ResultWrapper {
         return if (settings.overrideSignals) {
