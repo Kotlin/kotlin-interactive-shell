@@ -25,9 +25,15 @@ import kotlin.script.experimental.util.LinkedSnippet
 
 open class KShell(val replConfiguration: ReplConfiguration,
                   val hostConfiguration: ScriptingHostConfiguration,
-                  val compilationConfiguration: ScriptCompilationConfiguration,
-                  val evaluationConfiguration: ScriptEvaluationConfiguration
+                  val baseCompilationConfiguration: ScriptCompilationConfiguration,
+                  val baseEvaluationConfiguration: ScriptEvaluationConfiguration
 ) {
+
+    var compilationConfiguration: ScriptCompilationConfiguration = baseCompilationConfiguration
+        private set
+
+    var evaluationConfiguration: ScriptEvaluationConfiguration = baseEvaluationConfiguration
+        private set
 
     lateinit var compiler: KJvmReplCompilerWithIdeServices
         private set
@@ -80,6 +86,14 @@ open class KShell(val replConfiguration: ReplConfiguration,
         override val short: String = "q"
         override val description: String = "quit the kshell"
         override fun execute(line: String) {}
+    }
+
+    fun updateCompilationConfiguration(body: ScriptCompilationConfiguration.Builder.() -> Unit) {
+        compilationConfiguration = compilationConfiguration.with(body)
+    }
+
+    fun updateEvaluationConfiguration(body: ScriptEvaluationConfiguration.Builder.() -> Unit) {
+        evaluationConfiguration = evaluationConfiguration.with(body)
     }
 
     fun listCommands(): Iterable<com.github.khud.sparklin.kshell.Command> = commands.asIterable()
