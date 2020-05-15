@@ -7,14 +7,16 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.internal.StaticSQLConf.CATALOG_IMPLEMENTATION
 import org.apache.spark.util.Utils
 import com.github.khud.sparklin.kshell.plugins.SparkPlugin
-import com.github.khud.kshell.repl.SyntheticImportSnippet
 import com.github.khud.sparklin.kshell.*
+import kotlinx.coroutines.runBlocking
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
+import kotlin.script.experimental.api.defaultImports
+import kotlin.script.experimental.jvmhost.BasicJvmScriptClassFilesGenerator
 
-class Spark2xPlugin : Logging(), SparkPlugin {
+class Spark2xPlugin : SparkPlugin {
     lateinit var version: String
 
     override fun init(repl: KShell, config: ReplConfiguration) {
@@ -33,18 +35,15 @@ class Spark2xPlugin : Logging(), SparkPlugin {
 
         repl.eventManager.registerEventHandler(OnCompile::class, object : EventHandler<OnCompile> {
             override fun handle(event: OnCompile) {
-                event.data().classes.classes.forEach {
-                    if (it.path.contains('/')) {
-                        // Right now it is not needed and we can skip WEB-INF/$MODULE_NAME.kotlin_module here
-                        // because it will be empty anyway
-                    } else writeClass(outputDir.absolutePath + File.separator + it.path, it.bytes)
-                }
+                val saver = BasicJvmScriptClassFilesGenerator(outputDir)
+                runBlocking { saver(event.data().get()) }
             }
         })
 
 //        repl.addClasspathRoots(replJars)
-        repl.state.history.add(SyntheticImportSnippet(Holder::class.qualifiedName!!, "sc", "sc"))
-        repl.state.history.add(SyntheticImportSnippet(Holder::class.qualifiedName!!, "spark", "spark"))
+        repl.updateCompilationConfiguration {
+            defaultImports.append("${Holder::class.qualifiedName!!}sc", "${Holder::class.qualifiedName!!}spark")
+        }
     }
 
     object Holder {
@@ -79,19 +78,19 @@ class Spark2xPlugin : Logging(), SparkPlugin {
                 // does not have this value set to 'hive' yet. The original default
                 // behavior is that when there are hive classes, we use hive catalog.
                 sparkSession = builder.enableHiveSupport().getOrCreate()
-                logInfo("Created Spark session with Hive support")
+//                logInfo("Created Spark session with Hive support")
             } else {
                 // Need to change it back to 'in-memory' if no hive classes are found
                 // in the case that the property is set to hive in spark-defaults.conf
                 builder.config(CATALOG_IMPLEMENTATION().key(), "in-memory")
                 sparkSession = builder.getOrCreate()
-                logInfo("Created Spark session")
+//                logInfo("Created Spark session")
             }
         } else {
             // In the case that the property is set but not to 'hive', the internal
             // default is 'in-memory'. So the sparkSession will use in-memory catalog.
             sparkSession = builder.getOrCreate()
-            logInfo("Created Spark session")
+//            logInfo("Created Spark session")
         }
         version = sparkSession.version()
         return sparkSession
