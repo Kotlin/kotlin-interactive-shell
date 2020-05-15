@@ -14,8 +14,7 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.javaField
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.resultField
+import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.util.LinkedSnippet
 
@@ -46,12 +45,13 @@ class RuntimePlugin : Plugin {
             val expr = line.substring(p + 1).trim()
 
             // TODO: restore
-//            val compileResult = repl.compile(CodeExpr(counter.getAndIncrement(), expr))
-//            when (compileResult) {
-//                is Result.Error -> repl.handleError(compileResult.error)
-//                is Result.Success -> compileResult.data.classes.type?.let { println(it) }
-//            }
-            println("!not implemented!")
+            val analysisResults = repl.analyze(expr, SourceCode.Position(0, 0))
+            when (analysisResults) {
+                is ResultWithDiagnostics.Failure -> repl.handleError(analysisResults)
+                is ResultWithDiagnostics.Success<ReplAnalyzerResult> -> {
+                    analysisResults.value[ReplAnalyzerResult.renderedResultType]?.let { println(it) }
+                }
+            }
         }
 
         override fun highlighter(): Highlighter = customHighlighter
