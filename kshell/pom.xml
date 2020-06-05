@@ -45,7 +45,7 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-scripting-jvm-host-embeddable</artifactId>
+            <artifactId>kotlin-scripting-jvm-host</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
         <dependency>
@@ -55,7 +55,7 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-scripting-ide-services-embeddable</artifactId>
+            <artifactId>kotlin-scripting-ide-services</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
         <dependency>
