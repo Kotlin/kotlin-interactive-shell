@@ -11,7 +11,7 @@ class ReplConfigurationImpl : PropertyBasedReplConfiguration(Properties(),
                 RuntimePlugin::class.qualifiedName!!,
                 HelpPlugin::class.qualifiedName!!,
                 PastePlugin::class.qualifiedName!!,
-//                SyntaxPlugin::class.qualifiedName!!,
+                SyntaxPlugin::class.qualifiedName!!,
                 PromptPlugin::class.qualifiedName!!,
                 ConfigPlugin::class.qualifiedName!!)) {
     override fun load() {

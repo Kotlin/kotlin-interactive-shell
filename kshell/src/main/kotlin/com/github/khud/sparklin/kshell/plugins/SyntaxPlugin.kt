@@ -1,4 +1,4 @@
-/*
+
 package com.github.khud.sparklin.kshell.plugins
 
 import com.github.khud.sparklin.kshell.BaseCommand
@@ -58,7 +58,7 @@ class SyntaxPlugin: Plugin {
     override fun init(repl: KShell, config: ReplConfiguration) {
         this.repl = repl
         this.reader = repl.reader
-        kotlinHighlighter = KotlinHighlighter(repl.state, repl::checker, HighlightStylesFromConfiguration(config))
+        kotlinHighlighter = KotlinHighlighter(HighlightStylesFromConfiguration(config))
 
         repl.registerCommand(Syntax(config))
     }
@@ -74,6 +74,7 @@ class SyntaxPlugin: Plugin {
         val number: AttributedStyle?
         val parenthesis: AttributedStyle?
         val typeParameter: AttributedStyle?
+        val identifier: AttributedStyle?
     }
 
     class HighlightStylesFromConfiguration(conf: ReplConfiguration): HighlightStyles {
@@ -85,6 +86,7 @@ class SyntaxPlugin: Plugin {
         override val number: AttributedStyle by conf.get(StyleConverter, DEFAULT.foreground(CYAN))
         override val parenthesis: AttributedStyle by conf.get(StyleConverter, DEFAULT.foreground(BRIGHT))
         override val typeParameter: AttributedStyle by conf.get(StyleConverter, DEFAULT.foreground(BLUE))
+        override val identifier: AttributedStyle? by conf.get(StyleConverter, DEFAULT.foreground(YELLOW))
     }
 
     object StyleConverter: Converter<AttributedStyle> {
@@ -120,4 +122,4 @@ class SyntaxPlugin: Plugin {
             else -> throw IllegalArgumentException("Unsupported color: $s")
         }
     }
-}*/
+}
