@@ -1,4 +1,4 @@
-/*
+
 package com.github.khud.sparklin.kshell.plugins
 
 import com.github.khud.sparklin.kshell.BaseCommand
@@ -58,7 +58,7 @@ class SyntaxPlugin: Plugin {
     override fun init(repl: KShell, config: ReplConfiguration) {
         this.repl = repl
         this.reader = repl.reader
-        kotlinHighlighter = KotlinHighlighter(repl.state, repl::checker, HighlightStylesFromConfiguration(config))
+        kotlinHighlighter = KotlinHighlighter(HighlightStylesFromConfiguration(config))
 
         repl.registerCommand(Syntax(config))
     }
@@ -120,4 +120,4 @@ class SyntaxPlugin: Plugin {
             else -> throw IllegalArgumentException("Unsupported color: $s")
         }
     }
-}*/
+}
