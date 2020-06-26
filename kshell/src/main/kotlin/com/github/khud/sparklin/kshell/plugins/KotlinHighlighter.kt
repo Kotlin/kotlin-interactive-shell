@@ -31,11 +31,8 @@ class KotlinHighlighter(private val styles: SyntaxPlugin.HighlightStyles): BaseH
 
         if (lastCodeCausingError != code) {
             lastCodeCausingError = null
-            val codeStream: CodePointCharStream = CharStreams.fromString(code)
-            val lexer = KotlinLexer(codeStream)
-            val tokens = CommonTokenStream(lexer)
             try {
-                with(KotlinParser(tokens)) {
+                with(KotlinParserForHighlighting(code)) {
                     addParseListener(listener)
                     removeErrorListeners()
                     script()
@@ -69,4 +66,12 @@ class KotlinHighlighter(private val styles: SyntaxPlugin.HighlightStyles): BaseH
     override fun setErrorPattern(p0: Pattern?) {}
 
     override fun setErrorIndex(p0: Int) {}
+
+    private class KotlinParserForHighlighting(code: String) :
+            KotlinParser(CommonTokenStream(KotlinLexer(CharStreams.fromString(code))))
+    {
+        init {
+            _buildParseTrees = false
+        }
+    }
 }
