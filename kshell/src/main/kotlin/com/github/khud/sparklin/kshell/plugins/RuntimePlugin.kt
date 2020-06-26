@@ -6,6 +6,7 @@ import org.jline.reader.Highlighter
 import org.jline.reader.LineReader
 import org.jline.utils.AttributedString
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.regex.Pattern
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
@@ -61,6 +62,14 @@ class RuntimePlugin : Plugin {
         override fun highlight(reader: LineReader, buffer: String): AttributedString {
             val p = buffer.indexOf(' ')
             return baseHighlighter().highlight(buffer, p + 1)
+        }
+
+        override fun setErrorPattern(p0: Pattern?) {
+            TODO("Not yet implemented")
+        }
+
+        override fun setErrorIndex(p0: Int) {
+            TODO("Not yet implemented")
         }
     }
 
