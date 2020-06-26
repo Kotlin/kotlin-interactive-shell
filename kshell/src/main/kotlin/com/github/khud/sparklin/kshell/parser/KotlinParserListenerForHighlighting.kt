@@ -17,13 +17,15 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
         Unknown,
         Comment,
         Keyword,
-        Function,
-        Type,
+        FunctionIdentifier,
+        Identifier,
+        TypeIdentifier,
         String,
         StringTemplate,
         Number,
         Parenthesis,
-        TypeParameter
+        TypeParameter,
+        Label
     }
 
     data class ElementWithPos(
@@ -33,6 +35,52 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
     )
 
     val result = mutableListOf<ElementWithPos>()
+
+    var lastElement: RecogizedElements? = null
+    var lastIdentifierTypeElement: RecogizedElements? = null
+    var lastElementStart: Int? = null
+
+    fun addHighlightingIdentifier(ctx: ParserRuleContext) {
+        exitHighlightingElement(ctx)
+        result.add(ElementWithPos(ctx.start.startIndex, ctx.stop.stopIndex, lastIdentifierTypeElement ?: RecogizedElements.Identifier))
+        lastIdentifierTypeElement = null
+    }
+
+    fun enterIdentifierHighlighting(identifierElement: RecogizedElements) {
+        lastIdentifierTypeElement = identifierElement
+    }
+
+    fun addHighlightingElement(ctx: ParserRuleContext, element: RecogizedElements) {
+        exitHighlightingElement(ctx)
+        result.add(ElementWithPos(ctx.start.startIndex, ctx.stop.stopIndex, element))
+    }
+
+    fun addHighlightingParenthesis(ctx: ParserRuleContext) {
+        exitHighlightingElement(ctx)
+        result.add(ElementWithPos(ctx.start.startIndex, ctx.start.startIndex, RecogizedElements.Parenthesis))
+        result.add(ElementWithPos(ctx.stop.stopIndex, ctx.stop.stopIndex, RecogizedElements.Parenthesis))
+    }
+
+    fun enterHighlightingElement(ctx: ParserRuleContext, element: RecogizedElements) {
+        exitHighlightingElement(ctx)
+        lastElement = element
+        lastElementStart = ctx.start.startIndex
+    }
+    
+    fun enterHighlightingKeyword(ctx: ParserRuleContext) {
+        enterHighlightingElement(ctx, RecogizedElements.Keyword)
+    }
+    
+    fun cancelHighlightingKeyword() {
+        lastElement = null
+    }
+
+    fun exitHighlightingElement(ctx: ParserRuleContext) {
+        if (lastElement != null) {
+            result.add(ElementWithPos(lastElementStart!!, ctx.start.startIndex - 1, lastElement!!))
+            lastElement = null
+        }
+    }
 
     override fun enterKotlinFile(ctx: KotlinFileContext) {}
 
@@ -45,7 +93,7 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
     override fun enterShebangLine(ctx: ShebangLineContext) {}
 
     override fun exitShebangLine(ctx: ShebangLineContext) {
-        result.add(ElementWithPos(ctx.start.startIndex, ctx.stop.stopIndex, RecogizedElements.Comment))
+        addHighlightingElement(ctx, RecogizedElements.Comment)
     }
 
     override fun enterFileAnnotation(ctx: FileAnnotationContext) {}
@@ -80,7 +128,9 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitDeclaration(ctx: DeclarationContext) {}
 
-    override fun enterClassDeclaration(ctx: KotlinParser.ClassDeclarationContext) {}
+    override fun enterClassDeclaration(ctx: KotlinParser.ClassDeclarationContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitClassDeclaration(ctx: KotlinParser.ClassDeclarationContext) {}
 
@@ -124,11 +174,11 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitTypeParameters(ctx: TypeParametersContext) {}
 
-    override fun enterTypeParameter(ctx: TypeParameterContext) {}
-
-    override fun exitTypeParameter(ctx: TypeParameterContext) {
-        result.add(ElementWithPos(ctx.start.startIndex, ctx.stop.stopIndex, RecogizedElements.TypeParameter))
+    override fun enterTypeParameter(ctx: TypeParameterContext) {
+        enterIdentifierHighlighting(RecogizedElements.TypeParameter)
     }
+
+    override fun exitTypeParameter(ctx: TypeParameterContext) {}
 
     override fun enterTypeConstraints(ctx: TypeConstraintsContext) {}
 
@@ -146,11 +196,16 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitClassMemberDeclaration(ctx: ClassMemberDeclarationContext) {}
 
-    override fun enterAnonymousInitializer(ctx: AnonymousInitializerContext) {}
+    override fun enterAnonymousInitializer(ctx: AnonymousInitializerContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitAnonymousInitializer(ctx: AnonymousInitializerContext) {}
 
-    override fun enterCompanionObject(ctx: CompanionObjectContext) {}
+    override fun enterCompanionObject(ctx: CompanionObjectContext) {
+        enterHighlightingKeyword(ctx)
+        enterIdentifierHighlighting(RecogizedElements.TypeIdentifier)
+    }
 
     override fun exitCompanionObject(ctx: CompanionObjectContext) {}
 
@@ -162,7 +217,10 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitFunctionValueParameter(ctx: FunctionValueParameterContext) {}
 
-    override fun enterFunctionDeclaration(ctx: FunctionDeclarationContext) {}
+    override fun enterFunctionDeclaration(ctx: FunctionDeclarationContext) {
+        enterHighlightingKeyword(ctx)
+        enterIdentifierHighlighting(RecogizedElements.FunctionIdentifier)
+    }
 
     override fun exitFunctionDeclaration(ctx: FunctionDeclarationContext) {}
 
@@ -170,15 +228,21 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitFunctionBody(ctx: FunctionBodyContext) {}
 
-    override fun enterVariableDeclaration(ctx: VariableDeclarationContext) {}
+    override fun enterVariableDeclaration(ctx: VariableDeclarationContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitVariableDeclaration(ctx: VariableDeclarationContext) {}
 
-    override fun enterMultiVariableDeclaration(ctx: MultiVariableDeclarationContext) {}
+    override fun enterMultiVariableDeclaration(ctx: MultiVariableDeclarationContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitMultiVariableDeclaration(ctx: MultiVariableDeclarationContext) {}
 
-    override fun enterPropertyDeclaration(ctx: PropertyDeclarationContext) {}
+    override fun enterPropertyDeclaration(ctx: PropertyDeclarationContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitPropertyDeclaration(ctx: PropertyDeclarationContext) {}
 
@@ -186,11 +250,15 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitPropertyDelegate(ctx: PropertyDelegateContext) {}
 
-    override fun enterGetter(ctx: GetterContext) {}
+    override fun enterGetter(ctx: GetterContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitGetter(ctx: GetterContext) {}
 
-    override fun enterSetter(ctx: SetterContext) {}
+    override fun enterSetter(ctx: SetterContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitSetter(ctx: SetterContext) {}
 
@@ -206,11 +274,15 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitParameter(ctx: ParameterContext) {}
 
-    override fun enterObjectDeclaration(ctx: ObjectDeclarationContext) {}
+    override fun enterObjectDeclaration(ctx: ObjectDeclarationContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitObjectDeclaration(ctx: ObjectDeclarationContext) {}
 
-    override fun enterSecondaryConstructor(ctx: SecondaryConstructorContext) {}
+    override fun enterSecondaryConstructor(ctx: SecondaryConstructorContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitSecondaryConstructor(ctx: SecondaryConstructorContext) {}
 
@@ -230,11 +302,15 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitEnumEntry(ctx: EnumEntryContext) {}
 
-    override fun enterType(ctx: KotlinParser.TypeContext) {}
+    override fun enterType(ctx: KotlinParser.TypeContext) {
+        enterIdentifierHighlighting(RecogizedElements.TypeIdentifier)
+    }
 
     override fun exitType(ctx: KotlinParser.TypeContext) {}
 
-    override fun enterTypeReference(ctx: TypeReferenceContext) {}
+    override fun enterTypeReference(ctx: TypeReferenceContext) {
+        enterIdentifierHighlighting(RecogizedElements.TypeIdentifier)
+    }
 
     override fun exitTypeReference(ctx: TypeReferenceContext) {}
 
@@ -246,17 +322,21 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitQuest(ctx: QuestContext) {}
 
-    override fun enterUserType(ctx: UserTypeContext) {}
-
-    override fun exitUserType(ctx: UserTypeContext) {
-        result.add(ElementWithPos(ctx.start.startIndex, ctx.stop.stopIndex, RecogizedElements.Type))
+    override fun enterUserType(ctx: UserTypeContext) {
+        enterIdentifierHighlighting(RecogizedElements.TypeIdentifier)
     }
 
-    override fun enterSimpleUserType(ctx: SimpleUserTypeContext) {}
+    override fun exitUserType(ctx: UserTypeContext) {}
+
+    override fun enterSimpleUserType(ctx: SimpleUserTypeContext) {
+        enterIdentifierHighlighting(RecogizedElements.TypeIdentifier)
+    }
 
     override fun exitSimpleUserType(ctx: SimpleUserTypeContext) {}
 
-    override fun enterTypeProjection(ctx: TypeProjectionContext) {}
+    override fun enterTypeProjection(ctx: TypeProjectionContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitTypeProjection(ctx: TypeProjectionContext) {}
 
@@ -278,7 +358,9 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun enterParenthesizedType(ctx: ParenthesizedTypeContext) {}
 
-    override fun exitParenthesizedType(ctx: ParenthesizedTypeContext) {}
+    override fun exitParenthesizedType(ctx: ParenthesizedTypeContext) {
+        addHighlightingParenthesis(ctx)
+    }
 
     override fun enterReceiverType(ctx: ReceiverTypeContext) {}
 
@@ -286,7 +368,9 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun enterParenthesizedUserType(ctx: ParenthesizedUserTypeContext) {}
 
-    override fun exitParenthesizedUserType(ctx: ParenthesizedUserTypeContext) {}
+    override fun exitParenthesizedUserType(ctx: ParenthesizedUserTypeContext) {
+        addHighlightingParenthesis(ctx)
+    }
 
     override fun enterStatements(ctx: StatementsContext) {}
 
@@ -298,13 +382,17 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun enterLabel(ctx: LabelContext) {}
 
-    override fun exitLabel(ctx: LabelContext) {}
+    override fun exitLabel(ctx: LabelContext) {
+        addHighlightingElement(ctx, RecogizedElements.Label)
+    }
 
     override fun enterControlStructureBody(ctx: ControlStructureBodyContext) {}
 
     override fun exitControlStructureBody(ctx: ControlStructureBodyContext) {}
 
-    override fun enterBlock(ctx: KotlinParser.BlockContext) {}
+    override fun enterBlock(ctx: KotlinParser.BlockContext) {
+        exitHighlightingElement(ctx)
+    }
 
     override fun exitBlock(ctx: KotlinParser.BlockContext) {}
 
@@ -312,15 +400,21 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitLoopStatement(ctx: LoopStatementContext) {}
 
-    override fun enterForStatement(ctx: ForStatementContext) {}
+    override fun enterForStatement(ctx: ForStatementContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitForStatement(ctx: ForStatementContext) {}
 
-    override fun enterWhileStatement(ctx: WhileStatementContext) {}
+    override fun enterWhileStatement(ctx: WhileStatementContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitWhileStatement(ctx: WhileStatementContext) {}
 
-    override fun enterDoWhileStatement(ctx: DoWhileStatementContext) {}
+    override fun enterDoWhileStatement(ctx: DoWhileStatementContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitDoWhileStatement(ctx: DoWhileStatementContext) {}
 
@@ -432,7 +526,12 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitNavigationSuffix(ctx: NavigationSuffixContext) {}
 
-    override fun enterCallSuffix(ctx: CallSuffixContext) {}
+    override fun enterCallSuffix(ctx: CallSuffixContext) {
+        if (lastElement == RecogizedElements.Identifier) {
+            result.add(ElementWithPos(lastElementStart!!, ctx.start.startIndex - 1, RecogizedElements.FunctionIdentifier))
+            lastElement = null
+        }
+    }
 
     override fun exitCallSuffix(ctx: CallSuffixContext) {}
 
@@ -458,7 +557,9 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun enterParenthesizedExpression(ctx: KotlinParser.ParenthesizedExpressionContext) {}
 
-    override fun exitParenthesizedExpression(ctx: KotlinParser.ParenthesizedExpressionContext) {}
+    override fun exitParenthesizedExpression(ctx: KotlinParser.ParenthesizedExpressionContext) {
+        addHighlightingParenthesis(ctx)
+    }
 
     override fun enterCollectionLiteral(ctx: CollectionLiteralContext) {}
 
@@ -467,25 +568,25 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
     override fun enterLiteralConstant(ctx: LiteralConstantContext) {}
 
     override fun exitLiteralConstant(ctx: LiteralConstantContext) {
-        result.add(ElementWithPos(ctx.start.startIndex, ctx.stop.stopIndex, RecogizedElements.Number))
+        addHighlightingElement(ctx, RecogizedElements.Number)
     }
 
     override fun enterStringLiteral(ctx: KotlinParser.StringLiteralContext) {}
 
     override fun exitStringLiteral(ctx: KotlinParser.StringLiteralContext) {
-        result.add(ElementWithPos(ctx.start.startIndex, ctx.stop.stopIndex, RecogizedElements.String))
+        addHighlightingElement(ctx, RecogizedElements.String)
     }
 
     override fun enterLineStringLiteral(ctx: LineStringLiteralContext) {}
 
     override fun exitLineStringLiteral(ctx: LineStringLiteralContext) {
-        result.add(ElementWithPos(ctx.start.startIndex, ctx.stop.stopIndex, RecogizedElements.String))
+        addHighlightingElement(ctx, RecogizedElements.String)
     }
 
     override fun enterMultiLineStringLiteral(ctx: MultiLineStringLiteralContext) {}
 
     override fun exitMultiLineStringLiteral(ctx: MultiLineStringLiteralContext) {
-        result.add(ElementWithPos(ctx.start.startIndex, ctx.stop.stopIndex, RecogizedElements.String))
+        addHighlightingElement(ctx, RecogizedElements.String)
     }
 
     override fun enterLineStringContent(ctx: LineStringContentContext) {}
@@ -495,7 +596,7 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
     override fun enterLineStringExpression(ctx: LineStringExpressionContext) {}
 
     override fun exitLineStringExpression(ctx: LineStringExpressionContext) {
-        result.add(ElementWithPos(ctx.start.startIndex, ctx.stop.stopIndex, RecogizedElements.StringTemplate))
+        addHighlightingElement(ctx, RecogizedElements.StringTemplate)
     }
 
     override fun enterMultiLineStringContent(ctx: MultiLineStringContentContext) {}
@@ -505,7 +606,7 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
     override fun enterMultiLineStringExpression(ctx: MultiLineStringExpressionContext) {}
 
     override fun exitMultiLineStringExpression(ctx: MultiLineStringExpressionContext) {
-        result.add(ElementWithPos(ctx.start.startIndex, ctx.stop.stopIndex, RecogizedElements.StringTemplate))
+        addHighlightingElement(ctx, RecogizedElements.StringTemplate)
     }
 
     override fun enterLambdaLiteral(ctx: LambdaLiteralContext) {}
@@ -528,35 +629,53 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitFunctionLiteral(ctx: FunctionLiteralContext) {}
 
-    override fun enterObjectLiteral(ctx: ObjectLiteralContext) {}
+    override fun enterObjectLiteral(ctx: ObjectLiteralContext) {
+        enterIdentifierHighlighting(RecogizedElements.TypeIdentifier)
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitObjectLiteral(ctx: ObjectLiteralContext) {}
 
-    override fun enterThisExpression(ctx: ThisExpressionContext) {}
+    override fun enterThisExpression(ctx: ThisExpressionContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitThisExpression(ctx: ThisExpressionContext) {}
 
-    override fun enterSuperExpression(ctx: SuperExpressionContext) {}
+    override fun enterSuperExpression(ctx: SuperExpressionContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitSuperExpression(ctx: SuperExpressionContext) {}
 
-    override fun enterIfExpression(ctx: IfExpressionContext) {}
+    override fun enterIfExpression(ctx: IfExpressionContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitIfExpression(ctx: IfExpressionContext) {}
 
-    override fun enterWhenSubject(ctx: WhenSubjectContext) {}
+    override fun enterWhenSubject(ctx: WhenSubjectContext) {
+        exitHighlightingElement(ctx)
+    }
 
     override fun exitWhenSubject(ctx: WhenSubjectContext) {}
 
-    override fun enterWhenExpression(ctx: WhenExpressionContext) {}
+    override fun enterWhenExpression(ctx: WhenExpressionContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitWhenExpression(ctx: WhenExpressionContext) {}
 
-    override fun enterWhenEntry(ctx: WhenEntryContext) {}
+    override fun enterWhenEntry(ctx: WhenEntryContext) {
+        exitHighlightingElement(ctx)
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitWhenEntry(ctx: WhenEntryContext) {}
 
-    override fun enterWhenCondition(ctx: WhenConditionContext) {}
+    override fun enterWhenCondition(ctx: WhenConditionContext) {
+        cancelHighlightingKeyword()
+    }
 
     override fun exitWhenCondition(ctx: WhenConditionContext) {}
 
@@ -568,19 +687,27 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun exitTypeTest(ctx: TypeTestContext) {}
 
-    override fun enterTryExpression(ctx: TryExpressionContext) {}
+    override fun enterTryExpression(ctx: TryExpressionContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitTryExpression(ctx: TryExpressionContext) {}
 
-    override fun enterCatchBlock(ctx: CatchBlockContext) {}
+    override fun enterCatchBlock(ctx: CatchBlockContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitCatchBlock(ctx: CatchBlockContext) {}
 
-    override fun enterFinallyBlock(ctx: FinallyBlockContext) {}
+    override fun enterFinallyBlock(ctx: FinallyBlockContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitFinallyBlock(ctx: FinallyBlockContext) {}
 
-    override fun enterJumpExpression(ctx: JumpExpressionContext) {}
+    override fun enterJumpExpression(ctx: JumpExpressionContext) {
+        enterHighlightingKeyword(ctx)
+    }
 
     override fun exitJumpExpression(ctx: JumpExpressionContext) {}
 
@@ -730,11 +857,15 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
 
     override fun enterSimpleIdentifier(ctx: SimpleIdentifierContext) {}
 
-    override fun exitSimpleIdentifier(ctx: SimpleIdentifierContext) {}
+    override fun exitSimpleIdentifier(ctx: SimpleIdentifierContext) {
+        addHighlightingIdentifier(ctx)
+    }
 
     override fun enterIdentifier(ctx: KotlinParser.IdentifierContext) {}
 
-    override fun exitIdentifier(ctx: KotlinParser.IdentifierContext) {}
+    override fun exitIdentifier(ctx: KotlinParser.IdentifierContext) {
+        addHighlightingIdentifier(ctx)
+    }
 
     override fun enterEveryRule(ctx: ParserRuleContext) {}
 

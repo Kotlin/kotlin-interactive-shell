@@ -74,6 +74,7 @@ class SyntaxPlugin: Plugin {
         val number: AttributedStyle?
         val parenthesis: AttributedStyle?
         val typeParameter: AttributedStyle?
+        val identifier: AttributedStyle?
     }
 
     class HighlightStylesFromConfiguration(conf: ReplConfiguration): HighlightStyles {
@@ -85,6 +86,7 @@ class SyntaxPlugin: Plugin {
         override val number: AttributedStyle by conf.get(StyleConverter, DEFAULT.foreground(CYAN))
         override val parenthesis: AttributedStyle by conf.get(StyleConverter, DEFAULT.foreground(BRIGHT))
         override val typeParameter: AttributedStyle by conf.get(StyleConverter, DEFAULT.foreground(BLUE))
+        override val identifier: AttributedStyle? by conf.get(StyleConverter, DEFAULT.foreground(YELLOW))
     }
 
     object StyleConverter: Converter<AttributedStyle> {

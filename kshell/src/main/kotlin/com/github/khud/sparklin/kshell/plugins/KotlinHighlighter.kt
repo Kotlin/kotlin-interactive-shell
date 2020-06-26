@@ -49,11 +49,11 @@ class KotlinHighlighter(private val styles: SyntaxPlugin.HighlightStyles): BaseH
             val st = when (element) {
                 null -> null
                 KotlinParserListenerForHighlighting.RecogizedElements.Keyword -> styles.keyword
-                KotlinParserListenerForHighlighting.RecogizedElements.Function -> styles.function
+                KotlinParserListenerForHighlighting.RecogizedElements.FunctionIdentifier -> styles.function
                 KotlinParserListenerForHighlighting.RecogizedElements.Number -> styles.number
                 KotlinParserListenerForHighlighting.RecogizedElements.String -> styles.string
                 KotlinParserListenerForHighlighting.RecogizedElements.StringTemplate -> styles.stringTemplate
-                KotlinParserListenerForHighlighting.RecogizedElements.Type -> styles.type
+                KotlinParserListenerForHighlighting.RecogizedElements.TypeIdentifier -> styles.type
                 KotlinParserListenerForHighlighting.RecogizedElements.Parenthesis -> styles.parenthesis
                 KotlinParserListenerForHighlighting.RecogizedElements.TypeParameter -> styles.typeParameter
                 else -> null
