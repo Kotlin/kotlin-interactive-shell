@@ -12,6 +12,8 @@ import java.util.regex.Pattern
 
 class KotlinHighlighter(private val styles: SyntaxPlugin.HighlightStyles): BaseHighlighter {
 
+    private var lastCodeCausingError: String? = null
+
     override fun highlight(buffer: String, offset: Int): AttributedString {
         require(offset >= 0)
         return AttributedStringBuilder().run {
@@ -25,14 +27,23 @@ class KotlinHighlighter(private val styles: SyntaxPlugin.HighlightStyles): BaseH
         val code = buffer.substring(offset)
         if (code.isBlank()) return
 
-        val codeStream: CodePointCharStream = CharStreams.fromString(code)
-        val lexer = KotlinLexer(codeStream)
-        val tokens = CommonTokenStream(lexer)
         val listener = KotlinParserListenerForHighlighting()
-        with (KotlinParser(tokens)) {
-            addParseListener(listener)
-            removeErrorListeners()
-            script()
+
+        if (lastCodeCausingError != code) {
+            lastCodeCausingError = null
+            val codeStream: CodePointCharStream = CharStreams.fromString(code)
+            val lexer = KotlinLexer(codeStream)
+            val tokens = CommonTokenStream(lexer)
+            try {
+                with(KotlinParser(tokens)) {
+                    addParseListener(listener)
+                    removeErrorListeners()
+                    script()
+                }
+            } catch (e: Throwable) {
+                lastCodeCausingError = code
+                throw e
+            }
         }
 
         if (offset != 0) append(buffer.substring(0, offset))
