@@ -6,12 +6,12 @@
 	<properties>
         <kotlin.version>1.4-M3-eap-7</kotlin.version>
         <jvm.version>1.8</jvm.version>
-        <sparklin.version>0.2.7-SNAPSHOT</sparklin.version>
+        <ki-shell.version>0.3.0-SNAPSHOT</ki-shell.version>
 	</properties>
 
-	<groupId>sparklin</groupId>
-	<artifactId>sparklin</artifactId>
-	<version>0.2.7-SNAPSHOT</version>
+	<groupId>org.jetbrains.kotlin</groupId>
+	<artifactId>ki</artifactId>
+	<version>0.3.0-SNAPSHOT</version>
 	
 	<packaging>pom</packaging>
 
