@@ -26,6 +26,6 @@ class ReplConfigurationImpl : PropertyBasedReplConfiguration(Properties(),
 
     private fun configPath() =
             System.getProperty("config.path") ?:
-            System.getenv("SPARKLIN_CONFIG") ?:
-            (System.getProperty("user.home") ?: "") + File.separator + ".kshell"
+            System.getenv("KI_CONFIG") ?:
+            (System.getProperty("user.home") ?: "") + File.separator + ".ki-shell"
 }

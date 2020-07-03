@@ -31,6 +31,6 @@
     </pluginRepositories>
 
 	<modules>
-        <module>kshell</module>
+        <module>ki-shell</module>
     </modules>
 </project>

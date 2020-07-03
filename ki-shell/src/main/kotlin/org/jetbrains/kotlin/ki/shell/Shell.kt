@@ -23,10 +23,10 @@ import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.util.LinkedSnippet
 
-open class KShell(val replConfiguration: ReplConfiguration,
-                  val hostConfiguration: ScriptingHostConfiguration,
-                  val baseCompilationConfiguration: ScriptCompilationConfiguration,
-                  val baseEvaluationConfiguration: ScriptEvaluationConfiguration
+open class Shell(val replConfiguration: ReplConfiguration,
+                 val hostConfiguration: ScriptingHostConfiguration,
+                 val baseCompilationConfiguration: ScriptCompilationConfiguration,
+                 val baseEvaluationConfiguration: ScriptEvaluationConfiguration
 ) {
 
     var compilationConfiguration: ScriptCompilationConfiguration = baseCompilationConfiguration
@@ -84,7 +84,7 @@ open class KShell(val replConfiguration: ReplConfiguration,
     private class FakeQuit: BaseCommand() {
         override val name: String = "quit"
         override val short: String = "q"
-        override val description: String = "quit the kshell"
+        override val description: String = "quit the shell"
         override fun execute(line: String) {}
     }
 
@@ -268,7 +268,7 @@ open class KShell(val replConfiguration: ReplConfiguration,
     }
 
     private fun sayHello() {
-        println("kshell $VERSION/${KotlinVersion.CURRENT}")
+        println("ki-shell $VERSION/${KotlinVersion.CURRENT}")
         replConfiguration.plugins().forEach { it.sayHello() }
     }
 

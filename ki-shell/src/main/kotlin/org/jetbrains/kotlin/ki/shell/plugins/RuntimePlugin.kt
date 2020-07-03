@@ -92,12 +92,12 @@ class RuntimePlugin : Plugin {
         }
     }
 
-    private lateinit var repl: KShell
+    private lateinit var repl: Shell
     private lateinit var table: SymbolsTable
     private lateinit var customHighlighter: CustomHighlighter
     private val counter = AtomicInteger(0)
 
-    override fun init(repl: KShell, config: ReplConfiguration) {
+    override fun init(repl: Shell, config: ReplConfiguration) {
         this.repl = repl
         this.table = SymbolsTable()
 

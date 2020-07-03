@@ -71,7 +71,7 @@ class ConfigPlugin: Plugin {
         }
     }
 
-    override fun init(repl: KShell, config: ReplConfiguration) {
+    override fun init(repl: Shell, config: ReplConfiguration) {
         repl.registerCommand(Set(config))
         repl.registerCommand(Conf(config))
     }

@@ -1,7 +1,7 @@
 package org.jetbrains.kotlin.ki.shell.plugins
 
 import org.jetbrains.kotlin.ki.shell.BaseCommand
-import org.jetbrains.kotlin.ki.shell.KShell
+import org.jetbrains.kotlin.ki.shell.Shell
 import org.jetbrains.kotlin.ki.shell.Plugin
 import org.jetbrains.kotlin.ki.shell.configuration.ReplConfiguration
 import org.jetbrains.kotlin.ki.shell.wrappers.ResultWrapper
@@ -38,11 +38,11 @@ class PastePlugin : Plugin {
         }
     }
 
-    lateinit var repl: KShell
+    lateinit var repl: Shell
     lateinit var console: LineReader
     lateinit var pasteConsole: LineReader
 
-    override fun init(repl: KShell, config: ReplConfiguration) {
+    override fun init(repl: Shell, config: ReplConfiguration) {
         this.repl = repl
         this.console = repl.reader
         this.pasteConsole = repl.readerBuilder.highlighter(console.highlighter).build()

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.ki.shell.plugins
 
 import org.jetbrains.kotlin.ki.shell.BaseCommand
-import org.jetbrains.kotlin.ki.shell.KShell
+import org.jetbrains.kotlin.ki.shell.Shell
 import org.jetbrains.kotlin.ki.shell.Plugin
 import org.jetbrains.kotlin.ki.shell.configuration.BooleanConverter
 import org.jetbrains.kotlin.ki.shell.configuration.Converter
@@ -51,11 +51,11 @@ class SyntaxPlugin: Plugin {
             :$name off - disable highlighting""".trimIndent()
     }
 
-    lateinit var repl: KShell
+    lateinit var repl: Shell
     lateinit var kotlinHighlighter: KotlinHighlighter
     lateinit var reader: LineReader
 
-    override fun init(repl: KShell, config: ReplConfiguration) {
+    override fun init(repl: Shell, config: ReplConfiguration) {
         this.repl = repl
         this.reader = repl.reader
         kotlinHighlighter = KotlinHighlighter(HighlightStylesFromConfiguration(config))

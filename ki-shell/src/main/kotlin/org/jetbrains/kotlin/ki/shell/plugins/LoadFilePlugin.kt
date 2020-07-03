@@ -1,7 +1,7 @@
 package org.jetbrains.kotlin.ki.shell.plugins
 
 import org.jetbrains.kotlin.ki.shell.BaseCommand
-import org.jetbrains.kotlin.ki.shell.KShell
+import org.jetbrains.kotlin.ki.shell.Shell
 import org.jetbrains.kotlin.ki.shell.Plugin
 import org.jetbrains.kotlin.ki.shell.configuration.ReplConfiguration
 import java.io.File
@@ -23,9 +23,9 @@ class LoadFilePlugin: Plugin {
 
     }
 
-    lateinit var repl: KShell
+    lateinit var repl: Shell
 
-    override fun init(repl: KShell, config: ReplConfiguration) {
+    override fun init(repl: Shell, config: ReplConfiguration) {
         this.repl = repl
 
         repl.registerCommand(Load(config))

@@ -14,7 +14,7 @@ object KotlinShell {
     @JvmStatic
     fun main(args: Array<String>) {
         val repl =
-                KShell(
+                Shell(
                         configuration(),
                         defaultJvmScriptingHostConfiguration,
                         ScriptCompilationConfiguration {
@@ -25,7 +25,7 @@ object KotlinShell {
                         },
                         ScriptEvaluationConfiguration {
                             jvm {
-                                baseClassLoader(KShell::class.java.classLoader)
+                                baseClassLoader(Shell::class.java.classLoader)
                             }
                         }
                 )
