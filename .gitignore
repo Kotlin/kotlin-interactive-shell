@@ -1,0 +1,16 @@
+*/target/
+*.iml
+/.idea/libraries
+/.idea/.gitignore
+/.idea/.name
+/.idea/compiler.xml
+/.idea/jarRepositories.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/vcs.xml
+/.idea/shelf/
+/.idea/workspace.xml
+/.idea/dataSources/
+/.idea/dataSources.local.xml
+/.idea/httpRequests/
+
