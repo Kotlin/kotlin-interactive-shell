@@ -152,7 +152,7 @@
                     <archive>
                         <manifest>
                             <!-- addClasspath>true</addClasspath> -->
-                            <mainClass>com.github.khud.sparklin.kshell.KotlinShell</mainClass>
+                            <mainClass>org.jetbrains.kotlin.ki.shell.KotlinShell</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -182,7 +182,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.4.0</version>
                 <configuration>
-                    <mainClass>com.github.khud.sparklin.kshell.KotlinShell</mainClass>
+                    <mainClass>org.jetbrains.kotlin.ki.shell.KotlinShell</mainClass>
                 </configuration>
             </plugin>
         </plugins>
