@@ -24,6 +24,7 @@ class KotlinHighlighter(private val styles: SyntaxPlugin.HighlightStyles): BaseH
     }
 
     private fun AttributedStringBuilder.buildHighlighting(buffer: String, offset: Int) {
+        if (offset != 0) append(buffer.substring(0, offset))
         if (offset >= buffer.length) return
         val code = buffer.substring(offset)
         if (code.isBlank()) return
@@ -44,7 +45,6 @@ class KotlinHighlighter(private val styles: SyntaxPlugin.HighlightStyles): BaseH
             }
         }
 
-        if (offset != 0) append(buffer.substring(0, offset))
         for (i in code.indices) {
             val element = listener.result.firstOrNull { i >= it.start && i <= it.end }?.element
             val st = when (element) {
