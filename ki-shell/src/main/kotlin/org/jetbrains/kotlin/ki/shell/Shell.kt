@@ -25,8 +25,8 @@ import kotlin.script.experimental.util.LinkedSnippet
 
 open class Shell(val replConfiguration: ReplConfiguration,
                  val hostConfiguration: ScriptingHostConfiguration,
-                 val baseCompilationConfiguration: ScriptCompilationConfiguration,
-                 val baseEvaluationConfiguration: ScriptEvaluationConfiguration
+                 baseCompilationConfiguration: ScriptCompilationConfiguration,
+                 baseEvaluationConfiguration: ScriptEvaluationConfiguration
 ) {
 
     var compilationConfiguration: ScriptCompilationConfiguration = baseCompilationConfiguration
@@ -35,10 +35,9 @@ open class Shell(val replConfiguration: ReplConfiguration,
     var evaluationConfiguration: ScriptEvaluationConfiguration = baseEvaluationConfiguration
         private set
 
-    lateinit var compiler: KJvmReplCompilerWithIdeServices
-        private set
+    val compiler: KJvmReplCompilerWithIdeServices = KJvmReplCompilerWithIdeServices(hostConfiguration)
 
-    private lateinit var evaluator: BasicJvmReplEvaluator
+    private val evaluator: BasicJvmReplEvaluator = BasicJvmReplEvaluator()
 
     val currentSnippetNo = AtomicInteger()
 
@@ -47,10 +46,11 @@ open class Shell(val replConfiguration: ReplConfiguration,
     lateinit var readerBuilder: LineReaderBuilder
     lateinit var reader: LineReader
 
-    val highlighter = ContextHighlighter({ s -> !isCommandMode(s)}, { s -> commands.firstOrNull { it.weakMatch(s) } })
-
-    val commands = mutableListOf<org.jetbrains.kotlin.ki.shell.Command>(FakeQuit())
+    val commands = mutableListOf<Command>(FakeQuit())
     val eventManager = EventManager()
+
+    val highlighter = ContextHighlighter({ s -> !isCommandMode(s)}, { s -> commands.firstOrNull { it.weakMatch(s) } })
+    val completer = KotlinCompleter(compiler, { compilationConfiguration }, { currentSnippetNo.get() })
 
     var prompt = {
         if (incompleteLines.isEmpty())
@@ -113,7 +113,11 @@ open class Shell(val replConfiguration: ReplConfiguration,
             TerminalBuilder.builder().build()
         }
 
-        readerBuilder = LineReaderBuilder.builder().terminal(term).highlighter(highlighter)
+        readerBuilder =
+                LineReaderBuilder.builder()
+                        .terminal(term)
+                        .highlighter(highlighter)
+                        .completer(completer)
         reader = readerBuilder.build()
 
         replConfiguration.plugins().forEach { it.init(this, replConfiguration) }
@@ -122,9 +126,6 @@ open class Shell(val replConfiguration: ReplConfiguration,
                 System.getProperty("user.home") + File.separator + ".kshell_history"))
         reader.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "")
         reader.option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
-
-        compiler = KJvmReplCompilerWithIdeServices(hostConfiguration)
-        evaluator = BasicJvmReplEvaluator()
     }
 
     private fun interrupt() {
