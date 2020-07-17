@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 	<properties>
-        <kotlin.version>1.4-M3-eap-7</kotlin.version>
+        <kotlin.version>1.4-M3</kotlin.version>
         <jvm.version>1.8</jvm.version>
         <ki-shell.version>0.3.0-SNAPSHOT</ki-shell.version>
 	</properties>
@@ -19,14 +19,14 @@
         <repository>
             <id>kotlin-dev</id>
             <name>Kotlin dev builds</name>
-            <url>https://dl.bintray.com/kotlin/kotlin-dev</url>
+            <url>https://dl.bintray.com/kotlin/kotlin-eap</url>
         </repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
             <id>kotlin-dev</id>
             <name>Kotlin dev builds</name>
-            <url>https://dl.bintray.com/kotlin/kotlin-dev</url>
+            <url>https://dl.bintray.com/kotlin/kotlin-eap</url>
         </pluginRepository>
     </pluginRepositories>
 
