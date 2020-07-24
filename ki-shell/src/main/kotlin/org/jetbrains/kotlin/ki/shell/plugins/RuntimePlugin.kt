@@ -169,6 +169,7 @@ class SymbolsTable() {
     private val symbols = mutableListOf<Symbol>()
 
     fun add(symbol: Symbol) {
+        symbols.removeIf { it.kind == symbol.kind && it.name == symbol.name }
         symbols.add(symbol)
     }
 
@@ -176,21 +177,17 @@ class SymbolsTable() {
 
     override fun toString(): String = list().joinToString(separator = "\n")
 
-    fun list(pattern: String? = null, kinds: List<SymbolKind> =
-            listOf(SymbolKind.INSTANCE, SymbolKind.FUNCTION, SymbolKind.CLASS)): List<String> {
+    fun list(
+            pattern: String? = null,
+            kinds: List<SymbolKind> = listOf(SymbolKind.INSTANCE, SymbolKind.FUNCTION, SymbolKind.CLASS)
+    ): List<String> {
         val regex = pattern?.let { Regex(it) }
-        return symbols.filter { kinds.contains(it.kind) && !isShadowed(it) &&
-                (regex == null || it.name.matches(regex)) }.map {
+        return symbols.filter {
+            kinds.contains(it.kind) && (regex == null || it.name.matches(regex))
+        }.map {
             it.show()
         }
     }
-
-    fun isShadowed(symbol: Symbol): Boolean = false
-    // TODO: restore functionality
-//            history
-//            .filterIsInstance<DeclarationSnippet>()
-//            .findLast { it.klass == symbol.namespace && it.name == symbol.name }
-//            ?.shadowed ?: false
 
     fun addNewSnippets(snippets: LinkedSnippet<KJvmEvaluatedSnippet>): Unit {
         val r = snippets.get().result.scriptInstance
