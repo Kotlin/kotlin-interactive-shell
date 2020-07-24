@@ -1,14 +1,12 @@
 package org.jetbrains.kotlin.ki.shell.plugins
 
-/*
-import org.junit.Assert.assertEquals
 import org.junit.Test
-import com.github.khud.kshell.repl.ReplTestBase
+import junit.framework.TestCase
 import org.jline.utils.AttributedString
 import org.jline.utils.AttributedStyle
 import org.jline.utils.AttributedStyle.*
 
-class KotlinHighlighterTest : ReplTestBase() {
+class KotlinHighlighterTest : TestCase() {
     private val keyword = "keyword"
     private val function = "function"
     private val type = "type"
@@ -48,6 +46,7 @@ class KotlinHighlighterTest : ReplTestBase() {
         override val number: AttributedStyle? by styles
         override val parenthesis: AttributedStyle? by styles
         override val typeParameter: AttributedStyle? by styles
+        override val identifier: AttributedStyle? by styles
     }
 
     private val stylesToMnemonics = mnemonics.map {
@@ -57,29 +56,26 @@ class KotlinHighlighterTest : ReplTestBase() {
 
     @Test
     fun testFunction() {
-        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker }, styles.filter(listOf(keyword, function)))
-        assertEquals("kkk f(x: Int) = x", ht.highlight("fun g(x: Int) = x").mnemonics())
+        val ht = KotlinHighlighter(styles.filter(listOf(keyword, function)))
+        assertEquals("kkkkf(x: Int) = x", ht.highlight("fun g(x: Int) = x").mnemonics())
     }
 
     @Test
     fun testType() {
-        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
-                styles.filter(listOf(type)))
+        val ht = KotlinHighlighter( styles.filter(listOf(type)))
         assertEquals("fun g(x: ttt): ttt = x", ht.highlight("fun g(x: Int): Int = x").mnemonics())
         assertEquals("val x: tttttt = 1.0", ht.highlight("val x: Double = 1.0").mnemonics())
     }
 
     @Test
     fun testString() {
-        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
-                styles.filter(listOf(string, stringTemplate)))
+        val ht = KotlinHighlighter( styles.filter(listOf(string, stringTemplate)))
         assertEquals("sssssss\$\$world\$s\$xs", ht.highlight("\"hello \${world} \$x\"").mnemonics())
     }
 
     @Test
     fun testNumber() {
-        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
-                styles.filter(listOf(number)))
+        val ht = KotlinHighlighter( styles.filter(listOf(number)))
         assertEquals("val x: Double = nnn", ht.highlight("val x: Double = 1.0").mnemonics())
         assertEquals("val x: Double = nnnn", ht.highlight("val x: Double = 1.0f").mnemonics())
         assertEquals("println(nnnn)", ht.highlight("println(1000)").mnemonics())
@@ -87,22 +83,19 @@ class KotlinHighlighterTest : ReplTestBase() {
 
     @Test
     fun testOffset() {
-        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
-                styles.filter(listOf(number)))
+        val ht = KotlinHighlighter( styles.filter(listOf(number)))
         assertEquals(":t n + n", ht.highlight(":t 1 + 1", 2).mnemonics())
     }
 
     @Test
     fun testBrackets() {
-        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
-                styles.filter(listOf(parenthesis)))
+        val ht = KotlinHighlighter( styles.filter(listOf(parenthesis)))
         assertEquals("2 * p1 + 1p", ht.highlight("2 * (1 + 1)").mnemonics())
     }
 
     @Test
     fun testTypeParameter() {
-        val ht = KotlinHighlighter(repl.state, { repl.compiler.checker },
-                styles.filter(listOf(typeParameter)))
+        val ht = KotlinHighlighter( styles.filter(listOf(typeParameter)))
         assertEquals("fun <T, T> const(x: P, y: K): P = x", ht.highlight("fun <P, K> const(x: P, y: K): P = x").mnemonics())
     }
 
@@ -116,4 +109,4 @@ class KotlinHighlighterTest : ReplTestBase() {
         }
         return sb.toString()
     }
-}*/
+}
