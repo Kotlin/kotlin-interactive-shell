@@ -12,6 +12,7 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KVariance
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.declaredMembers
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.javaField
@@ -204,7 +205,7 @@ class SymbolsTable() {
             }
         }
 
-        embodiment::class.members.filter { callable -> val cname = callable.toString()
+        embodiment::class.declaredMembers.filter { callable -> val cname = callable.toString()
             cname.contains(" Line_")}.forEach {
             when (it) {
                 is KProperty1<*, *> -> {
