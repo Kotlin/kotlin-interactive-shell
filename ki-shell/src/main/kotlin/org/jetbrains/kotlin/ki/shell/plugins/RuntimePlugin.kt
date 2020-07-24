@@ -114,7 +114,8 @@ class RuntimePlugin : Plugin {
 
         repl.registerCommand(InferType(config))
         repl.registerCommand(ListSymbols(config))
-        repl.registerCommand(Imports(config))
+        // TODO: restore the functionality
+//        repl.registerCommand(Imports(config))
     }
 
     override fun cleanUp() { }
