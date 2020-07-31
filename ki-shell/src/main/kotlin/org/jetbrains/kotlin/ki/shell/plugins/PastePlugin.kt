@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.ki.shell.plugins
 
 import org.jetbrains.kotlin.ki.shell.BaseCommand
+import org.jetbrains.kotlin.ki.shell.Command
 import org.jetbrains.kotlin.ki.shell.Shell
 import org.jetbrains.kotlin.ki.shell.Plugin
 import org.jetbrains.kotlin.ki.shell.configuration.ReplConfiguration
@@ -15,26 +16,20 @@ class PastePlugin : Plugin {
         override val short: String by conf.get(default = "p")
         override val description: String = "enter paste mode"
 
-        override fun execute(line: String) {
+        override fun execute(line: String): Command.Result {
             println("// Entering paste mode (ctrl-D to finish)")
             val buf = StringBuilder()
             var lineCount = 0
             try {
                 while (true) {
                     val s = pasteConsole.readLine("")
-                    buf.appendln(s)
+                    buf.appendLine(s)
                     lineCount++
                 }
             } catch (e: EndOfFileException) { }
             val code = buf.toString()
             println("// Exiting paste mode, now interpreting.")
-            val time = System.nanoTime()
-            val result = repl.eval(code)
-            repl.evaluationTimeMillis = (System.nanoTime() - time) / 1_000_000
-            when (result.getStatus()) {
-                ResultWrapper.Status.ERROR -> repl.handleError(result.result)
-                ResultWrapper.Status.SUCCESS -> repl.handleSuccess(result.result as ResultWithDiagnostics.Success<*>)
-            }
+            return Command.Result.RunSnippets(listOf(code))
         }
     }
 

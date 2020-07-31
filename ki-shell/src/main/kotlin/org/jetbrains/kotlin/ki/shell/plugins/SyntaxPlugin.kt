@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.ki.shell.plugins
 
 import org.jetbrains.kotlin.ki.shell.BaseCommand
+import org.jetbrains.kotlin.ki.shell.Command
 import org.jetbrains.kotlin.ki.shell.Shell
 import org.jetbrains.kotlin.ki.shell.Plugin
 import org.jetbrains.kotlin.ki.shell.configuration.BooleanConverter
@@ -27,22 +28,21 @@ class SyntaxPlugin: Plugin {
             }
         }
 
-        override fun execute(line: String) {
+        override fun execute(line: String): Command.Result {
             val args = line.replace('\t', ' ').split(' ')
 
             if (args.size != 2) {
-                println(help())
-                return
+                return Command.Result.Failure(help())
             }
 
             when (args[1]) {
                 "on" -> reader.option(LineReader.Option.DISABLE_HIGHLIGHTER, false)
                 "off" -> reader.option(LineReader.Option.DISABLE_HIGHLIGHTER, true)
                 else -> {
-                    println("Unknown option ${args[1]}")
-                    println(help())
+                    return Command.Result.Failure("Unknown option ${args[1]}\n${help()}")
                 }
             }
+            return Command.Result.Success()
         }
 
         override fun help(): String = """

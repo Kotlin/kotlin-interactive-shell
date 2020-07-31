@@ -1,9 +1,6 @@
 package org.jetbrains.kotlin.ki.shell.plugins
 
-import org.jetbrains.kotlin.ki.shell.BaseCommand
-import org.jetbrains.kotlin.ki.shell.Shell
-import org.jetbrains.kotlin.ki.shell.Plugin
-import org.jetbrains.kotlin.ki.shell.calcHumanReadableSize
+import org.jetbrains.kotlin.ki.shell.*
 import org.jetbrains.kotlin.ki.shell.configuration.ReplConfiguration
 import java.net.InetAddress
 import java.time.LocalTime
@@ -23,13 +20,14 @@ class PromptPlugin: Plugin {
             this@PromptPlugin.incomplete = incomplete
         }
 
-        override fun execute(line: String) {
+        override fun execute(line: String): Command.Result {
             val p = line.indexOf(' ')
             if (p > 0) {
                 this@PromptPlugin.pattern = line.substring(p + 1).trim()
             } else {
                 println(this@PromptPlugin.pattern)
             }
+            return Command.Result.Success()
         }
 
         override fun help(): String {

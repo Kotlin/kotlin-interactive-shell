@@ -1,11 +1,8 @@
 package org.jetbrains.kotlin.ki.shell.plugins
 
 import kotlinx.cli.HelpPrinter
-import org.jetbrains.kotlin.ki.shell.BaseCommand
-import org.jetbrains.kotlin.ki.shell.Shell
-import org.jetbrains.kotlin.ki.shell.Plugin
+import org.jetbrains.kotlin.ki.shell.*
 import org.jetbrains.kotlin.ki.shell.configuration.ReplConfiguration
-import org.jetbrains.kotlin.ki.shell.match
 
 class HelpPlugin: Plugin {
     inner class Help(conf: ReplConfiguration): BaseCommand() {
@@ -15,7 +12,7 @@ class HelpPlugin: Plugin {
 
         override val params = "[command]"
 
-        override fun execute(line: String) {
+        override fun execute(line: String): Command.Result {
             val args = line.split(' ')
             val commands = repl.listCommands()
 
@@ -29,10 +26,11 @@ class HelpPlugin: Plugin {
                         val res = commands.first { it.match(":$command") }
                         println(res.help())
                     } catch (_: NoSuchElementException) {
-                        println("$command: no such command. Type :help for help.")
+                        return Command.Result.Failure("$command: no such command. Type :help for help.")
                     }
                 }
             }
+            return Command.Result.Success()
         }
     }
 

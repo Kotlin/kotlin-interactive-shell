@@ -3,7 +3,14 @@ package org.jetbrains.kotlin.ki.shell
 import org.jline.reader.Highlighter
 
 interface Command {
-    fun execute(line: String)
+
+    sealed class Result(val message: String? = null) {
+        class Failure(message: String) : Result(message)
+        class Success(message: String? = null) : Result(message)
+        class RunSnippets(val snippetsToRun: Iterable<String>) : Result()
+    }
+
+    fun execute(line: String): Result
 
     val name: String
 

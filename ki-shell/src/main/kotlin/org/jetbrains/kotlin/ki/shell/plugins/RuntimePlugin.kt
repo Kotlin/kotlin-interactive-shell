@@ -21,28 +21,13 @@ import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.util.LinkedSnippet
 
 class RuntimePlugin : Plugin {
-    inner class Imports(conf: ReplConfiguration): BaseCommand() {
-        override val name: String by conf.get(default = "imports")
-        override val short: String by conf.get(default = "i")
-
-        override val description: String = "show imports"
-
-        override fun execute(line: String) {
-            // TODO: restore
-//            repl.state.history
-//                    .filterIsInstance<ImportSnippet>()
-//                    .forEach { println(it.psi.text) }
-            println("!not implemented!")
-        }
-    }
-
     inner class InferType(conf: ReplConfiguration): BaseCommand() {
         override val name: String by conf.get(default = "type")
         override val short: String by conf.get(default = "t")
         override val description: String = "display the type of an expression without evaluating it"
 
         override val params = "<expr>"
-        override fun execute(line: String) {
+        override fun execute(line: String): Command.Result {
             val p = line.indexOf(' ')
             val expr = line.substring(p + 1).trim()
 
@@ -54,6 +39,7 @@ class RuntimePlugin : Plugin {
                     analysisResults.value[ReplAnalyzerResult.renderedResultType]?.let { println(it) }
                 }
             }
+            return Command.Result.Success()
         }
 
         override fun highlighter(): Highlighter = customHighlighter
@@ -86,10 +72,11 @@ class RuntimePlugin : Plugin {
         override val short: String? by conf.get(default = "ls")
         override val description: String = "list defined symbols"
 
-        override fun execute(line: String) {
+        override fun execute(line: String): Command.Result {
             if (!table.isEmpty()) {
                 println(table)
             }
+            return Command.Result.Success()
         }
     }
 

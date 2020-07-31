@@ -86,7 +86,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
         override val name: String = "quit"
         override val short: String = "q"
         override val description: String = "quit the shell"
-        override fun execute(line: String) {}
+        override fun execute(line: String): Command.Result = Command.Result.Success()
     }
 
     fun updateCompilationConfiguration(body: ScriptCompilationConfiguration.Builder.() -> Unit) {
@@ -146,46 +146,61 @@ open class Shell(val replConfiguration: ReplConfiguration,
 
         var blankLines = 0
 
-        do {
-            try {
-            val line = reader.readLine(prompt())
-
-            if (line == null || isQuitAction(line)) break
-
-            if (isCommandMode(line)) {
-                try {
-                    val action = commands.first { it.match(line) }
-                    action.execute(line)
-                    currentSnippetNo.incrementAndGet()
-                } catch (_: NoSuchElementException) {
-                    println("Unknown command $line")
-                } catch (e: Exception) {
-                    commandError(e)
-                }
+        fun evalSnippet(line: String) {
+            if (line.isBlank() && incompleteLines.isNotEmpty()) {
+                if (blankLines == settings.blankLinesAllowed - 1) {
+                    incompleteLines.clear()
+                    println("You typed ${settings.blankLinesAllowed} blank lines. Starting a new command.")
+                } else blankLines++
             } else {
-                if (line.isBlank() && incompleteLines.isNotEmpty()) {
-                    if (blankLines == settings.blankLinesAllowed - 1) {
+                val source = (incompleteLines + line).joinToString(separator = "\n")
+                val time = System.nanoTime()
+                val result = eval(source)
+                evaluationTimeMillis = (System.nanoTime() - time) / 1_000_000
+                when (result.getStatus()) {
+                    ResultWrapper.Status.INCOMPLETE -> incompleteLines.add(line)
+                    ResultWrapper.Status.ERROR -> {
                         incompleteLines.clear()
-                        println("You typed ${settings.blankLinesAllowed} blank lines. Starting a new command.")
-                    } else blankLines ++
-                } else {
-                    val source = (incompleteLines + line).joinToString(separator = "\n")
-                    val time = System.nanoTime()
-                    val result = eval(source)
-                    evaluationTimeMillis = (System.nanoTime() - time) / 1_000_000
-                    when (result.getStatus()) {
-                        ResultWrapper.Status.INCOMPLETE -> incompleteLines.add(line)
-                        ResultWrapper.Status.ERROR -> {
-                            incompleteLines.clear()
-                            handleError(result.result)
-                        }
-                        ResultWrapper.Status.SUCCESS -> {
-                            incompleteLines.clear()
-                            handleSuccess(result.result as ResultWithDiagnostics.Success<*>)
-                        }
+                        handleError(result.result)
+                    }
+                    ResultWrapper.Status.SUCCESS -> {
+                        incompleteLines.clear()
+                        handleSuccess(result.result as ResultWithDiagnostics.Success<*>)
                     }
                 }
-            } }
+            }
+        }
+
+        do {
+            try {
+                val line = reader.readLine(prompt())
+
+                if (line == null || isQuitAction(line)) break
+
+                if (isCommandMode(line)) {
+                    try {
+                        val action = commands.first { it.match(line) }
+                        when (val result = action.execute(line)) {
+                            is Command.Result.Success -> {
+                                result.message?.let { println(it) }
+                                currentSnippetNo.incrementAndGet()
+                            }
+                            is Command.Result.Failure -> {
+                                println("Error in command $line: ${result.message}")
+                            }
+                            is Command.Result.RunSnippets -> {
+                                result.snippetsToRun.forEach(::evalSnippet)
+                            }
+                        }
+                    } catch (_: NoSuchElementException) {
+                        println("Unknown command $line")
+                    } catch (e: Exception) {
+                        commandError(e)
+                    }
+                } else {
+                    evalSnippet(line)
+                }
+            }
             catch (e: UserInterruptException) { if (settings.overrideSignals) currentSnippetNo.incrementAndGet() else break }
             catch (ee: EndOfFileException) { break }
             catch (ex: Exception) { ex.printStackTrace() }
@@ -206,7 +221,8 @@ open class Shell(val replConfiguration: ReplConfiguration,
 
     private fun tempLine(code: String) = code.toScriptSource("\$\$tempLine_${UUID.randomUUID()}.${compilationConfiguration[ScriptCompilationConfiguration.fileExtension]}")
 
-    suspend fun compile(code: String) = compiler.compile(nextLine(code), compilationConfiguration)
+    suspend fun compile(code: String) =
+            compiler.compile(nextLine(code), compilationConfiguration)
 
     fun compile(code: SourceCode) = runBlocking { compiler.compile(code, compilationConfiguration) }
 

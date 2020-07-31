@@ -10,20 +10,21 @@ class ConfigPlugin: Plugin {
         override val short: String? by conf.getNullable()
         override val description: String = "set configuration parameter"
 
-        override fun execute(line: String) {
+        override fun execute(line: String): Command.Result {
             val args = smartSplit(line)
             val (k, v) = args.drop(1)
             val params = conf.list().filter { it.endsWith(k) }
             if (params.size > 1) {
-                println("Please specify configuration parameter more precisely, found ${params.size}:")
-                params.forEach { println(it) }
+                return Command.Result.Failure(
+                    "Please specify configuration parameter more precisely, found ${params.size}:\n${params.joinToString("\n")}"
+                )
             } else {
                 val key = params.first()
                 try {
                     conf.set(key, v)
-                    println("$key is set to $v")
+                    return Command.Result.Success("$key is set to $v")
                 } catch (e: Exception) {
-                    println(e)
+                    return Command.Result.Failure(e.toString())
                 }
             }
         }
@@ -39,15 +40,14 @@ class ConfigPlugin: Plugin {
         private val withValues by cli.flagArgument("-v", "Prints with values")
         private val glob by cli.positionalArgument("GLOB", "Glob pattern to match parameter (i.e. *.name)", minArgs = 0)
 
-        override fun execute(line: String) {
+        override fun execute(line: String): Command.Result {
             val args = line.split(' ').drop(1)
             try {
                 cli.parse(args)
             } catch (e: HelpPrintedException) {
-                return
+                return Command.Result.Success()
             } catch (e: Exception) {
-                println(e)
-                return
+                return Command.Result.Failure(e.toString())
             }
             val regex = glob?.let { globToRegex(it).toRegex() }
             val params = if (regex == null) conf.list() else conf.list().filter { regex.matches(it) }
@@ -62,6 +62,7 @@ class ConfigPlugin: Plugin {
             } else {
                 params.forEach { if (withValues) println("$it=${conf.getTouched(it)}") else println(it) }
             }
+            return Command.Result.Success()
         }
 
         override fun help(): String {

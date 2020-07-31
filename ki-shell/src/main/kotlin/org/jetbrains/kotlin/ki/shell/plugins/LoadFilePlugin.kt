@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.ki.shell.plugins
 
 import org.jetbrains.kotlin.ki.shell.BaseCommand
+import org.jetbrains.kotlin.ki.shell.Command
 import org.jetbrains.kotlin.ki.shell.Shell
 import org.jetbrains.kotlin.ki.shell.Plugin
 import org.jetbrains.kotlin.ki.shell.configuration.ReplConfiguration
@@ -14,11 +15,11 @@ class LoadFilePlugin: Plugin {
 
         override val params = "<path>"
 
-        override fun execute(line: String) {
+        override fun execute(line: String): Command.Result {
             val p = line.indexOf(' ')
             val path = line.substring(p + 1).trim()
             val content = File(path).readText()
-            repl.eval(content)
+            return Command.Result.RunSnippets(listOf(content))
         }
 
     }
