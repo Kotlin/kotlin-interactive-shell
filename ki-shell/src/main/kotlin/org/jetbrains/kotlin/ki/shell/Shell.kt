@@ -13,6 +13,7 @@ import org.jline.reader.UserInterruptException
 import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
 import java.io.File
+import java.io.PrintStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.script.experimental.api.*
@@ -271,9 +272,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
             is ResultValue.Value ->
                 println(evalResultValue.value.toString().bound(settings.maxResultLength))
             is ResultValue.Error -> {
-                val error = evalResultValue.error
-                error.printStackTrace()
-//                if (error.cause != null) error.cause?.printStackTrace() else println("Runtime Error: ${error.message}")
+                evalResultValue.renderError(System.err)
             }
         }
     }
@@ -302,4 +301,20 @@ class OnCompile(private val data: LinkedSnippet<KJvmCompiledScript>) : Event<Lin
 
 class OnEval(private val data: LinkedSnippet<KJvmEvaluatedSnippet>) : Event<LinkedSnippet<KJvmEvaluatedSnippet>> {
     override fun data(): LinkedSnippet<KJvmEvaluatedSnippet> = data
+}
+
+private fun ResultValue.Error.renderError(stream: PrintStream) {
+    val fullTrace = error.stackTrace
+    if (wrappingException == null || fullTrace.size < wrappingException!!.stackTrace.size) {
+        error.printStackTrace(stream)
+    } else {
+        // subtracting wrapping message stacktrace from error stacktrace to show only user-specific part of it
+        // TODO: consider more reliable logic, e.g. comparing traces, fallback to full error printing in case of mismatch
+        // TODO: write tests
+        stream.println(error)
+        val scriptTraceSize = fullTrace.size - wrappingException!!.stackTrace.size
+        for (i in 0 until scriptTraceSize) {
+            stream.println("\tat " + fullTrace[i])
+        }
+    }
 }
