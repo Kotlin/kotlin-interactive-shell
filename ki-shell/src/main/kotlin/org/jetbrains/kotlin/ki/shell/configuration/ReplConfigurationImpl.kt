@@ -16,7 +16,8 @@ class ReplConfigurationImpl
                 SyntaxPlugin::class.qualifiedName!!,
                 PromptPlugin::class.qualifiedName!!,
                 ConfigPlugin::class.qualifiedName!!,
-                DependenciesPlugin::class.qualifiedName!!
+                DependenciesPlugin::class.qualifiedName!!,
+                ExecutionEnvironmentPlugin::class.qualifiedName!!
         )
 ) {
     override fun load() {
