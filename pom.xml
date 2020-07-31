@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 	<properties>
-        <kotlin.version>1.4-M3</kotlin.version>
+        <kotlin.version>1.4.0-rc</kotlin.version>
         <jvm.version>1.8</jvm.version>
         <ki-shell.version>0.3.0-SNAPSHOT</ki-shell.version>
 	</properties>
