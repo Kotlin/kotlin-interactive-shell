@@ -92,7 +92,10 @@ class RuntimePlugin : Plugin {
 
         repl.eventManager.registerEventHandler(OnEval::class, object : EventHandler<OnEval> {
             override fun handle(event: OnEval) {
-                table.addNewSnippets(event.data())
+                val result = event.data().get().result
+                if (result is ResultValue.Value || result is ResultValue.Unit) {
+                    table.addNewSnippets(event.data())
+                }
             }
         })
 
