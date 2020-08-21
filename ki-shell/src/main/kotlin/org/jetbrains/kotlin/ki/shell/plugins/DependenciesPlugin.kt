@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.ki.shell.configuration.ReplConfiguration
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.dependencies.*
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
+import kotlin.script.experimental.host.configurationDependencies
 import kotlin.script.experimental.jvm.JvmDependency
-import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
-import kotlin.script.experimental.jvm.jvm
+import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
 
 class DependenciesPlugin : Plugin {
 
@@ -65,13 +65,22 @@ class DependenciesPlugin : Plugin {
         repl.registerCommand(DependsOnCommand(config))
         repl.registerCommand(RepositoryCommand(config))
 
-        repl.updateCompilationConfiguration {
-            defaultImports(DependsOn::class, Repository::class)
-            jvm {
-                dependenciesFromCurrentContext(
+        val dependenciesClasspath = JvmDependency(
+                scriptCompilationClasspathFromContext(
                         "kotlin-scripting-dependencies" // DependsOn and Repository annotations are taken from it
                 )
-            }
+        )
+        repl.updateHostConfiguration {
+            configurationDependencies.append(dependenciesClasspath)
+        }
+        repl.updateCompilationConfiguration {
+            defaultImports(DependsOn::class, Repository::class)
+            dependencies.append(dependenciesClasspath)
+//            jvm {
+//                dependenciesFromCurrentContext(
+//                        "kotlin-scripting-dependencies" // DependsOn and Repository annotations are taken from it
+//                )
+//            }
             refineConfiguration {
                 onAnnotations(DependsOn::class, Repository::class, handler = ::configureMavenDepsOnAnnotations)
             }

@@ -7,8 +7,8 @@ import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.jvm.baseClassLoader
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
+import kotlin.script.experimental.jvm.dependenciesFromClassloader
 import kotlin.script.experimental.jvm.jvm
-import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
 
 object KotlinShell {
     @JvmStatic
@@ -20,7 +20,10 @@ object KotlinShell {
                         ScriptCompilationConfiguration {
                             jvm {
                                 // TODO: replJars here
-                                scriptCompilationClasspathFromContext(wholeClasspath = true)
+                                dependenciesFromClassloader(
+                                        classLoader = KotlinShell::class.java.classLoader,
+                                        wholeClasspath = true
+                                )
                             }
                         },
                         ScriptEvaluationConfiguration {

@@ -25,15 +25,22 @@ import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.util.LinkedSnippet
 
 open class Shell(val replConfiguration: ReplConfiguration,
-                 val hostConfiguration: ScriptingHostConfiguration,
+                 baseHostConfiguration: ScriptingHostConfiguration,
                  baseCompilationConfiguration: ScriptCompilationConfiguration,
                  baseEvaluationConfiguration: ScriptEvaluationConfiguration
 ) {
 
-    var compilationConfiguration: ScriptCompilationConfiguration = baseCompilationConfiguration
+    var hostConfiguration: ScriptingHostConfiguration = baseHostConfiguration
         private set
 
-    var evaluationConfiguration: ScriptEvaluationConfiguration = baseEvaluationConfiguration
+    var compilationConfiguration: ScriptCompilationConfiguration = baseCompilationConfiguration.with {
+        hostConfiguration(this@Shell.hostConfiguration)
+    }
+        private set
+
+    var evaluationConfiguration: ScriptEvaluationConfiguration = baseEvaluationConfiguration.with {
+        hostConfiguration(this@Shell.hostConfiguration)
+    }
         private set
 
     val compiler: KJvmReplCompilerWithIdeServices = KJvmReplCompilerWithIdeServices(hostConfiguration)
@@ -88,6 +95,16 @@ open class Shell(val replConfiguration: ReplConfiguration,
         override val short: String = "q"
         override val description: String = "quit the shell"
         override fun execute(line: String): Command.Result = Command.Result.Success()
+    }
+
+    fun updateHostConfiguration(body: ScriptingHostConfiguration.Builder.() -> Unit) {
+        hostConfiguration = hostConfiguration.with(body)
+        updateCompilationConfiguration {
+            hostConfiguration(this@Shell.hostConfiguration)
+        }
+        updateEvaluationConfiguration {
+            hostConfiguration(this@Shell.hostConfiguration)
+        }
     }
 
     fun updateCompilationConfiguration(body: ScriptCompilationConfiguration.Builder.() -> Unit) {
@@ -317,4 +334,12 @@ private fun ResultValue.Error.renderError(stream: PrintStream) {
             stream.println("\tat " + fullTrace[i])
         }
     }
+}
+
+// TODO: put into the kotlin codebase, remove from here
+private fun ScriptingHostConfiguration?.with(body: ScriptingHostConfiguration.Builder.() -> Unit): ScriptingHostConfiguration {
+    val newConfiguration =
+            if (this == null) ScriptingHostConfiguration(body = body)
+            else ScriptingHostConfiguration(this, body = body)
+    return if (newConfiguration == this) this else newConfiguration
 }
