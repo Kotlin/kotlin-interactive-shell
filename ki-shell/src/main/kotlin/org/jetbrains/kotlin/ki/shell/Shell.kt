@@ -287,12 +287,22 @@ open class Shell(val replConfiguration: ReplConfiguration,
         val evalResultValue = snippets.get().result
         when (evalResultValue) {
             is ResultValue.Value ->
-                println(evalResultValue.value.toString().bound(settings.maxResultLength))
+                println("${evalResultValue.name}${renderResultType(evalResultValue)} = ${evalResultValue.value}".bound(settings.maxResultLength))
             is ResultValue.Error -> {
                 evalResultValue.renderError(System.err)
             }
         }
     }
+
+    private val builtinPackages = listOf(
+            "kotlin",
+            "kotlin.collections",
+            "java.lang"
+    )
+    private val typeDelimiters = "<>, "
+    private val builtinsNamesRE = Regex("(?<=^|[$typeDelimiters])(?:(?:${builtinPackages.joinToString("|") { Regex.escape(it) }})\\.){1}([^\\.$typeDelimiters]+)(?=[$typeDelimiters]|\$)")
+
+    fun renderResultType(res: ResultValue.Value): String = ": " + res.type.replace(builtinsNamesRE, "\$1")
 
     private fun commandError(e: Exception) {
         e.printStackTrace()
