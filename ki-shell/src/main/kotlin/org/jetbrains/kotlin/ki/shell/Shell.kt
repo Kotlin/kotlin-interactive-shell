@@ -58,7 +58,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
     val eventManager = EventManager()
 
     val highlighter = ContextHighlighter({ s -> !isCommandMode(s)}, { s -> commands.firstOrNull { it.weakMatch(s) } })
-    val completer = KotlinCompleter(compiler, { compilationConfiguration }, { currentSnippetNo.get() })
+    val completer = KotlinCompleter(compiler, { compilationConfiguration }, { currentSnippetNo.get() }, incompleteLines)
     val parser = KotlinReplSnippetParser()
 
     var prompt = {
