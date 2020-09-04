@@ -7,6 +7,6 @@ class KotlinReplSnippetParser : DefaultParser() {
     val wordDelimiters = ".,?:"
 
     override fun isDelimiterChar(buffer: CharSequence, pos: Int): Boolean {
-        return super.isDelimiterChar(buffer, pos) || wordDelimiters.contains(buffer[pos])
+        return wordDelimiters.contains(buffer[pos])
     }
 }
