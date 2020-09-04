@@ -34,7 +34,7 @@ class RuntimePlugin : Plugin {
             // TODO: restore
             val analysisResults = repl.analyze(expr, SourceCode.Position(0, 0))
             when (analysisResults) {
-                is ResultWithDiagnostics.Failure -> repl.handleError(analysisResults)
+                is ResultWithDiagnostics.Failure -> repl.handleError(analysisResults, false)
                 is ResultWithDiagnostics.Success<ReplAnalyzerResult> -> {
                     analysisResults.value[ReplAnalyzerResult.renderedResultType]?.let { println(it) }
                 }

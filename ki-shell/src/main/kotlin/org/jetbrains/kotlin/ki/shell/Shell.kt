@@ -72,7 +72,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
 
     class EvalThread: Thread() {
         lateinit var evalBlock: () -> ResultWrapper
-        var result: ResultWrapper = ResultWrapper(ResultWithDiagnostics.Failure("Interrupted".asErrorDiagnostics()))
+        var result: ResultWrapper = ResultWrapper(ResultWithDiagnostics.Failure("Interrupted".asErrorDiagnostics()), true)
 
         override fun run() {
             result = evalBlock()
@@ -149,7 +149,18 @@ open class Shell(val replConfiguration: ReplConfiguration,
     }
 
     private fun interrupt() {
+        if (!evalThread.isAlive) return
         evalThread.interrupt()
+        for (i in 1..5) {
+            if (!evalThread.isAlive) break
+            Thread.sleep(100)
+        }
+        if (evalThread.isAlive) {
+            // NOTE: we cannot avoid thread killing here, because we're running arbitrary user code
+            // see also jshell implementation, it uses low-level JDI stuff but in fact the same approach
+            @Suppress("DEPRECATION")
+            evalThread.stop()
+        }
         evalThread = EvalThread()
     }
 
@@ -179,7 +190,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
                     ResultWrapper.Status.INCOMPLETE -> incompleteLines.add(line)
                     ResultWrapper.Status.ERROR -> {
                         incompleteLines.clear()
-                        handleError(result.result)
+                        handleError(result.result, result.isCompiled)
                     }
                     ResultWrapper.Status.SUCCESS -> {
                         incompleteLines.clear()
@@ -264,23 +275,28 @@ open class Shell(val replConfiguration: ReplConfiguration,
     fun compileAndEval(source: String): ResultWrapper =
         runBlocking {
             val compileResult: ResultWithDiagnostics<LinkedSnippet<KJvmCompiledScript>> = compile(source)
-            ResultWrapper(when (compileResult) {
-                is ResultWithDiagnostics.Failure -> compileResult
-                is ResultWithDiagnostics.Success -> {
+            val res = when {
+                Thread.currentThread().isInterrupted ->
+                    ResultWrapper(ResultWithDiagnostics.Failure("Interrupted".asErrorDiagnostics()), true)
+                compileResult is ResultWithDiagnostics.Success -> {
                     eventManager.emitEvent(OnCompile(compileResult.value))
-                    evaluator.eval(compileResult.value, evaluationConfiguration)
+                    ResultWrapper(evaluator.eval(compileResult.value, evaluationConfiguration), true)
                 }
-            })
+                else -> ResultWrapper(compileResult, false)
+            }
+            res
         }
 
-    fun handleError(result: ResultWithDiagnostics<*>) = printDiagnostics(result)
+    fun handleError(result: ResultWithDiagnostics<*>, isCompiled: Boolean) = printDiagnostics(result, isCompiled)
 
-    private fun printDiagnostics(result: ResultWithDiagnostics<*>) {
-        result.reports.forEach { println(it.render(withStackTrace = true)) }
+    private fun printDiagnostics(result: ResultWithDiagnostics<*>, isCompiled: Boolean) {
+        result.reports.forEach {
+            println(it.render(withStackTrace = isCompiled))
+        }
     }
 
     fun handleSuccess(result: ResultWithDiagnostics.Success<*>) {
-        printDiagnostics(result)
+        printDiagnostics(result, true)
         // TODO: avoid unchecked cast
         val snippets = result.value as LinkedSnippet<KJvmEvaluatedSnippet>
         eventManager.emitEvent(OnEval(snippets))

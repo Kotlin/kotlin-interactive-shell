@@ -5,7 +5,7 @@ import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.ScriptDiagnostic
 
 
-class ResultWrapper(val result: ResultWithDiagnostics<*>) {
+class ResultWrapper(val result: ResultWithDiagnostics<*>, val isCompiled: Boolean) {
     enum class Status {
         SUCCESS, ERROR, INCOMPLETE
     }
