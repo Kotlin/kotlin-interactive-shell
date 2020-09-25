@@ -55,3 +55,13 @@ fun smartSplit(line: String): List<String> {
 }
 
 fun String.unquote(): String = if (startsWith("\"") && endsWith("\"")) substring(1, length - 1) else this
+
+private val builtinPackages = listOf(
+        "kotlin",
+        "kotlin.collections",
+        "java.lang"
+)
+private val typeDelimiters = "<>, "
+private val builtinsNamesRE = Regex("(?<=^|[$typeDelimiters])(?:(?:${builtinPackages.joinToString("|") { Regex.escape(it) }})\\.){1}([^\\.$typeDelimiters]+)(?=[$typeDelimiters]|\$)")
+
+fun renderKotlinType(typeName: String): String = typeName.replace(builtinsNamesRE, "\$1")

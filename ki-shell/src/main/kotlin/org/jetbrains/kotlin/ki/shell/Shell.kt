@@ -310,15 +310,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
         }
     }
 
-    private val builtinPackages = listOf(
-            "kotlin",
-            "kotlin.collections",
-            "java.lang"
-    )
-    private val typeDelimiters = "<>, "
-    private val builtinsNamesRE = Regex("(?<=^|[$typeDelimiters])(?:(?:${builtinPackages.joinToString("|") { Regex.escape(it) }})\\.){1}([^\\.$typeDelimiters]+)(?=[$typeDelimiters]|\$)")
-
-    fun renderResultType(res: ResultValue.Value): String = ": " + res.type.replace(builtinsNamesRE, "\$1")
+    fun renderResultType(res: ResultValue.Value): String = ": " + renderKotlinType(res.type)
 
     private fun commandError(e: Exception) {
         e.printStackTrace()

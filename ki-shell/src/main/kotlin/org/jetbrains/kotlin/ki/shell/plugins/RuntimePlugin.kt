@@ -5,17 +5,9 @@ import org.jetbrains.kotlin.ki.shell.configuration.ReplConfiguration
 import org.jline.reader.Highlighter
 import org.jline.reader.LineReader
 import org.jline.utils.AttributedString
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
-import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
-import kotlin.reflect.KProperty1
-import kotlin.reflect.KVariance
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.declaredMembers
-import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.full.valueParameters
-import kotlin.reflect.jvm.javaField
+import kotlin.reflect.*
+import kotlin.reflect.full.*
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.util.LinkedSnippet
@@ -32,8 +24,7 @@ class RuntimePlugin : Plugin {
             val expr = line.substring(p + 1).trim()
 
             // TODO: restore
-            val analysisResults = repl.analyze(expr, SourceCode.Position(0, 0))
-            when (analysisResults) {
+            when (val analysisResults = repl.analyze(expr, SourceCode.Position(0, 0))) {
                 is ResultWithDiagnostics.Failure -> repl.handleError(analysisResults, false)
                 is ResultWithDiagnostics.Success<ReplAnalyzerResult> -> {
                     analysisResults.value[ReplAnalyzerResult.renderedResultType]?.let { println(it) }
@@ -74,7 +65,9 @@ class RuntimePlugin : Plugin {
 
         override fun execute(line: String): Command.Result {
             if (!table.isEmpty()) {
-                println(table)
+                val p = line.indexOf(' ')
+                val pattern = if (p >= 0)line.substring(p + 1).trim() else null
+                println(table.list(pattern).joinToString("\n"))
             }
             return Command.Result.Success()
         }
@@ -83,7 +76,6 @@ class RuntimePlugin : Plugin {
     private lateinit var repl: Shell
     private lateinit var table: SymbolsTable
     private lateinit var customHighlighter: CustomHighlighter
-    private val counter = AtomicInteger(0)
 
     override fun init(repl: Shell, config: ReplConfiguration) {
         this.repl = repl
@@ -100,7 +92,7 @@ class RuntimePlugin : Plugin {
         })
 
 
-        customHighlighter = CustomHighlighter({ repl.highlighter.syntaxHighlighter })
+        customHighlighter = CustomHighlighter { repl.highlighter.syntaxHighlighter }
 
         repl.registerCommand(InferType(config))
         repl.registerCommand(ListSymbols(config))
@@ -117,70 +109,58 @@ enum class SymbolKind {
     FUNCTION
 }
 
-sealed class Symbol(val namespace: String, val name: String, val kind: SymbolKind) {
+sealed class Symbol(val name: String, val kind: SymbolKind, val namespace: String, val extensionReceiver: String?) {
     abstract fun show(): String
 }
 
-class ClassSymbol(namespace: String, name: String, private val clazz: KClass<*>): Symbol(namespace, name, SymbolKind.CLASS) {
+class ClassSymbol(name: String, private val clazz: KClass<*>, namespace: String): Symbol(name, SymbolKind.CLASS, namespace, null) {
     override fun show(): String {
-        val constructor = clazz.primaryConstructor?.let { FunctionSymbol.show(it, true) } ?: ""
+        val constructor = clazz.primaryConstructor?.render(true) ?: ""
         val data = if (clazz.isData) "data " else ""
         return "${data}class $name$constructor"
     }
 }
 
-class InstanceSymbol(namespace: String, name: String, private val obj: Any?, private val prop: KProperty1<*, *>): Symbol(namespace, name, SymbolKind.INSTANCE) {
+class InstanceSymbol(name: String, private val prop: KProperty<*>, namespace: String, extensionReceiver: String?): Symbol(name, SymbolKind.INSTANCE, namespace, extensionReceiver) {
     override fun show(): String {
         val def = if (prop.toString().startsWith("val")) "val" else "var"
-        val type = prop.returnType
-        return "$def $name: $type"
+        return "$def ${prop.renderReceiver()}$name: ${prop.renderReturnType()}"
     }
 }
 
-class FunctionSymbol(namespace: String, name: String, private val func: KFunction<*>): Symbol(namespace, name, SymbolKind.FUNCTION) {
-    override fun show(): String  = Companion.show(func)
-
-    companion object {
-        fun show(func: KFunction<*>, isConstructor: Boolean = false): String {
-            val tp = if (func.typeParameters.isNotEmpty()) "<" + func.typeParameters.joinToString(separator = ",") {
-                (if (it.variance != KVariance.INVARIANT) "${it.variance} ${it.name}" else it.name) +
-                        (if (it.upperBounds.isNotEmpty()) ": ${it.upperBounds.joinToString(separator = ",")}" else "")
-            } + "> " else ""
-
-            val vp = func.valueParameters.joinToString(separator = ", ") {
-                it.name + ": " + it.type
-            }
-
-            return if (isConstructor) "${tp.trim()}($vp)" else "fun $tp${func.name}($vp): ${func.returnType}"
-        }
-    }
+class FunctionSymbol(name: String, private val func: KFunction<*>, namespace: String, extensionReceiver: String?): Symbol(name, SymbolKind.FUNCTION, namespace, extensionReceiver) {
+    override fun show(): String  = func.render()
 }
 
-class SymbolsTable() {
+class SymbolsTable {
     private val symbols = mutableListOf<Symbol>()
 
     fun add(symbol: Symbol) {
-        symbols.removeIf { it.kind == symbol.kind && it.name == symbol.name }
+        symbols.removeIf { it.kind == symbol.kind && it.name == symbol.name && it.extensionReceiver == symbol.extensionReceiver }
         symbols.add(symbol)
     }
 
     fun isEmpty() = symbols.isEmpty()
 
-    override fun toString(): String = list().joinToString(separator = "\n")
-
     fun list(
             pattern: String? = null,
             kinds: List<SymbolKind> = listOf(SymbolKind.INSTANCE, SymbolKind.FUNCTION, SymbolKind.CLASS)
     ): List<String> {
-        val regex = pattern?.let { Regex(it) }
-        return symbols.filter {
-            kinds.contains(it.kind) && (regex == null || it.name.matches(regex))
+        val regex = pattern?.takeIf { it.isNotBlank() }?.let { Regex(it) }
+        return symbols.filter { symbol ->
+            kinds.contains(symbol.kind)
+                    && (
+                        regex == null
+                                || symbol.name.matches(regex)
+                                || symbol.namespace.matches(regex)
+                                || symbol.extensionReceiver?.matches(regex) == true
+                    )
         }.map {
             it.show()
         }
     }
 
-    fun addNewSnippets(snippets: LinkedSnippet<KJvmEvaluatedSnippet>): Unit {
+    fun addNewSnippets(snippets: LinkedSnippet<KJvmEvaluatedSnippet>) {
         val r = snippets.get().result.scriptInstance
         val resultFieldName = snippets.get().compiledSnippet.compilationConfiguration[ScriptCompilationConfiguration.resultField]
         // cast carefully
@@ -189,30 +169,50 @@ class SymbolsTable() {
 
         embodiment::class.nestedClasses.forEach { clazz ->
             clazz.simpleName?.let {
-                add(ClassSymbol(namespace, it, clazz))
+                add(ClassSymbol(it, clazz, namespace))
             }
         }
 
-        embodiment::class.declaredMembers.filter { callable -> val cname = callable.toString()
-            cname.contains(" Line_")}.forEach {
+        embodiment::class.declaredMembers.filter { callable ->
+            val cname = callable.toString()
+            cname.contains(" Line_")
+        }.forEach {
+            val extReceiver = it.renderReceiver(withDot = false)
             when (it) {
-                is KProperty1<*, *> -> {
-                    val obj = readProperty(embodiment, it.name)
+                is KProperty<*> -> {
                     if (it.name != resultFieldName) // special names
-                        add(InstanceSymbol(namespace, it.name, obj, it))
+                        add(InstanceSymbol(it.name, it, namespace, extReceiver))
                 }
                 is KFunction<*> -> {
-                    add(FunctionSymbol(namespace, it.name, it))
+                    add(FunctionSymbol(it.name, it, namespace, extReceiver))
                 }
                 else -> throw IllegalStateException("Unknown symbol: $it of ${it::class}")
             }
         }
     }
+}
 
-    private fun readProperty(instance: Any, propertyName: String): Any? {
-        val klass = instance.javaClass.kotlin
-        return klass.declaredMemberProperties.first { it.name == propertyName }.apply {
-            if (isConst) javaField!!.get(null) else get(instance)
-        }
+private fun KCallable<*>.getExtensionReceiver() =
+        parameters.find { it.kind == KParameter.Kind.EXTENSION_RECEIVER }?.type
+
+private fun KCallable<*>.renderReceiver(withDot: Boolean = true): String =
+        getExtensionReceiver()?.let {
+            val typeName = renderKotlinType(it.toString())
+            if (withDot) "$typeName."
+            else typeName
+        } ?: ""
+
+private fun KCallable<*>.renderReturnType(): String = renderKotlinType(returnType.toString())
+
+private fun KFunction<*>.render(isConstructor: Boolean = false): String {
+    val tp = if (typeParameters.isNotEmpty()) "<" + typeParameters.joinToString(separator = ",") {
+        (if (it.variance != KVariance.INVARIANT) "${it.variance} ${it.name}" else it.name) +
+                (if (it.upperBounds.isNotEmpty()) ": ${it.upperBounds.joinToString(separator = ",")}" else "")
+    } + "> " else ""
+
+    val vp = valueParameters.joinToString(separator = ", ") {
+        it.name + ": " + renderKotlinType(it.type.toString())
     }
+
+    return if (isConstructor) "${tp.trim()}($vp)" else "fun $tp${renderReceiver()}${name}($vp): ${renderReturnType()}"
 }
