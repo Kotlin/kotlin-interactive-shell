@@ -6,7 +6,7 @@ import java.io.File
 import java.io.FileReader
 import java.util.*
 
-class ReplConfigurationImpl
+class ReplConfigurationImpl(extraPlugins: List<String> = listOf())
     : PropertyBasedReplConfiguration(
         Properties(),
         listOf(LoadFilePlugin::class.qualifiedName!!,
@@ -18,7 +18,7 @@ class ReplConfigurationImpl
                 ConfigPlugin::class.qualifiedName!!,
                 DependenciesPlugin::class.qualifiedName!!,
                 ExecutionEnvironmentPlugin::class.qualifiedName!!
-        )
+        ) + extraPlugins
 ) {
     override fun load() {
         val path = configPath()
