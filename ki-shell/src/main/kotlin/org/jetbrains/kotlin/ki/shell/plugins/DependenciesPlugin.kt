@@ -65,17 +65,17 @@ class DependenciesPlugin : Plugin {
         repl.registerCommand(DependsOnCommand(config))
         repl.registerCommand(RepositoryCommand(config))
 
-        val dependenciesClasspath = JvmDependency(
-                scriptCompilationClasspathFromContext(
-                        "kotlin-scripting-dependencies" // DependsOn and Repository annotations are taken from it
-                )
-        )
+//        val dependenciesClasspath = JvmDependency(
+//                scriptCompilationClasspathFromContext(
+//                        "kotlin-scripting-dependencies" // DependsOn and Repository annotations are taken from it
+//                )
+//        )
         repl.updateHostConfiguration {
-            configurationDependencies.append(dependenciesClasspath)
+//            configurationDependencies.append(dependenciesClasspath)
         }
         repl.updateCompilationConfiguration {
             defaultImports(DependsOn::class, Repository::class)
-            dependencies.append(dependenciesClasspath)
+//            dependencies.append(dependenciesClasspath)
 //            jvm {
 //                dependenciesFromCurrentContext(
 //                        "kotlin-scripting-dependencies" // DependsOn and Repository annotations are taken from it
