@@ -326,7 +326,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
     }
 
     companion object {
-        const val VERSION: String = "0.2.7"
+        const val VERSION: String = "0.3.0"
     }
 }
 

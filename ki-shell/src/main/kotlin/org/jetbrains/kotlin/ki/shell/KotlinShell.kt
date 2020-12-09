@@ -19,7 +19,6 @@ object KotlinShell {
                         defaultJvmScriptingHostConfiguration,
                         ScriptCompilationConfiguration {
                             jvm {
-                                // TODO: replJars here
                                 dependenciesFromClassloader(
                                         classLoader = KotlinShell::class.java.classLoader,
                                         wholeClasspath = true
@@ -33,7 +32,6 @@ object KotlinShell {
                         }
                 )
 
-//        repl.addClasspathRoots(replJars())
         Runtime.getRuntime().addShutdownHook(Thread {
             println("\nBye!")
             repl.cleanUp()

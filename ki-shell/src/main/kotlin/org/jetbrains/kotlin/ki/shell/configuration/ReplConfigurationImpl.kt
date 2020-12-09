@@ -6,7 +6,7 @@ import java.io.File
 import java.io.FileReader
 import java.util.*
 
-class ReplConfigurationImpl(extraPlugins: List<String> = listOf())
+open class ReplConfigurationImpl(extraPlugins: List<String> = listOf())
     : PropertyBasedReplConfiguration(
         Properties(),
         listOf(LoadFilePlugin::class.qualifiedName!!,
