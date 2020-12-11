@@ -182,6 +182,7 @@
                                 <includes>
                                 </includes>
                             </artifactSet>
+                            <outputFile>../lib/${project.artifactId}-${project.version}.jar</outputFile>
                         </configuration>
                     </execution>
                 </executions>
