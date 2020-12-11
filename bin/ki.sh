@@ -2,6 +2,7 @@
 
 KI_VERSION=0.3.0-SNAPSHOT
 
-KI_SHELL=$HOME/.m2/repository/org/jetbrains/kotlin/ki-shell/${KI_VERSION}/ki-shell-${KI_VERSION}.jar
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+KI_SHELL=$SCRIPT_DIR/../lib/ki-shell-${KI_VERSION}.jar
 
 java -jar ${KI_SHELL} $@

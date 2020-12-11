@@ -1,6 +1,7 @@
 @echo off
-set KI_VERSION=0.3.0
+set KI_VERSION=0.3.0-SNAPSHOT
 
-set KI_SHELL=%USERPROFILE%\.m2\repository\org\jetbrains\kotlin\ki-shell\%KI_VERSION%\ki-shell-%KI_VERSION%.jar
+set SCRIPT_PATH=%~dp0
+set KI_SHELL=%SCRIPT_PATH%\..\lib\ki-shell-%KI_VERSION%.jar
 
 java -jar %KI_SHELL% %*
