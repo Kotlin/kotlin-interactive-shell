@@ -22,7 +22,7 @@ The previous version of the Sparklin is accessible in the `sparklin` branch.
 The latest version can be downloaded and installed by the following commands:
 
 ```bash
-wget wget https://github.com/Kotlin/kotlin-interactive-shell/releases/latest/download/ki-shell-0.3-SNAPSHOT-bin.tar.gz
+wget https://github.com/Kotlin/kotlin-interactive-shell/releases/latest/download/ki-shell-0.3-SNAPSHOT-bin.tar.gz
 tar xvzf ki-shell-0.3-SNAPSHOT-bin.tar.gz
 ```
 
