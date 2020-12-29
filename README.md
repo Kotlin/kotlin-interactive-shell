@@ -17,20 +17,6 @@ The Apache Spark adaptation of it is located in a separate [repository](https://
 
 The previous version of the Sparklin is accessible in the `sparklin` branch.
 
-## Installation
-
-The latest version can be downloaded and installed by the following commands:
-
-```bash
-wget https://github.com/Kotlin/kotlin-interactive-shell/releases/download/v0.3-beta2/ki-shell-0.3-SNAPSHOT-bin.tar.gz
-tar xvzf ki-shell-0.3-SNAPSHOT-bin.tar.gz
-```
-
-It can also be obtained directly from
-GitHub [releases](https://github.com/Kotlin/kotlin-interactive-shell/releases/latest) page. 
-
-To start the shell, run `bin/ki.sh` on Linux and macOS. On Windows, use `bin\ki.bat` instead.
-
 ## Build From Source
 
 To build from source use:
@@ -43,3 +29,4 @@ It may be useful to build the project with a specific version of Kotlin. To do s
 ```bash
 mvn -Dkotlin.version=1.4.10 -DskipTests package
 ```
+To start the shell, run `bin/ki.sh` on Linux and macOS. On Windows, use `bin\ki.bat` instead.
