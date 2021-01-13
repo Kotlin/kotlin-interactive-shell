@@ -9,7 +9,7 @@
         <ki-shell.version>0.3-SNAPSHOT</ki-shell.version>
 	</properties>
 
-	<groupId>org.jetbrains.kotlin</groupId>
+	<groupId>org.jetbrains.kotlinx</groupId>
 	<artifactId>ki</artifactId>
 	<version>0.3-SNAPSHOT</version>
 	
