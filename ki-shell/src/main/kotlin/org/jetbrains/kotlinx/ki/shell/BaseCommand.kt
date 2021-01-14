@@ -9,6 +9,6 @@ abstract class BaseCommand: Command {
 
     override fun desc(): String {
         val shortPhrase = if (short != null) "or $short " else ""
-        return String.format("%-30s %s",  ":$name $shortPhrase$params", description)
+        return String.format("%-36s %s",  ":$name $shortPhrase$params", description)
     }
 }
