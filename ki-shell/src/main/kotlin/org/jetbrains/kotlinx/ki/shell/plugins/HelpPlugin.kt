@@ -52,20 +52,20 @@ class HelpPlugin: Plugin {
         private val sb = StringBuilder()
 
         override fun printText(text: String) {
-            sb.appendln(text)
+            sb.appendLine(text)
         }
 
         override fun printSeparator() {
-            sb.appendln()
+            sb.appendLine()
         }
 
         override fun printEntry(helpEntry: String, description: String) {
             if (helpEntry.length <= syntaxWidth) {
-                sb.appendln("  ${helpEntry.padEnd(syntaxWidth)}  $description")
+                sb.appendLine("  ${helpEntry.padEnd(syntaxWidth)}  $description")
             }
             else {
-                sb.appendln("  $helpEntry")
-                sb.appendln("  ${"".padEnd(syntaxWidth)}  $description")
+                sb.appendLine("  $helpEntry")
+                sb.appendLine("  ${"".padEnd(syntaxWidth)}  $description")
             }
         }
 
