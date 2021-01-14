@@ -2,7 +2,7 @@ package org.jetbrains.kotlinx.ki.shell
 
 import org.jetbrains.kotlinx.ki.shell.configuration.CachedInstance
 import org.jetbrains.kotlinx.ki.shell.configuration.ReplConfiguration
-import org.jetbrains.kotlinx.ki.shell.configuration.ReplConfigurationImpl
+import org.jetbrains.kotlinx.ki.shell.configuration.ReplConfigurationBase
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.jvm.baseClassLoader
@@ -13,24 +13,23 @@ import kotlin.script.experimental.jvm.jvm
 object KotlinShell {
     @JvmStatic
     fun main(args: Array<String>) {
-        val repl =
-                Shell(
-                        configuration(),
-                        defaultJvmScriptingHostConfiguration,
-                        ScriptCompilationConfiguration {
-                            jvm {
-                                dependenciesFromClassloader(
-                                        classLoader = KotlinShell::class.java.classLoader,
-                                        wholeClasspath = true
-                                )
-                            }
-                        },
-                        ScriptEvaluationConfiguration {
-                            jvm {
-                                baseClassLoader(Shell::class.java.classLoader)
-                            }
-                        }
-                )
+        val repl = Shell(
+            configuration(),
+            defaultJvmScriptingHostConfiguration,
+            ScriptCompilationConfiguration {
+                jvm {
+                    dependenciesFromClassloader(
+                        classLoader = KotlinShell::class.java.classLoader,
+                        wholeClasspath = true
+                    )
+                }
+            },
+            ScriptEvaluationConfiguration {
+                jvm {
+                    baseClassLoader(Shell::class.java.classLoader)
+                }
+            }
+        )
 
         Runtime.getRuntime().addShutdownHook(Thread {
             println("\nBye!")
@@ -47,7 +46,7 @@ object KotlinShell {
         return if (klassName != null) {
             instance.load(klassName, ReplConfiguration::class)
         } else {
-            instance.get { ReplConfigurationImpl() }
+            instance.get { object : ReplConfigurationBase() {}  }
         }
     }
 }
