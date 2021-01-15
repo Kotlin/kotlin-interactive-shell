@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>ki</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.3</version>
   </parent>
 
   <artifactId>ki-shell</artifactId>
@@ -186,7 +186,7 @@
             <phase>package</phase>
             <configuration>
               <artifactSet>
-                <includes></includes>
+                <includes />
               </artifactSet>
               <shadedArtifactAttached>true</shadedArtifactAttached>
             </configuration>
