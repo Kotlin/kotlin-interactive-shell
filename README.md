@@ -24,6 +24,9 @@ To build from source use:
 git clone https://github.com/Kotlin/kotlin-interactive-shell
 cd kotlin-interactive-shell
 mvn -DskipTests package
+mkdir lib
+ln -s $(pwd)/ki-shell/target/ki-shell-0.4-SNAPSHOT-shaded.jar $(pwd)/lib/ki-shell-0.4-SNAPSHOT-shaded.jar
+
 ```
 It may be useful to build the project with a specific version of Kotlin. To do so use:
 ```bash
