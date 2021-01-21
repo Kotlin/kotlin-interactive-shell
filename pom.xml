@@ -4,7 +4,7 @@
 
   <groupId>org.jetbrains.kotlinx</groupId>
   <artifactId>ki</artifactId>
-  <version>0.4-SNAPSHOT</version>
+  <version>0.3.1-SNAPSHOT</version>
 
   <packaging>pom</packaging>
   <name>Ki Shell :: parent</name>
