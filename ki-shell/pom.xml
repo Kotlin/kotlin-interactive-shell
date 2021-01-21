@@ -188,8 +188,44 @@
               <artifactSet>
                 <includes />
               </artifactSet>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <outputFile>${project.parent.basedir}/lib/${project.artifactId}-${project.version}.jar</outputFile>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>../lib</directory>
+            </fileset>
+            <fileset>
+              <directory>target</directory>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.3.0</version>
+        <configuration>
+          <descriptors>
+            <descriptor>ki-shell/src/assembly/bin.xml</descriptor>
+          </descriptors>
+          <finalName>ki-spark</finalName>
+          <attach>true</attach>
+          <basedir>${project.parent.basedir}</basedir>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <phase>package</phase>
           </execution>
         </executions>
       </plugin>

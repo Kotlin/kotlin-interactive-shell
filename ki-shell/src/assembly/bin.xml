@@ -1,0 +1,22 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 http://maven.apache.org/xsd/assembly-2.1.0.xsd">
+  <formats>
+    <format>zip</format>
+  </formats>
+  <files>
+    <file>
+      <source>bin/ki.sh</source>
+      <outputDirectory>bin</outputDirectory>
+    </file>
+    <file>
+      <source>bin/ki.bat</source>
+      <outputDirectory>bin</outputDirectory>
+    </file>
+    <file>
+      <source>lib/${project.artifactId}-${project.version}.jar</source>
+      <outputDirectory>lib</outputDirectory>
+    </file>
+  </files>
+  <id>archive</id>
+</assembly>
