@@ -4,7 +4,7 @@
 
   <groupId>org.jetbrains.kotlinx</groupId>
   <artifactId>ki</artifactId>
-  <version>0.3.2</version>
+  <version>0.3.3-SNAPSHOT</version>
 
   <packaging>pom</packaging>
   <name>Ki Shell :: parent</name>
@@ -108,7 +108,7 @@
     <connection>scm:git:git://github.com/Kotlin/kotlin-interactive-shell.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/Kotlin/kotlin-interactive-shell.git</developerConnection>
     <url>https://github.com/Kotlin/kotlin-interactive-shell/tree/master</url>
-    <tag>ki-0.3.2</tag>
+    <tag>HEAD</tag>
   </scm>
   <pluginRepositories>
     <pluginRepository>
