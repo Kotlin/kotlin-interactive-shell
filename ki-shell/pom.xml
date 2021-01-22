@@ -216,7 +216,7 @@
           <descriptors>
             <descriptor>ki-shell/src/assembly/bin.xml</descriptor>
           </descriptors>
-          <finalName>ki-spark</finalName>
+          <finalName>ki</finalName>
           <attach>true</attach>
           <basedir>${project.parent.basedir}</basedir>
         </configuration>
