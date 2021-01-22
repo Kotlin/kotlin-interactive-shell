@@ -1,4 +1,4 @@
-# Kotlin Language Interactive Shell
+# Kotlin Language Interactive Shell [![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/ki-shell.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22org.jetbrains.kotlinx%22%20AND%20a:%22ki-shell%22)
 
 The shell is an extensible implementation of Kotlin REPL with reach set of features including:
 
@@ -16,6 +16,14 @@ generic Kotlin Language Interactive Shell.
 The Apache Spark adaptation of it is located in a separate [repository](https://github.com/Kotlin/kotlin-spark-shell).
 
 The previous version of the Sparklin is accessible in the `sparklin` branch.
+
+## Running
+
+You can download archive from Maven Central: 
+1. Go to https://search.maven.org/artifact/org.jetbrains.kotlinx/ki-shell
+2. Select latest (or desired) version there (currently it's [0.3.1](https://search.maven.org/remotecontent?filepath=org/jetbrains/kotlinx/ki-shell/0.3.1/ki-shell-0.3.1-archive.zip))
+3. Unpack it to desired place
+4. Launch `bin/ki.sh` for Linux/Mac or `bin\ki.bat` for Windows
 
 ## Build From Source
 
