@@ -17,7 +17,7 @@ The Apache Spark adaptation of it is located in a separate [repository](https://
 
 The previous version of the Sparklin is accessible in the `sparklin` branch.
 
-## Running
+## Installation and Usage
 
 You can download archive from Maven Central: 
 1. Go to https://search.maven.org/artifact/org.jetbrains.kotlinx/ki-shell
