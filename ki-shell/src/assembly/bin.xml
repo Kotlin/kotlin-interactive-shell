@@ -14,7 +14,7 @@
       <outputDirectory>bin</outputDirectory>
     </file>
     <file>
-      <source>lib/${project.artifactId}-${project.version}.jar</source>
+      <source>lib/${project.artifactId}.jar</source>
       <outputDirectory>lib</outputDirectory>
     </file>
   </files>
