@@ -188,7 +188,7 @@
               <artifactSet>
                 <includes />
               </artifactSet>
-              <outputFile>${project.parent.basedir}/lib/${project.artifactId}-${project.version}.jar</outputFile>
+              <outputFile>${project.parent.basedir}/lib/${project.artifactId}.jar</outputFile>
             </configuration>
           </execution>
         </executions>
