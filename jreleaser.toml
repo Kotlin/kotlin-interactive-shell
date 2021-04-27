@@ -1,0 +1,32 @@
+[project]
+  name = "ki"
+  version = "0.3.2"
+  description = "ki shell"
+  longDescription = "Extendable Kotlin interactive shell with code completion, syntax highlighting, and other features"
+  website = "https://github.com/Kotlin/kotlin-interactive-shell"
+  authors = ["Vitaly Khudobakhshov", "Ilya Chernikov"]
+  license = "Apache-2"
+  java.groupId = "org.jetbrains.kotlinx"
+  java.version = "8"
+
+[distributions.ki]
+  executable = "ki.sh"
+  artifacts = [
+    { path = "ki-shell/target/ki-archive.zip" }
+  ]
+  tags = ["cli", "Kotlin", "shell", "interactive"]
+
+[release.github]
+  owner = "Kotlin"
+  username = "asm0dey"
+  skipTag = true
+  overwrite = true
+  name = "kotlin-interactive-shell"
+
+[packagers.brew]
+  active = "ALWAYS"
+  formulaName = "Ki"
+
+[packagers.scoop]
+  active = "ALWAYS"
+
