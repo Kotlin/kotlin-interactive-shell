@@ -13,7 +13,7 @@ if [[ "$_JAVA" ]]; then
   JAVA_VERSION=$("$_JAVA" -version 2>&1 | awk -F '"' '/version/ {print $2}')
   if [[ "$JAVA_VERSION" =~ ^1\.[0-8]+ ]]; then
     if [[ "$JAVA_VERSION" =~ ^1\.[0-7]+ ]]; then
-      echo "java has version $version but at least 1.8 is required"
+      echo "java has version $JAVA_VERSION but at least 1.8 is required"
       exit 1
     fi
   else
