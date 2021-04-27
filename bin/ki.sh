@@ -35,7 +35,7 @@ command -v realpath &>/dev/null || realpath() {
   fi
 }
 
-SCRIPT_DIR="$(dirname $(realpath "$0"))"
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 KI_SHELL=$SCRIPT_DIR/../lib/ki-shell.jar
 
-$_JAVA $JAVA_OPTS -jar ${KI_SHELL} $@
+$_JAVA $JAVA_OPTS -jar "${KI_SHELL}" $@
