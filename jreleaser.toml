@@ -10,7 +10,7 @@
   java.version = "8"
 
 [distributions.ki]
-  executable = "ki.sh"
+  executable = "ki"
   artifacts = [
     { path = "ki-shell/target/ki-archive.zip" }
   ]
