@@ -57,3 +57,4 @@ buildNumber.properties
 
 out/
 .idea/
+.env

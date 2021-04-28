@@ -14,7 +14,7 @@
   artifacts = [
     { path = "ki-shell/target/ki-archive.zip" }
   ]
-  tags = ["cli", "Kotlin", "shell", "interactive"]
+  tags = ["cli", "kotlin", "shell", "interactive"]
 
 [release.github]
   owner = "Kotlin"
@@ -26,7 +26,6 @@
 [packagers.brew]
   active = "ALWAYS"
   formulaName = "Ki"
-
-[packagers.scoop]
-  active = "ALWAYS"
-
+  tap.owner = "JetBrains"
+  tap.name = "homebrew-utils"
+  tap.username = "asm0dey"
