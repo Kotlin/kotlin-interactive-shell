@@ -13,7 +13,7 @@
     <module>ki-shell</module>
   </modules>
   <properties>
-    <kotlin.version>1.4.21</kotlin.version>
+    <kotlin.version>1.4.32</kotlin.version>
     <jvm.version>1.8</jvm.version>
   </properties>
   <build>
@@ -34,13 +34,13 @@
       <plugin>
         <groupId>org.jetbrains.dokka</groupId>
         <artifactId>dokka-maven-plugin</artifactId>
-        <version>1.4.20</version>
+        <version>1.4.32</version>
         <configuration>
           <dokkaPlugins>
             <plugin>
               <groupId>org.jetbrains.dokka</groupId>
               <artifactId>kotlin-as-java-plugin</artifactId>
-              <version>1.4.20</version>
+              <version>1.4.32</version>
             </plugin>
           </dokkaPlugins>
         </configuration>
