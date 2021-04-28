@@ -26,6 +26,9 @@
 [packagers.brew]
   active = "ALWAYS"
   formulaName = "Ki"
+  tap.owner = "JetBrains"
+  tap.name = "homebrew-utils"
+  tap.username = "asm0dey"
 
 [packagers.scoop]
   active = "ALWAYS"
