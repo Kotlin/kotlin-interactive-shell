@@ -17,13 +17,16 @@ The Apache Spark adaptation of it is located in a separate [repository](https://
 
 The previous version of the Sparklin is accessible in the `sparklin` branch.
 
-## Running
+## Installation and Usage
 
 You can download archive from Maven Central: 
 1. Go to https://search.maven.org/artifact/org.jetbrains.kotlinx/ki-shell
 2. Select latest (or desired) version there (currently it's [0.3.2](https://search.maven.org/remotecontent?filepath=org/jetbrains/kotlinx/ki-shell/0.3.2/ki-shell-0.3.2-archive.zip))
 3. Unpack it to desired place
 4. Launch `bin/ki.sh` for Linux/Mac or `bin\ki.bat` for Windows
+
+On Arch Linux, there's an [AUR package](https://aur.archlinux.org/packages/ki-shell-bin/) available.
+After installation, you can run the shell through `ki`.
 
 ## Build From Source
 
