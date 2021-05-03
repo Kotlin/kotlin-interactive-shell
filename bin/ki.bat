@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 set SCRIPT_DIR=%~dp0
-set KI_SHELL=%SCRIPT_DIR%\..\lib\ki-shell.jar
+set KI_SHELL="%SCRIPT_DIR%\..\lib\ki-shell.jar"
 set JAVA_OPTS=%*
 
 for /f "tokens=3" %%g in ('java -version 2^>^&1 ^| findstr /i "version"') do (
