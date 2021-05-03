@@ -25,8 +25,17 @@ You can download archive from Maven Central:
 3. Unpack it to desired place
 4. Launch `bin/ki.sh` for Linux/Mac or `bin\ki.bat` for Windows
 
+### AUR Linux
+
 On Arch Linux, there's an [AUR package](https://aur.archlinux.org/packages/ki-shell-bin/) available.
 After installation, you can run the shell through `ki`.
+
+### Homebrew
+
+Install with [Homebrew](https://brew.sh/) with the following command:
+```bash
+brew install ki
+```
 
 ## Build From Source
 
