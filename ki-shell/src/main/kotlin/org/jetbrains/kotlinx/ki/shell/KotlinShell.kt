@@ -1,5 +1,8 @@
 package org.jetbrains.kotlinx.ki.shell
 
+import kotlinx.cli.CommandLineInterface
+import kotlinx.cli.flagArgument
+import kotlinx.cli.parse
 import org.jetbrains.kotlinx.ki.shell.configuration.CachedInstance
 import org.jetbrains.kotlinx.ki.shell.configuration.ReplConfiguration
 import org.jetbrains.kotlinx.ki.shell.configuration.ReplConfigurationBase
@@ -11,8 +14,18 @@ import kotlin.script.experimental.jvm.dependenciesFromClassloader
 import kotlin.script.experimental.jvm.jvm
 
 object KotlinShell {
+    private val cli = CommandLineInterface("ki", printHelpByDefault = false)
+    private val version by cli.flagArgument("--version", "Print version")
+
     @JvmStatic
     fun main(args: Array<String>) {
+        cli.parse(args)
+
+        if (version) {
+            printVersion()
+            return
+        }
+
         val repl = Shell(
             configuration(),
             defaultJvmScriptingHostConfiguration,

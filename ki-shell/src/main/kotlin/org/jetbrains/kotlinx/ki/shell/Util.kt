@@ -4,6 +4,10 @@ import java.io.File
 import java.util.*
 import java.util.regex.Pattern
 
+fun printVersion() {
+    val version = ApplicationProperties.version
+    println("ki-shell $version/${KotlinVersion.CURRENT}")
+}
 
 fun calcHumanReadableSize(bytes: Long, si: Boolean = false): String {
     val unit = if (si) 1000 else 1024
