@@ -321,12 +321,8 @@ open class Shell(val replConfiguration: ReplConfiguration,
     }
 
     private fun sayHello() {
-        println("ki-shell $VERSION/${KotlinVersion.CURRENT}")
+        printVersion()
         replConfiguration.plugins().forEach { it.sayHello() }
-    }
-
-    companion object {
-        const val VERSION: String = "0.3"
     }
 }
 
