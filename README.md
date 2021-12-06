@@ -53,3 +53,5 @@ It may be useful to build the project with a specific version of Kotlin. To do s
 mvn -Dkotlin.version=1.4.10 -DskipTests package
 ```
 To start the shell, run `bin/ki.sh` on Linux and macOS. On Windows, use `bin\ki.bat` instead.
+
+To exit the shell, type `:q` or `:quit`.
