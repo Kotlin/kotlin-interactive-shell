@@ -19,6 +19,6 @@ class {{brewFormulaName}} < Formula
 
   test do
     output = shell_output("#{bin}/ki.sh <<< '' 2>&1 | grep ki-shell")
-    assert_match "ki-shell 0.3/1.4.32", output
+    assert_match "ki-shell 0.3/1.6.0", output
   end
 end
