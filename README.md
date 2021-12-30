@@ -39,6 +39,13 @@ Install with [Homebrew](https://brew.sh/) with the following command:
 brew install ki
 ```
 
+### MacPorts
+
+Install with [MacPorts](https://www.macports.org) with the following command:
+```bash
+sudo port install ki-shell
+```
+
 ## Build From Source
 
 To build from source use:
