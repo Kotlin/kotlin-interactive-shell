@@ -1,6 +1,6 @@
 [project]
   name = "ki"
-  version = "0.3.3"
+  version = "0.4.0"
   description = "ki shell"
   longDescription = "Extendable Kotlin interactive shell with code completion, syntax highlighting, and other features"
   website = "https://github.com/Kotlin/kotlin-interactive-shell"
@@ -16,6 +16,7 @@
   ]
   tags = ["cli", "kotlin", "shell", "interactive"]
 
+
 [release.github]
   owner = "Kotlin"
   username = "asm0dey"
@@ -29,3 +30,10 @@
   tap.owner = "JetBrains"
   tap.name = "homebrew-utils"
   tap.username = "asm0dey"
+
+#
+[packagers.sdkman]
+  active = "ALWAYS"
+  continueOnError = true
+  releaseNotesUrl = "https://github.com/Kotlin/{{projectName}}/{{tagName}}"
+  command = "MINOR"

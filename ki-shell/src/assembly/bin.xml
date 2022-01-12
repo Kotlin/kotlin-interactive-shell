@@ -6,6 +6,10 @@
   </formats>
   <files>
     <file>
+      <source>bin/ki</source>
+      <outputDirectory>bin</outputDirectory>
+    </file>
+    <file>
       <source>bin/ki.sh</source>
       <outputDirectory>bin</outputDirectory>
     </file>
