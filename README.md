@@ -27,6 +27,16 @@ You can download archive from Maven Central:
 3. Unpack it to desired place
 4. Launch `bin/ki.sh` for Linux/Mac or `bin\ki.bat` for Windows
 
+### SDKMAN!
+
+Install with [SDKMAN!](https://sdkman.io/) with the following command:
+
+```bash
+sdk install ki
+```
+
+After installation you can launch `ki` with either `ki` or `ki.sh` comman.
+
 ### Arch Linux
 
 On Arch Linux, there's an [AUR package](https://aur.archlinux.org/packages/ki-shell-bin/) available.
