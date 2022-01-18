@@ -59,7 +59,7 @@
     </dependency>
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
-      <artifactId>kotlin-scripting-dependencies-maven-all</artifactId>
+      <artifactId>kotlin-scripting-dependencies-maven</artifactId>
       <version>${kotlin.version}</version>
     </dependency>
     <dependency>
