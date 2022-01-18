@@ -28,5 +28,5 @@
 [packagers.sdkman]
   active = "ALWAYS"
   continueOnError = true
-  releaseNotesUrl = "https://github.com/Kotlin/kotlin-interactive-shell/{{tagName}}"
+  releaseNotesUrl = "https://github.com/Kotlin/kotlin-interactive-shell/releases/tag/{{tagName}}"
   command = "MINOR"
