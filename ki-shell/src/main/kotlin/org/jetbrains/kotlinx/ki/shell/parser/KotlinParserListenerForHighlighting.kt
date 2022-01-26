@@ -7,6 +7,20 @@ import org.antlr.v4.runtime.tree.TerminalNode
 import org.jetbrains.kotlinx.ki.shell.parser.KotlinParser.*
 
 /**
+ * Magic constants are taken from official grammar.
+ * https://kotlinlang.org/docs/reference/grammar.html#ifExpression
+ * https://kotlinlang.org/docs/reference/grammar.html#forStatement
+ * https://kotlinlang.org/docs/reference/grammar.html#whileStatement
+ * https://kotlinlang.org/docs/reference/grammar.html#doWhileStatement
+ * The goal is navigating to the sub-elements not directly represented in it and
+ * granular control over keywords space to be taken into account by highlighting.
+ */
+private const val IF_EXPR_OFFSET = 2
+private const val ELSE_OFFSET = 4
+private const val FOR_EXPR_OFFSET = 3
+private const val WHILE_EXPR_OFFSET = 5
+
+/**
  * This class provides an empty implementation of [KotlinParserListener],
  * which can be extended to create a listener which only needs to handle a subset
  * of the available methods.
@@ -80,6 +94,12 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
             result.add(ElementWithPos(lastElementStart!!, ctx.start.startIndex - 1, lastElement!!))
             lastElement = null
         }
+    }
+
+    fun highlightKeywordWithOffset(ctx: ParserRuleContext, start: Int, offset: Int) {
+        exitHighlightingElement(ctx)
+        result.add(ElementWithPos(start, start + offset, RecogizedElements.Keyword))
+        lastElementStart = start
     }
 
     override fun enterKotlinFile(ctx: KotlinFileContext) {}
@@ -401,13 +421,13 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
     override fun exitLoopStatement(ctx: LoopStatementContext) {}
 
     override fun enterForStatement(ctx: ForStatementContext) {
-        enterHighlightingKeyword(ctx)
+        highlightKeywordWithOffset(ctx, ctx.start.startIndex, FOR_EXPR_OFFSET)
     }
 
     override fun exitForStatement(ctx: ForStatementContext) {}
 
     override fun enterWhileStatement(ctx: WhileStatementContext) {
-        enterHighlightingKeyword(ctx)
+        highlightKeywordWithOffset(ctx, ctx.start.startIndex, WHILE_EXPR_OFFSET)
     }
 
     override fun exitWhileStatement(ctx: WhileStatementContext) {}
@@ -416,7 +436,10 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
         enterHighlightingKeyword(ctx)
     }
 
-    override fun exitDoWhileStatement(ctx: DoWhileStatementContext) {}
+    override fun exitDoWhileStatement(ctx: DoWhileStatementContext) {
+        val whileToken = ctx.WHILE().symbol
+        highlightKeywordWithOffset(ctx, whileToken.startIndex, WHILE_EXPR_OFFSET)
+    }
 
     override fun enterAssignment(ctx: AssignmentContext) {}
 
@@ -649,10 +672,13 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
     override fun exitSuperExpression(ctx: SuperExpressionContext) {}
 
     override fun enterIfExpression(ctx: IfExpressionContext) {
-        enterHighlightingKeyword(ctx)
+        highlightKeywordWithOffset(ctx, ctx.start.startIndex, IF_EXPR_OFFSET)
     }
 
-    override fun exitIfExpression(ctx: IfExpressionContext) {}
+    override fun exitIfExpression(ctx: IfExpressionContext) {
+        val elseToken = ctx.ELSE().symbol
+        highlightKeywordWithOffset(ctx, elseToken.startIndex, ELSE_OFFSET)
+    }
 
     override fun enterWhenSubject(ctx: WhenSubjectContext) {
         exitHighlightingElement(ctx)
