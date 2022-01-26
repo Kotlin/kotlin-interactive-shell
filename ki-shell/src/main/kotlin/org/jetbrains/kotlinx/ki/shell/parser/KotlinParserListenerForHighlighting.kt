@@ -6,6 +6,15 @@ import org.antlr.v4.runtime.tree.ErrorNode
 import org.antlr.v4.runtime.tree.TerminalNode
 import org.jetbrains.kotlinx.ki.shell.parser.KotlinParser.*
 
+/**
+ * Magic constants are taken from official grammar.
+ * https://kotlinlang.org/docs/reference/grammar.html#ifExpression
+ * https://kotlinlang.org/docs/reference/grammar.html#forStatement
+ * https://kotlinlang.org/docs/reference/grammar.html#whileStatement
+ * https://kotlinlang.org/docs/reference/grammar.html#doWhileStatement
+ * The goal is navigating to the sub-elements not directly represented in it and
+ * granular control over keywords space to be taken into account by highlighting.
+ */
 private const val IF_EXPR_OFFSET = 2
 private const val ELSE_OFFSET = 4
 private const val FOR_EXPR_OFFSET = 3
