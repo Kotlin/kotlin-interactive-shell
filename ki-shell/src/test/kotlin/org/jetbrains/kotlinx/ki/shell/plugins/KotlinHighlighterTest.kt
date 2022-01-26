@@ -99,6 +99,42 @@ class KotlinHighlighterTest : TestCase() {
         assertEquals("fun <T, T> const(x: P, y: K): P = x", ht.highlight("fun <P, K> const(x: P, y: K): P = x").mnemonics())
     }
 
+    @Test
+    fun testIfElse() {
+        val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
+        assertEquals(
+            "kkk(1 > 2) 11 kkkkkkkk(1 > 2) { 12 } kkkkk{ 13 }",
+            ht.highlight("if (1 > 2) 11 else if (1 > 2) { 12 } else { 13 }").mnemonics()
+        )
+    }
+
+    @Test
+    fun testForLoop() {
+        val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
+        assertEquals(
+            "kkkk(x in \"gg\") x + 1",
+            ht.highlight("for (x in \"gg\") x + 1").mnemonics()
+        )
+    }
+
+    @Test
+    fun testWhileLoop() {
+        val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
+        assertEquals(
+            "kkkkkk(1 > 2) { 1 + 2 }",
+            ht.highlight("while (1 > 2) { 1 + 2 }").mnemonics()
+        )
+    }
+
+    @Test
+    fun testDoWhileLoop() {
+        val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
+        assertEquals(
+            "kkk{ 1 + 2 } kkkkkk(1 > 2)",
+            ht.highlight("do { 1 + 2 } while (1 > 2)").mnemonics()
+        )
+    }
+
     private fun  Map<String, AttributedStyle?>.filter(list: List<String>): HighlightStylesFromMap =
             HighlightStylesFromMap(map { if (list.contains(it.key)) Pair(it.key, it.value) else Pair(it.key, null) }.toMap())
 
