@@ -128,7 +128,7 @@
     <connection>scm:git:git://github.com/Kotlin/kotlin-interactive-shell.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/Kotlin/kotlin-interactive-shell.git</developerConnection>
     <url>https://github.com/Kotlin/kotlin-interactive-shell/tree/master</url>
-    <tag>HEAD</tag>
+    <tag>v0.4.5</tag>
   </scm>
   <distributionManagement>
     <repository>
