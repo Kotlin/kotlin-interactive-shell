@@ -437,8 +437,9 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
     }
 
     override fun exitDoWhileStatement(ctx: DoWhileStatementContext) {
-        val whileToken = ctx.WHILE().symbol
-        highlightKeywordWithOffset(ctx, whileToken.startIndex, WHILE_EXPR_OFFSET)
+        ctx.WHILE()?.let {
+            highlightKeywordWithOffset(ctx, it.symbol.startIndex, WHILE_EXPR_OFFSET)
+        }
     }
 
     override fun enterAssignment(ctx: AssignmentContext) {}
@@ -676,8 +677,9 @@ class KotlinParserListenerForHighlighting : KotlinParserListener {
     }
 
     override fun exitIfExpression(ctx: IfExpressionContext) {
-        val elseToken = ctx.ELSE().symbol
-        highlightKeywordWithOffset(ctx, elseToken.startIndex, ELSE_OFFSET)
+        ctx.ELSE()?.let {
+            highlightKeywordWithOffset(ctx, it.symbol.startIndex, ELSE_OFFSET)
+        }
     }
 
     override fun enterWhenSubject(ctx: WhenSubjectContext) {
