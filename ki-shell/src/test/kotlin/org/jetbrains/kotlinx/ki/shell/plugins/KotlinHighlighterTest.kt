@@ -109,6 +109,15 @@ class KotlinHighlighterTest : TestCase() {
     }
 
     @Test
+    fun testIfNoElse() {
+        val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
+        assertEquals(
+            "kkk(1 > 2) { 11 }",
+            ht.highlight("if (1 > 2) { 11 }").mnemonics()
+        )
+    }
+
+    @Test
     fun testForLoop() {
         val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
         assertEquals(
