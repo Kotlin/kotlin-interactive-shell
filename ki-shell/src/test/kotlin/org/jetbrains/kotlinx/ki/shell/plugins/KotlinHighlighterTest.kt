@@ -103,7 +103,7 @@ class KotlinHighlighterTest : TestCase() {
     fun testIfElse() {
         val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
         assertEquals(
-            "kkk(1 > 2) 11 kkkkkkkk(1 > 2) { 12 } kkkkk{ 13 }",
+            "kk (1 > 2) 11 kkkk kk (1 > 2) { 12 } kkkk { 13 }",
             ht.highlight("if (1 > 2) 11 else if (1 > 2) { 12 } else { 13 }").mnemonics()
         )
     }
@@ -112,8 +112,17 @@ class KotlinHighlighterTest : TestCase() {
     fun testIfNoElse() {
         val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
         assertEquals(
-            "kkk(1 > 2) { 11 }",
+            "kk (1 > 2) { 11 }",
             ht.highlight("if (1 > 2) { 11 }").mnemonics()
+        )
+    }
+
+    @Test
+    fun testIfNoSpace() {
+        val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
+        assertEquals(
+            "kk(1 > 2) { 11 }",
+            ht.highlight("if(1 > 2) { 11 }").mnemonics()
         )
     }
 
@@ -121,8 +130,17 @@ class KotlinHighlighterTest : TestCase() {
     fun testForLoop() {
         val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
         assertEquals(
-            "kkkk(x in \"gg\") x + 1",
+            "kkk (x in \"gg\") x + 1",
             ht.highlight("for (x in \"gg\") x + 1").mnemonics()
+        )
+    }
+
+    @Test
+    fun testForNoSpaceLoop() {
+        val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
+        assertEquals(
+            "kkk(x in \"gg\") x + 1",
+            ht.highlight("for(x in \"gg\") x + 1").mnemonics()
         )
     }
 
@@ -130,8 +148,17 @@ class KotlinHighlighterTest : TestCase() {
     fun testWhileLoop() {
         val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
         assertEquals(
-            "kkkkkk(1 > 2) { 1 + 2 }",
+            "kkkkk (1 > 2) { 1 + 2 }",
             ht.highlight("while (1 > 2) { 1 + 2 }").mnemonics()
+        )
+    }
+
+    @Test
+    fun testWhileNoSpaceLoop() {
+        val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
+        assertEquals(
+            "kkkkk(1 > 2) { 1 + 2 }",
+            ht.highlight("while(1 > 2) { 1 + 2 }").mnemonics()
         )
     }
 
@@ -139,8 +166,35 @@ class KotlinHighlighterTest : TestCase() {
     fun testDoWhileLoop() {
         val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
         assertEquals(
-            "kkk{ 1 + 2 } kkkkkk(1 > 2)",
+            "kkk{ 1 + 2 } kkkkk (1 > 2)",
             ht.highlight("do { 1 + 2 } while (1 > 2)").mnemonics()
+        )
+    }
+
+    @Test
+    fun testDoNoSpaceWhileLoop() {
+        val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
+        assertEquals(
+            "kk{ 1 + 2 } kkkkk (1 > 2)",
+            ht.highlight("do{ 1 + 2 } while (1 > 2)").mnemonics()
+        )
+    }
+
+    @Test
+    fun testDoWhileNoSpaceLoop() {
+        val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
+        assertEquals(
+            "kkk{ 1 + 2 } kkkkk(1 > 2)",
+            ht.highlight("do { 1 + 2 } while(1 > 2)").mnemonics()
+        )
+    }
+
+    @Test
+    fun testInvalidDoNoWhileLoop() {
+        val ht = KotlinHighlighter( styles.filter(listOf(keyword, parenthesis)) )
+        assertEquals(
+            "do { 1 + 2 } 11",
+            ht.highlight("do { 1 + 2 } 11").mnemonics()
         )
     }
 
