@@ -72,3 +72,16 @@ mvn -Dkotlin.version=1.4.10 -DskipTests package
 To start the shell, run `bin/ki.sh` on Linux and macOS. On Windows, use `bin\ki.bat` instead.
 
 To exit the shell, type `:q` or `:quit`.
+
+## Adding maven repositories that require auth
+
+The following options are supported:
+
+```bash
+:repository https://myrepo.org username password
+
+:repository https:myrepo.org ./path/to/file
+# properties file should contain
+# username=john
+# password=johnpwd
+```
