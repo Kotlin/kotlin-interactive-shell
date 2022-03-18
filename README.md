@@ -78,7 +78,8 @@ To exit the shell, type `:q` or `:quit`.
 The following options are supported:
 
 ```bash
-:repository https://myrepo.org username password
+:repository https://myrepo.org username=user password=pwd
+:repository https://myrepo.org username:user password:pwd
 
 :repository https:myrepo.org ./path/to/file
 # properties file should contain

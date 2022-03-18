@@ -32,12 +32,111 @@ class DependenciesPluginTest : TestCase() {
     }
 
     @Test
-    fun testUsernameAndPasswordPassed() {
-        val command = repoCommand.execute(":repository https://packages.team/path/to/maven user pass")
+    fun testUsernameAndPasswordEqualSeparator() {
+        val command = repoCommand.execute(":repository https://packages.team/path/to/maven username=user password=pass")
             as Command.Result.RunSnippets
 
         assertEquals(
             "@file:Repository(\"https://packages.team/path/to/maven\", options = [\"username=user\", \"password=pass\"])",
+            extractSnippetFromCommand(command)
+        )
+    }
+
+    @Test
+    fun testUsernameOnlyEqualSeparator() {
+        val command = repoCommand.execute(":repository https://packages.team/path/to/maven username=user barepassword")
+            as Command.Result.RunSnippets
+
+        assertEquals(
+            "@file:Repository(\"https://packages.team/path/to/maven\", options = [\"username=user\", \"password=\"])",
+            extractSnippetFromCommand(command)
+        )
+    }
+
+    @Test
+    fun testPasswordOnlyEqualSeparator() {
+        val command = repoCommand.execute(":repository https://packages.team/path/to/maven bareusername password=pass")
+            as Command.Result.RunSnippets
+
+        assertEquals(
+            "@file:Repository(\"https://packages.team/path/to/maven\", options = [\"username=\", \"password=pass\"])",
+            extractSnippetFromCommand(command)
+        )
+    }
+
+    @Test
+    fun testUsernameWithEqualEqualSeparator() {
+        val command = repoCommand.execute(":repository https://packages.team/path/to/maven username=my=user password=pass")
+            as Command.Result.RunSnippets
+
+        assertEquals(
+            "@file:Repository(\"https://packages.team/path/to/maven\", options = [\"username=my=user\", \"password=pass\"])",
+            extractSnippetFromCommand(command)
+        )
+    }
+
+    @Test
+    fun testPasswordWithEqualEqualSeparator() {
+        val command = repoCommand.execute(":repository https://packages.team/path/to/maven username=user password=my=pass")
+            as Command.Result.RunSnippets
+
+        assertEquals(
+            "@file:Repository(\"https://packages.team/path/to/maven\", options = [\"username=user\", \"password=my=pass\"])",
+            extractSnippetFromCommand(command)
+        )
+    }
+
+    @Test
+    fun testUsernameAndPasswordSemicolonSeparator() {
+        val command = repoCommand.execute(":repository https://packages.team/path/to/maven username:user password:pass")
+            as Command.Result.RunSnippets
+
+        assertEquals(
+            "@file:Repository(\"https://packages.team/path/to/maven\", options = [\"username=user\", \"password=pass\"])",
+            extractSnippetFromCommand(command)
+        )
+    }
+
+    @Test
+    fun testUsernameOnlySemicolonSeparator() {
+        val command = repoCommand.execute(":repository https://packages.team/path/to/maven username:user barepassword")
+            as Command.Result.RunSnippets
+
+        assertEquals(
+            "@file:Repository(\"https://packages.team/path/to/maven\", options = [\"username=user\", \"password=\"])",
+            extractSnippetFromCommand(command)
+        )
+    }
+
+    @Test
+    fun testPasswordOnlySemicolonSeparator() {
+        val command = repoCommand.execute(":repository https://packages.team/path/to/maven bareusername password:pass")
+            as Command.Result.RunSnippets
+
+        assertEquals(
+            "@file:Repository(\"https://packages.team/path/to/maven\", options = [\"username=\", \"password=pass\"])",
+            extractSnippetFromCommand(command)
+        )
+    }
+
+    @Test
+    fun testUsernameWithSemicolonSemicolonSeparator() {
+        val command = repoCommand.execute(":repository https://packages.team/path/to/maven username:my:user password:pass")
+            as Command.Result.RunSnippets
+
+        assertEquals(
+            "@file:Repository(\"https://packages.team/path/to/maven\", options = [\"username=my:user\", \"password=pass\"])",
+            extractSnippetFromCommand(command)
+        )
+    }
+
+    @Test
+    fun testPasswordWithSemicolonSemicolonSeparator() {
+        val command = repoCommand.execute(":repository https://packages.team/path/to/maven username:user password:my:pass")
+            as Command.Result.RunSnippets
+
+        assertEquals(
+            "@file:Repository(\"https://packages.team/path/to/maven\", options = [\"username=user\", \"password=my:pass\"])",
             extractSnippetFromCommand(command)
         )
     }
@@ -49,7 +148,7 @@ class DependenciesPluginTest : TestCase() {
             as Command.Result.RunSnippets
 
         assertEquals(
-            "@file:Repository(\"https://packages.team/path/to/maven\", options = [\"username=fileusername\", \"password=filepassword\"])",
+            "@file:Repository(\"https://packages.team/path/to/maven\", options = [\"username=fileusername\", \"password=file password\"])",
             extractSnippetFromCommand(command)
         )
     }

@@ -74,7 +74,16 @@ class DependenciesPlugin : Plugin {
         }
 
         private fun buildCredentialsFromUsernameAndPassword(args: List<String>): RepoCredentials {
-            return RepoCredentials(args[0], args[1])
+            val props = Properties()
+
+            return args.joinToString("\n").reader().use { reader ->
+                props.load(reader)
+
+                RepoCredentials(
+                    props.getProperty(CREDENTIALS_USERNAME_PROPERTY, ""),
+                    props.getProperty(CREDENTIALS_PASSWORD_PROPERTY, "")
+                )
+            }
         }
 
         private fun buildCredentialsFromFile(args: List<String>): RepoCredentials {
