@@ -13,8 +13,8 @@
     <module>ki-shell</module>
   </modules>
   <properties>
-    <kotlin.version>1.6.10</kotlin.version>
-    <jvm.version>1.8</jvm.version>
+    <kotlin.version>1.7.0</kotlin.version>
+    <jvm.version>11</jvm.version>
   </properties>
   <build>
     <plugins>
