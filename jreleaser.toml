@@ -1,21 +1,19 @@
 [project]
   name = "ki"
-  version = "0.4.5"
+  version = "0.5.0"
   description = "ki shell"
   longDescription = "Extendable Kotlin interactive shell with code completion, syntax highlighting, and other features"
   website = "https://github.com/Kotlin/kotlin-interactive-shell"
   authors = ["Vitaly Khudobakhshov", "Ilya Chernikov"]
   license = "Apache-2"
   java.groupId = "org.jetbrains.kotlinx"
-  java.version = "8"
+  java.version = "11"
 
 [distributions.ki]
-  executable = "ki"
   artifacts = [
     { path = "ki-shell/target/ki-archive.zip" }
   ]
   tags = ["cli", "kotlin", "shell", "interactive"]
-
 
 [release.github]
   owner = "Kotlin"
@@ -29,4 +27,4 @@
   active = "ALWAYS"
   continueOnError = true
   releaseNotesUrl = "https://github.com/Kotlin/kotlin-interactive-shell/releases/tag/{{tagName}}"
-  command = "MINOR"
+  command = "MAJOR"
