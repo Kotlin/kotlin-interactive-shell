@@ -1,6 +1,7 @@
 package org.jetbrains.kotlinx.ki.shell
 
 import kotlinx.cli.CommandLineInterface
+import kotlinx.cli.HelpPrintedException
 import kotlinx.cli.flagArgument
 import kotlinx.cli.parse
 import org.jetbrains.kotlinx.ki.shell.configuration.CachedInstance
@@ -19,7 +20,11 @@ object KotlinShell {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        cli.parse(args)
+        try {
+            cli.parse(args)
+        }catch (e:HelpPrintedException){
+            return
+        }
 
         if (version) {
             printVersion()
