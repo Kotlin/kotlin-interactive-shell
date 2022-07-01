@@ -307,7 +307,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
             is ResultValue.Error -> {
                 evalResultValue.renderError(System.err)
             }
-            else -> error("Unknown outcome")
+            else -> {}
         }
     }
 
