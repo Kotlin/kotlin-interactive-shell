@@ -35,7 +35,6 @@ class KotlinHighlighter(private val styles: SyntaxPlugin.HighlightStyles): BaseH
             try {
                 with(KotlinParserForHighlighting(code)) {
                     addParseListener(listener)
-                    removeErrorListeners()
                     script()
                 }
             } catch (e: Throwable) {
@@ -68,10 +67,17 @@ class KotlinHighlighter(private val styles: SyntaxPlugin.HighlightStyles): BaseH
     override fun setErrorIndex(p0: Int) {}
 
     private class KotlinParserForHighlighting(code: String) :
-            KotlinParser(CommonTokenStream(KotlinLexer(CharStreams.fromString(code))))
+            KotlinParser(
+                CommonTokenStream(
+                    KotlinLexer(CharStreams.fromString(code)).also {
+                        it.removeErrorListeners()
+                    }
+                )
+            )
     {
         init {
             _buildParseTrees = false
+            removeErrorListeners()
         }
     }
 }
