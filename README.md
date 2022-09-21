@@ -4,7 +4,7 @@
 [![JetBrains team project](https://jb.gg/badges/team.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/ki-shell.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22org.jetbrains.kotlinx%22%20AND%20a:%22ki-shell%22)
 
-The shell is an extensible implementation of Kotlin REPL with reach set of features including:
+The shell is an extensible implementation of Kotlin REPL with a rich set of features including:
 
 - Syntax highlight
 - Type inference command
