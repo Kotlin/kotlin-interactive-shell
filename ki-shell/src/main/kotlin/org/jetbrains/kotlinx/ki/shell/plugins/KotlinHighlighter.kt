@@ -47,14 +47,14 @@ class KotlinHighlighter(private val styles: SyntaxPlugin.HighlightStyles): BaseH
             val element = listener.result.firstOrNull { i >= it.start && i <= it.end }?.element
             val st = when (element) {
                 null -> null
-                KotlinParserListenerForHighlighting.RecogizedElements.Keyword -> styles.keyword
-                KotlinParserListenerForHighlighting.RecogizedElements.FunctionIdentifier -> styles.function
-                KotlinParserListenerForHighlighting.RecogizedElements.Number -> styles.number
-                KotlinParserListenerForHighlighting.RecogizedElements.String -> styles.string
-                KotlinParserListenerForHighlighting.RecogizedElements.StringTemplate -> styles.stringTemplate
-                KotlinParserListenerForHighlighting.RecogizedElements.TypeIdentifier -> styles.type
-                KotlinParserListenerForHighlighting.RecogizedElements.Parenthesis -> styles.parenthesis
-                KotlinParserListenerForHighlighting.RecogizedElements.TypeParameter -> styles.typeParameter
+                KotlinParserListenerForHighlighting.RecognizedElements.Keyword -> styles.keyword
+                KotlinParserListenerForHighlighting.RecognizedElements.FunctionIdentifier -> styles.function
+                KotlinParserListenerForHighlighting.RecognizedElements.Number -> styles.number
+                KotlinParserListenerForHighlighting.RecognizedElements.String -> styles.string
+                KotlinParserListenerForHighlighting.RecognizedElements.StringTemplate -> styles.stringTemplate
+                KotlinParserListenerForHighlighting.RecognizedElements.TypeIdentifier -> styles.type
+                KotlinParserListenerForHighlighting.RecognizedElements.Parenthesis -> styles.parenthesis
+                KotlinParserListenerForHighlighting.RecognizedElements.TypeParameter -> styles.typeParameter
                 else -> null
             } ?: AttributedStyle.DEFAULT
             style(st)
