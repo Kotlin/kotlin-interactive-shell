@@ -4,7 +4,7 @@
 
   <groupId>org.jetbrains.kotlinx</groupId>
   <artifactId>ki</artifactId>
-  <version>0.5.2-SNAPSHOT</version>
+  <version>0.5.3-SNAPSHOT</version>
 
   <packaging>pom</packaging>
   <name>Ki Shell :: parent</name>
@@ -13,7 +13,7 @@
     <module>ki-shell</module>
   </modules>
   <properties>
-    <kotlin.version>1.7.0</kotlin.version>
+    <kotlin.version>1.9.10</kotlin.version>
     <jvm.version>11</jvm.version>
   </properties>
   <build>

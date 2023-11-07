@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>ki</artifactId>
-    <version>0.5.2-SNAPSHOT</version>
+    <version>0.5.3-SNAPSHOT</version>
   </parent>
 
   <artifactId>ki-shell</artifactId>
@@ -15,12 +15,12 @@
     <dependency>
       <groupId>org.jline</groupId>
       <artifactId>jline</artifactId>
-      <version>3.21.0</version>
+      <version>3.24.1</version>
     </dependency>
     <dependency>
       <groupId>org.fusesource.jansi</groupId>
       <artifactId>jansi</artifactId>
-      <version>2.4.0</version>
+      <version>2.4.1</version>
     </dependency>
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
@@ -75,7 +75,7 @@
     <dependency>
       <groupId>org.jetbrains.kotlinx</groupId>
       <artifactId>kotlinx-coroutines-core</artifactId>
-      <version>1.6.3</version>
+      <version>1.7.3</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
