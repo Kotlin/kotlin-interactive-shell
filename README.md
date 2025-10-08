@@ -60,6 +60,16 @@ Install with [MacPorts](https://www.macports.org) with the following command:
 sudo port install ki-shell
 ```
 
+### Nix
+
+There's a package available in [nixpkgs](https://github.com/NixOS/nixpkgs). Add `kotlin-interactive-shell` to your environment or shell, e.g.:
+
+```bash
+nix-shell -p kotlin-interactive-shell
+```
+
+After which you can launch with `ki`.
+
 ## Build From Source
 
 To build from source use:
