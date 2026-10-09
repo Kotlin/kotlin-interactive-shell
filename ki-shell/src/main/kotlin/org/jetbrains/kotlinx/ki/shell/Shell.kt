@@ -22,6 +22,7 @@ import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
 import java.io.File
 import java.io.PrintStream
+import java.lang.reflect.Modifier
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -240,7 +241,6 @@ open class Shell(val replConfiguration: ReplConfiguration,
                         when (val result = action.execute(line)) {
                             is Command.Result.Success -> {
                                 result.message?.let { println(it) }
-                                currentSnippetNo.incrementAndGet()
                             }
                             is Command.Result.Failure -> {
                                 println("Error in command $line: ${result.message}")
@@ -258,7 +258,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
                     evalSnippet(line)
                 }
             }
-            catch (e: UserInterruptException) { if (settings.overrideSignals) currentSnippetNo.incrementAndGet() else break }
+            catch (e: UserInterruptException) { if (!settings.overrideSignals) break }
             catch (ee: EndOfFileException) { break }
             catch (ex: Exception) { ex.printStackTrace() }
         } while (true)
@@ -274,7 +274,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
         return incompleteLines.isEmpty() && (line.equals(":quit", ignoreCase = true) || line.equals(":q", ignoreCase = true))
     }
 
-    private fun nextLine(code: String) = code.toScriptSource("Line_${currentSnippetNo.incrementAndGet()}.${compilationConfiguration[ScriptCompilationConfiguration.fileExtension]}")
+    private fun nextLine(code: String) = code.toScriptSource("Line_${currentSnippetNo.get()}.${compilationConfiguration[ScriptCompilationConfiguration.fileExtension]}")
 
     private fun replState(): ReplState = replState ?: error("The engine is not initialized, call initEngine() first")
 
@@ -307,21 +307,19 @@ open class Shell(val replConfiguration: ReplConfiguration,
 
     suspend fun compile(code: String) = compile(nextLine(code))
 
+    // Incomplete input is compiled again with the next line added, so only complete snippets take a number
     fun compile(code: SourceCode): ResultWithDiagnostics<LinkedSnippet<CompiledSnippet>> =
         replLock.withLock {
-            runBlocking { replState().compiler.compile(listOf(code), snippetCompilationConfiguration()) }
+            val result = runBlocking { replState().compiler.compile(listOf(code), snippetCompilationConfiguration()) }
+            if (result.reports.none { it.code == ScriptDiagnostic.incompleteCode }) currentSnippetNo.incrementAndGet()
+            result
         }
 
     fun compileProbe(code: String): ResultWithDiagnostics<LinkedSnippet<CompiledSnippet>>? {
         if (!replLock.tryLock(PROBE_LOCK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) return null
         return try {
-            val source = code.toScriptSource("Line_${currentSnippetNo.get() + 1}_probe.${compilationConfiguration[ScriptCompilationConfiguration.fileExtension]}")
-            val configuration = compilationConfiguration.with {
-                repl {
-                    currentSnippetNo(this@Shell.currentSnippetNo.get() + 1)
-                }
-            }
-            runBlocking { replState().compiler.compile(listOf(source), configuration) }
+            val source = code.toScriptSource("Line_${currentSnippetNo.get()}_probe.${compilationConfiguration[ScriptCompilationConfiguration.fileExtension]}")
+            runBlocking { replState().compiler.compile(listOf(source), snippetCompilationConfiguration()) }
         } finally {
             replLock.unlock()
         }
@@ -377,7 +375,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
         val evalResultValue = snippets.get().result
         when (evalResultValue) {
             is ResultValue.Value ->
-                println("${evalResultValue.name}${renderResultType(evalResultValue)} = ${evalResultValue.value}".bound(settings.maxResultLength))
+                println(renderResult(evalResultValue).bound(settings.maxResultLength))
             is ResultValue.Error -> {
                 evalResultValue.renderError(System.err)
             }
@@ -386,6 +384,8 @@ open class Shell(val replConfiguration: ReplConfiguration,
     }
 
     fun renderResultType(res: ResultValue.Value): String = ": " + renderKotlinType(res.type)
+
+    fun renderResult(res: ResultValue.Value): String = "${res.name}${renderResultType(res)} = ${boxValueClass(res)}"
 
     private fun commandError(e: Exception) {
         e.printStackTrace()
@@ -426,6 +426,37 @@ private fun ResultValue.Error.renderError(stream: PrintStream) {
         for (i in 0 until scriptTraceSize) {
             stream.println("\tat " + fullTrace[i])
         }
+    }
+}
+
+// A result of a value class type, e.g. `ULong`, is stored unboxed, so its own `toString` is not used without boxing
+private fun boxValueClass(res: ResultValue.Value): Any? {
+    val value = res.value ?: return null
+    val classLoader = res.scriptInstance?.javaClass?.classLoader ?: return value
+    val valueClass = loadClassByKotlinName(res.type.substringBefore('<').removeSuffix("?"), classLoader) ?: return value
+    if (valueClass.isInstance(value)) return value
+    val box = valueClass.declaredMethods.singleOrNull {
+        it.name == "box-impl" && Modifier.isStatic(it.modifiers) && it.parameterCount == 1
+    } ?: return value
+    return try {
+        box.isAccessible = true
+        box.invoke(null, value)
+    } catch (_: Exception) {
+        value
+    }
+}
+
+private fun loadClassByKotlinName(name: String, classLoader: ClassLoader): Class<*>? {
+    var binaryName = name
+    while (true) {
+        try {
+            return Class.forName(binaryName, false, classLoader)
+        } catch (_: ClassNotFoundException) {
+        } catch (_: LinkageError) {
+        }
+        val lastDot = binaryName.lastIndexOf('.')
+        if (lastDot < 0) return null
+        binaryName = binaryName.substring(0, lastDot) + "$" + binaryName.substring(lastDot + 1)
     }
 }
 
