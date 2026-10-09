@@ -8,10 +8,12 @@
     <file>
       <source>bin/ki</source>
       <outputDirectory>bin</outputDirectory>
+      <fileMode>0755</fileMode>
     </file>
     <file>
       <source>bin/ki.sh</source>
       <outputDirectory>bin</outputDirectory>
+      <fileMode>0755</fileMode>
     </file>
     <file>
       <source>bin/ki.bat</source>
@@ -20,6 +22,16 @@
     <file>
       <source>lib/${project.artifactId}.jar</source>
       <outputDirectory>lib</outputDirectory>
+    </file>
+    <file>
+      <source>lib/ki-completion-plugin.jar</source>
+      <outputDirectory>lib</outputDirectory>
+    </file>
+    <file>
+      <source>LICENSE</source>
+    </file>
+    <file>
+      <source>README.md</source>
     </file>
   </files>
   <id>archive</id>
