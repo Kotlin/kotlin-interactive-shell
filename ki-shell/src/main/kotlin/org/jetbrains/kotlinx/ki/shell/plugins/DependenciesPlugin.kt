@@ -124,7 +124,10 @@ class DependenciesPlugin : Plugin {
     private val resolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), MavenDependenciesResolver())
 
     fun configureMavenDepsOnAnnotations(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> {
-        val annotations = context.collectedData?.get(ScriptCollectedData.collectedAnnotations)?.takeIf { it.isNotEmpty() }
+        // The other plugins' annotations, e.g. @file:CompilerOptions, are collected too
+        val annotations = context.collectedData?.get(ScriptCollectedData.collectedAnnotations)
+                ?.filter { it.annotation is DependsOn || it.annotation is Repository }
+                ?.takeIf { it.isNotEmpty() }
                 ?: return context.compilationConfiguration.asSuccess()
         return runBlocking {
             resolver.resolveFromScriptSourceAnnotations(annotations)
@@ -141,22 +144,8 @@ class DependenciesPlugin : Plugin {
         repl.registerCommand(DependsOnCommand(config))
         repl.registerCommand(RepositoryCommand(config))
 
-//        val dependenciesClasspath = JvmDependency(
-//                scriptCompilationClasspathFromContext(
-//                        "kotlin-scripting-dependencies" // DependsOn and Repository annotations are taken from it
-//                )
-//        )
-        repl.updateHostConfiguration {
-//            configurationDependencies.append(dependenciesClasspath)
-        }
         repl.updateCompilationConfiguration {
-            defaultImports(DependsOn::class, Repository::class)
-//            dependencies.append(dependenciesClasspath)
-//            jvm {
-//                dependenciesFromCurrentContext(
-//                        "kotlin-scripting-dependencies" // DependsOn and Repository annotations are taken from it
-//                )
-//            }
+            defaultImports.append(DependsOn::class.qualifiedName!!, Repository::class.qualifiedName!!)
             refineConfiguration {
                 onAnnotations(DependsOn::class, Repository::class, handler = ::configureMavenDepsOnAnnotations)
             }

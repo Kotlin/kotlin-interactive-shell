@@ -18,9 +18,9 @@ import kotlin.script.experimental.util.LinkedSnippet
 class TestShells : ExternalResource() {
     private val shells = mutableListOf<Shell>()
 
-    fun create(): Shell =
-        KotlinShell.createShell(object : ReplConfigurationBase() {})
-            .apply { initEngine() }
+    fun create(classpath: List<File> = emptyList(), compilerOptions: List<String> = emptyList()): Shell =
+        KotlinShell.createShell(object : ReplConfigurationBase() {}, classpath, compilerOptions)
+            .apply { initEngine(interactive = false) }
             .also { shells += it }
 
     override fun after() {
