@@ -82,7 +82,7 @@ class RuntimePlugin : Plugin {
         })
 
 
-        repl.ideServices = BasicReplIdeServices { table.completionItems() }
+        repl.ideServices = K2ReplIdeServices(repl::compileProbe, repl::completionSink, BasicReplIdeServices { table.completionItems() })
 
         customHighlighter = CustomHighlighter { repl.highlighter.syntaxHighlighter }
 

@@ -6,9 +6,10 @@ import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplCompiler
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.ScriptDiagnosticsMessageCollector
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.currentSnippetNo
-import org.jetbrains.kotlin.scripting.compiler.plugin.services.FirReplHistoryProviderImpl
 import org.jetbrains.kotlin.scripting.compiler.plugin.services.firReplHistoryProvider
 import org.jetbrains.kotlin.scripting.compiler.plugin.services.isReplSnippetSource
+import org.jetbrains.kotlinx.ki.completion.CompletionSink
+import org.jetbrains.kotlinx.ki.completion.KiReplHistoryProvider
 import org.jetbrains.kotlinx.ki.shell.configuration.BooleanConverter
 import org.jetbrains.kotlinx.ki.shell.configuration.IntConverter
 import org.jetbrains.kotlinx.ki.shell.configuration.ReplConfiguration
@@ -22,6 +23,7 @@ import org.jline.terminal.TerminalBuilder
 import java.io.File
 import java.io.PrintStream
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -54,6 +56,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
     private class ReplState(
         val compiler: K2ReplCompiler,
         val evaluator: K2ReplEvaluator,
+        val completionSink: CompletionSink,
         val disposable: Disposable,
     )
 
@@ -61,7 +64,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
 
     val replLock = ReentrantLock()
 
-    var ideServices: ReplIdeServices = BasicReplIdeServices { emptyList() }
+    var ideServices: ReplIdeServices = K2ReplIdeServices(::compileProbe, { replState?.completionSink }, BasicReplIdeServices { emptyList() })
 
     val currentSnippetNo = AtomicInteger()
 
@@ -74,7 +77,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
     val eventManager = EventManager()
 
     val highlighter = ContextHighlighter({ s -> !isCommandMode(s)}, { s -> commands.firstOrNull { it.weakMatch(s) } })
-    val completer = KotlinCompleter({ ideServices }, incompleteLines)
+    val completer = KotlinCompleter({ ideServices }, incompleteLines, ::isCommandMode)
     val parser = KotlinReplSnippetParser()
 
     var prompt = {
@@ -275,11 +278,14 @@ open class Shell(val replConfiguration: ReplConfiguration,
 
     private fun replState(): ReplState = replState ?: error("The engine is not initialized, call initEngine() first")
 
+    internal fun completionSink(): CompletionSink? = replState?.completionSink
+
     private fun createReplState(): ReplState {
         val disposable = Disposer.newDisposable("KI REPL")
+        val historyProvider = KiReplHistoryProvider()
         val replHostConfiguration = ScriptingHostConfiguration(hostConfiguration) {
             repl {
-                firReplHistoryProvider(FirReplHistoryProviderImpl())
+                firReplHistoryProvider(historyProvider)
                 isReplSnippetSource { _, _ -> true }
             }
         }
@@ -289,7 +295,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
             compilationConfiguration,
             replHostConfiguration
         )
-        return ReplState(K2ReplCompiler(compilationState), K2ReplEvaluator(), disposable)
+        return ReplState(K2ReplCompiler(compilationState), K2ReplEvaluator(), historyProvider.completionSink, disposable)
     }
 
     private fun snippetCompilationConfiguration(): ScriptCompilationConfiguration =
@@ -305,6 +311,21 @@ open class Shell(val replConfiguration: ReplConfiguration,
         replLock.withLock {
             runBlocking { replState().compiler.compile(listOf(code), snippetCompilationConfiguration()) }
         }
+
+    fun compileProbe(code: String): ResultWithDiagnostics<LinkedSnippet<CompiledSnippet>>? {
+        if (!replLock.tryLock(PROBE_LOCK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) return null
+        return try {
+            val source = code.toScriptSource("Line_${currentSnippetNo.get() + 1}_probe.${compilationConfiguration[ScriptCompilationConfiguration.fileExtension]}")
+            val configuration = compilationConfiguration.with {
+                repl {
+                    currentSnippetNo(this@Shell.currentSnippetNo.get() + 1)
+                }
+            }
+            runBlocking { replState().compiler.compile(listOf(source), configuration) }
+        } finally {
+            replLock.unlock()
+        }
+    }
 
     fun eval(source: String): ResultWrapper {
         return if (settings.overrideSignals) {
@@ -381,6 +402,8 @@ open class Shell(val replConfiguration: ReplConfiguration,
         replConfiguration.plugins().forEach { it.sayHello() }
     }
 }
+
+private const val PROBE_LOCK_TIMEOUT_MS = 2000L
 
 class OnCompile(private val data: LinkedSnippet<CompiledSnippet>) : Event<LinkedSnippet<CompiledSnippet>> {
     override fun data(): LinkedSnippet<CompiledSnippet> = data

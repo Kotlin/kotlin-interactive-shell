@@ -13,6 +13,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.jetbrains.kotlinx</groupId>
+      <artifactId>ki-completion-plugin</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.jline</groupId>
       <artifactId>jline</artifactId>
       <version>4.4.7</version>
@@ -213,6 +218,9 @@
                   </excludes>
                 </filter>
               </filters>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+              </transformers>
               <outputFile>${project.parent.basedir}/lib/${project.artifactId}.jar</outputFile>
             </configuration>
           </execution>
