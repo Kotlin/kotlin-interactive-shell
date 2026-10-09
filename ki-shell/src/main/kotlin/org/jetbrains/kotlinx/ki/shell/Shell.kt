@@ -21,6 +21,7 @@ import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
 import java.io.File
 import java.io.PrintStream
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -60,7 +61,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
 
     val replLock = ReentrantLock()
 
-    var ideServices: ReplIdeServices = BasicReplIdeServices { emptyList() }
+    var ideServices: ReplIdeServices = K2ReplIdeServices(::compileProbe, BasicReplIdeServices { emptyList() })
 
     val currentSnippetNo = AtomicInteger()
 
@@ -73,7 +74,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
     val eventManager = EventManager()
 
     val highlighter = ContextHighlighter({ s -> !isCommandMode(s)}, { s -> commands.firstOrNull { it.weakMatch(s) } })
-    val completer = KotlinCompleter({ ideServices }, incompleteLines)
+    val completer = KotlinCompleter({ ideServices }, incompleteLines, ::isCommandMode)
     val parser = KotlinReplSnippetParser()
 
     var prompt = {
@@ -301,6 +302,21 @@ open class Shell(val replConfiguration: ReplConfiguration,
             runBlocking { replState().compiler.compile(listOf(code), snippetCompilationConfiguration()) }
         }
 
+    fun compileProbe(code: String): ResultWithDiagnostics<LinkedSnippet<CompiledSnippet>>? {
+        if (!replLock.tryLock(PROBE_LOCK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) return null
+        return try {
+            val source = code.toScriptSource("Line_${currentSnippetNo.get() + 1}_probe.${compilationConfiguration[ScriptCompilationConfiguration.fileExtension]}")
+            val configuration = compilationConfiguration.with {
+                repl {
+                    currentSnippetNo(this@Shell.currentSnippetNo.get() + 1)
+                }
+            }
+            runBlocking { replState().compiler.compile(listOf(source), configuration) }
+        } finally {
+            replLock.unlock()
+        }
+    }
+
     fun eval(source: String): ResultWrapper {
         return if (settings.overrideSignals) {
             val thread = evalThread.apply {
@@ -372,6 +388,8 @@ open class Shell(val replConfiguration: ReplConfiguration,
         replConfiguration.plugins().forEach { it.sayHello() }
     }
 }
+
+private const val PROBE_LOCK_TIMEOUT_MS = 2000L
 
 class OnCompile(private val data: LinkedSnippet<CompiledSnippet>) : Event<LinkedSnippet<CompiledSnippet>> {
     override fun data(): LinkedSnippet<CompiledSnippet> = data

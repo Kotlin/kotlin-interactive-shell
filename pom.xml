@@ -10,6 +10,7 @@
   <name>Ki Shell :: parent</name>
   <description>Parent project for Ki Shell</description>
   <modules>
+    <module>ki-completion-plugin</module>
     <module>ki-shell</module>
   </modules>
   <properties>

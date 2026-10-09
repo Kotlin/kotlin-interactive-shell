@@ -4,9 +4,9 @@ import org.jline.reader.impl.DefaultParser
 
 class KotlinReplSnippetParser : DefaultParser() {
 
-    val wordDelimiters = ".,?:"
+    val wordDelimiters = ".,?:()[]{}=+-*/%!<>&|;@"
 
     override fun isDelimiterChar(buffer: CharSequence, pos: Int): Boolean {
-        return wordDelimiters.contains(buffer[pos])
+        return super.isDelimiterChar(buffer, pos) || wordDelimiters.contains(buffer[pos])
     }
 }
