@@ -181,6 +181,51 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.6.1</version>
+        <executions>
+          <!-- A third-party compiler plugin for the tests of the explicitly passed -Xplugin -->
+          <execution>
+            <id>copy-test-compiler-plugin</id>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <phase>generate-test-resources</phase>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.jetbrains.kotlin</groupId>
+                  <artifactId>kotlin-allopen-compiler-plugin-embeddable</artifactId>
+                  <version>${kotlin.version}</version>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/test-compiler-plugins</outputDirectory>
+              <stripVersion>true</stripVersion>
+            </configuration>
+          </execution>
+          <!-- Passed with -Xplugin next to the compiler plugins passed explicitly -->
+          <execution>
+            <id>copy-completion-plugin</id>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.jetbrains.kotlinx</groupId>
+                  <artifactId>ki-completion-plugin</artifactId>
+                  <version>${project.version}</version>
+                  <destFileName>ki-completion-plugin.jar</destFileName>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.parent.basedir}/lib</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>3.3.0</version>
         <configuration>
@@ -235,6 +280,10 @@
             <!-- Not the developer's ~/.ki-shell -->
             <config.path>${project.build.directory}/no-ki-shell-config</config.path>
           </systemPropertyVariables>
+          <environmentVariables>
+            <!-- A real terminal type, so that writing terminal sequences in script mode is caught -->
+            <TERM>xterm-256color</TERM>
+          </environmentVariables>
         </configuration>
       </plugin>
       <plugin>
