@@ -1,13 +1,13 @@
 [project]
   name = "ki"
-  version = "0.5.0"
+  version = "0.6.0"
   description = "ki shell"
   longDescription = "Extendable Kotlin interactive shell with code completion, syntax highlighting, and other features"
   website = "https://github.com/Kotlin/kotlin-interactive-shell"
   authors = ["Vitaly Khudobakhshov", "Ilya Chernikov"]
   license = "Apache-2"
   java.groupId = "org.jetbrains.kotlinx"
-  java.version = "11"
+  java.version = "17"
 
 [distributions.ki]
   artifacts = [
