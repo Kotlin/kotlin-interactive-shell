@@ -31,8 +31,19 @@ object KotlinShell {
             return
         }
 
-        val repl = Shell(
-            configuration(),
+        val repl = createShell(configuration())
+
+        Runtime.getRuntime().addShutdownHook(Thread {
+            println("\nBye!")
+            repl.cleanUp()
+        })
+
+        repl.doRun()
+    }
+
+    fun createShell(configuration: ReplConfiguration): Shell =
+        Shell(
+            configuration,
             defaultJvmScriptingHostConfiguration,
             ScriptCompilationConfiguration {
                 jvm {
@@ -48,14 +59,6 @@ object KotlinShell {
                 }
             }
         )
-
-        Runtime.getRuntime().addShutdownHook(Thread {
-            println("\nBye!")
-            repl.cleanUp()
-        })
-
-        repl.doRun()
-    }
 
     fun configuration(): ReplConfiguration {
         val instance = CachedInstance<ReplConfiguration>()
