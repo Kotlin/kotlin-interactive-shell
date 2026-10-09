@@ -56,6 +56,15 @@ class InferTypeTest {
     }
 
     @Test
+    fun errorLocationsAreRelativeToExpression() {
+        val result = shell.ideServices.inferType("1 +\n  undefinedName")
+        val error = result.reports.single { "undefinedName" in it.message }
+        assertEquals(null, error.sourcePath)
+        assertEquals(2, error.location?.start?.line)
+        assertEquals(3, error.location?.start?.col)
+    }
+
+    @Test
     fun historyAndNumberingAreUnchanged() {
         eval("val a = 1")
         val snippetNo = shell.currentSnippetNo.get()

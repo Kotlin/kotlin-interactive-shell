@@ -6,6 +6,8 @@ import org.jetbrains.kotlinx.ki.completion.CompletionSink
 import org.jetbrains.kotlinx.ki.completion.TYPE_PROBE
 import java.util.UUID
 import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.asErrorDiagnostics
 
 interface ReplIdeServices {
@@ -45,10 +47,7 @@ class K2ReplIdeServices(
         // A condition of `if`, `while` or `for` is only valid with a body after it
         val endings = if (closing.startsWith(")")) listOf(closing, ") {}" + closing.drop(1)) else listOf(closing)
         val candidates = endings.firstNotNullOfOrNull { ending ->
-            probe {
-                compileProbe(beforeCursor + COMPLETION_MARKER + ending)
-                CompletionSink.collected(it)
-            }
+            probe(beforeCursor + COMPLETION_MARKER + ending, CompletionSink::collected).second
         } ?: return fallback.complete(code, cursor)
         val prefix = beforeCursor.takeLastWhile { Character.isJavaIdentifierPart(it) }
         val afterDot = beforeCursor.dropLast(prefix.length).trimEnd().endsWith(".")
@@ -59,18 +58,27 @@ class K2ReplIdeServices(
     }
 
     override fun inferType(expr: String): ResultWithDiagnostics<String> {
-        var result: ResultWithDiagnostics<*>? = null
-        val type = probe { result = compileProbe("val $TYPE_PROBE = (\n$expr\n)\n$PROBE_END"); CompletionSink.type(it) }
+        val (result, type) = probe("val $TYPE_PROBE = (\n$expr\n)\n$PROBE_END", CompletionSink::type)
         if (type != null) return ResultWithDiagnostics.Success(type)
-        val reports = result?.reports.orEmpty().filter { PROBE_END !in it.message }
+        val reports = result?.reports.orEmpty().filter { PROBE_END !in it.message }.map { it.toExpressionDiagnostic() }
         return ResultWithDiagnostics.Failure(reports.ifEmpty { listOf("Cannot infer the type of '$expr'".asErrorDiagnostics()) })
     }
 
-    private fun <T> probe(body: (String) -> T): T {
+    // The expression starts on the second line of the probe
+    private fun ScriptDiagnostic.toExpressionDiagnostic(): ScriptDiagnostic {
+        fun SourceCode.Position.shifted() = copy(line = line - 1, absolutePos = null)
+        return copy(
+            sourcePath = null,
+            location = location?.let { SourceCode.Location(it.start.shifted(), it.end?.shifted()) }
+        )
+    }
+
+    // The compilation result of the probe and what the plugin has collected while compiling it
+    private fun <T> probe(code: String, collected: (requestId: String) -> T): Pair<ResultWithDiagnostics<*>?, T> {
         val requestId = UUID.randomUUID().toString()
         CompletionSink.begin(requestId)
         try {
-            return body(requestId)
+            return compileProbe(code) to collected(requestId)
         } finally {
             CompletionSink.end(requestId)
         }
