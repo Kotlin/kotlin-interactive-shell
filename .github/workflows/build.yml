@@ -12,5 +12,11 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 17
+      - name: Check for K1 REPL leftovers
+        run: |
+          if git grep -n -E 'ide_services|BasicJvmReplEvaluator|KJvmReplCompilerWithIdeServices' -- ki-shell; then
+            echo "K1 REPL API usages found"
+            exit 1
+          fi
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots verify

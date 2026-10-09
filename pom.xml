@@ -13,9 +13,28 @@
     <module>ki-shell</module>
   </modules>
   <properties>
-    <kotlin.version>1.9.10</kotlin.version>
+    <kotlin.version>2.5.0-Beta2-35</kotlin.version>
+    <dokka.version>2.2.0</dokka.version>
     <jvm.version>11</jvm.version>
   </properties>
+  <repositories>
+    <repository>
+      <id>kotlin-dev</id>
+      <url>https://redirector.kotlinlang.org/maven/dev</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>kotlin-dev</id>
+      <url>https://redirector.kotlinlang.org/maven/dev</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
   <build>
     <plugins>
       <plugin>
@@ -54,13 +73,13 @@
       <plugin>
         <groupId>org.jetbrains.dokka</groupId>
         <artifactId>dokka-maven-plugin</artifactId>
-        <version>${kotlin.version}</version>
+        <version>${dokka.version}</version>
         <configuration>
           <dokkaPlugins>
             <plugin>
               <groupId>org.jetbrains.dokka</groupId>
               <artifactId>kotlin-as-java-plugin</artifactId>
-              <version>${kotlin.version}</version>
+              <version>${dokka.version}</version>
             </plugin>
           </dokkaPlugins>
         </configuration>
@@ -137,6 +156,12 @@
     </repository>
   </distributionManagement>
   <profiles>
+    <profile>
+      <id>kotlin-dev-local</id>
+      <properties>
+        <kotlin.version>2.5.255-SNAPSHOT</kotlin.version>
+      </properties>
+    </profile>
     <profile>
       <id>release-sign</id>
       <activation>

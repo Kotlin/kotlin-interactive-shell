@@ -23,12 +23,9 @@ class RuntimePlugin : Plugin {
             val p = line.indexOf(' ')
             val expr = line.substring(p + 1).trim()
 
-            // TODO: restore
-            when (val analysisResults = repl.analyze(expr, SourceCode.Position(0, 0))) {
-                is ResultWithDiagnostics.Failure -> repl.handleError(analysisResults, false)
-                is ResultWithDiagnostics.Success<ReplAnalyzerResult> -> {
-                    analysisResults.value[ReplAnalyzerResult.renderedResultType]?.let { println(it) }
-                }
+            when (val typeResult = repl.ideServices.inferType(expr)) {
+                is ResultWithDiagnostics.Failure -> repl.handleError(typeResult, false)
+                is ResultWithDiagnostics.Success -> println(typeResult.value)
             }
             return Command.Result.Success()
         }
@@ -50,13 +47,6 @@ class RuntimePlugin : Plugin {
             TODO("Not yet implemented")
         }
     }
-
-//    private data class CodeExpr(override val no: Int, override val code: String): SourceCode {
-//        override val part: Int = 0
-//        override fun mkFileName(): String = "TypeInference_$no"
-//        override fun nextPart(codePart: String): SourceCode = throw UnsupportedOperationException("Should never happen")
-//        override fun replace(code: String): CodeExpr = CodeExpr(no, code)
-//    }
 
     inner class ListSymbols(conf: ReplConfiguration) : BaseCommand() {
         override val name: String by conf.get(default = "list")
@@ -91,6 +81,8 @@ class RuntimePlugin : Plugin {
             }
         })
 
+
+        repl.ideServices = BasicReplIdeServices { table.completionItems() }
 
         customHighlighter = CustomHighlighter { repl.highlighter.syntaxHighlighter }
 
@@ -142,6 +134,15 @@ class SymbolsTable {
 
     fun isEmpty() = symbols.isEmpty()
 
+    fun completionItems(): List<CompletionItem> = symbols.map {
+        val kind = when (it.kind) {
+            SymbolKind.CLASS -> CompletionItem.Kind.CLASS
+            SymbolKind.INSTANCE -> CompletionItem.Kind.PROPERTY
+            SymbolKind.FUNCTION -> CompletionItem.Kind.FUNCTION
+        }
+        CompletionItem(it.name, kind, null)
+    }
+
     fun list(
             pattern: String? = null,
             kinds: List<SymbolKind> = listOf(SymbolKind.INSTANCE, SymbolKind.FUNCTION, SymbolKind.CLASS)
@@ -175,7 +176,7 @@ class SymbolsTable {
 
         embodiment::class.declaredMembers.filter { callable ->
             val cname = callable.toString()
-            cname.contains(" Line_")
+            cname.contains(" Line_") && !callable.name.startsWith("\$\$")
         }.forEach {
             val extReceiver = it.renderReceiver(withDot = false)
             when (it) {

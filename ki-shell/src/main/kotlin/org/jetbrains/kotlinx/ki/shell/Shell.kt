@@ -1,11 +1,18 @@
 package org.jetbrains.kotlinx.ki.shell
 
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.com.intellij.openapi.Disposable
+import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
+import org.jetbrains.kotlin.scripting.compiler.plugin.impl.K2ReplCompiler
+import org.jetbrains.kotlin.scripting.compiler.plugin.impl.ScriptDiagnosticsMessageCollector
+import org.jetbrains.kotlin.scripting.compiler.plugin.impl.currentSnippetNo
+import org.jetbrains.kotlin.scripting.compiler.plugin.services.FirReplHistoryProviderImpl
+import org.jetbrains.kotlin.scripting.compiler.plugin.services.firReplHistoryProvider
+import org.jetbrains.kotlin.scripting.compiler.plugin.services.isReplSnippetSource
 import org.jetbrains.kotlinx.ki.shell.configuration.BooleanConverter
 import org.jetbrains.kotlinx.ki.shell.configuration.IntConverter
 import org.jetbrains.kotlinx.ki.shell.configuration.ReplConfiguration
 import org.jetbrains.kotlinx.ki.shell.wrappers.ResultWrapper
-import org.jetbrains.kotlin.scripting.ide_services.compiler.KJvmReplCompilerWithIdeServices
 import org.jline.reader.EndOfFileException
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
@@ -14,14 +21,14 @@ import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
 import java.io.File
 import java.io.PrintStream
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.toScriptSource
-import kotlin.script.experimental.jvm.BasicJvmReplEvaluator
+import kotlin.script.experimental.jvm.K2ReplEvaluator
 import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
-import kotlin.script.experimental.jvm.impl.KJvmCompiledScript
 import kotlin.script.experimental.util.LinkedSnippet
 
 open class Shell(val replConfiguration: ReplConfiguration,
@@ -43,9 +50,17 @@ open class Shell(val replConfiguration: ReplConfiguration,
     }
         private set
 
-    val compiler: KJvmReplCompilerWithIdeServices = KJvmReplCompilerWithIdeServices(hostConfiguration)
+    private class ReplState(
+        val compiler: K2ReplCompiler,
+        val evaluator: K2ReplEvaluator,
+        val disposable: Disposable,
+    )
 
-    private val evaluator: BasicJvmReplEvaluator = BasicJvmReplEvaluator()
+    private var replState: ReplState? = null
+
+    val replLock = ReentrantLock()
+
+    var ideServices: ReplIdeServices = BasicReplIdeServices { emptyList() }
 
     val currentSnippetNo = AtomicInteger()
 
@@ -58,7 +73,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
     val eventManager = EventManager()
 
     val highlighter = ContextHighlighter({ s -> !isCommandMode(s)}, { s -> commands.firstOrNull { it.weakMatch(s) } })
-    val completer = KotlinCompleter(compiler, { compilationConfiguration }, { currentSnippetNo.get() }, incompleteLines)
+    val completer = KotlinCompleter({ ideServices }, incompleteLines)
     val parser = KotlinReplSnippetParser()
 
     var prompt = {
@@ -73,6 +88,11 @@ open class Shell(val replConfiguration: ReplConfiguration,
     class EvalThread: Thread() {
         lateinit var evalBlock: () -> ResultWrapper
         var result: ResultWrapper = ResultWrapper(ResultWithDiagnostics.Failure("Interrupted".asErrorDiagnostics()), true)
+        @Volatile var abandoned = false
+
+        init {
+            isDaemon = true
+        }
 
         override fun run() {
             result = evalBlock()
@@ -146,22 +166,22 @@ open class Shell(val replConfiguration: ReplConfiguration,
                 System.getProperty("user.home") + File.separator + ".kshell_history"))
         reader.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "")
         reader.option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
+
+        // Created after the plugins have updated the configuration; the later changes reach the compiler per snippet
+        replState?.let { Disposer.dispose(it.disposable) }
+        replState = createReplState()
     }
 
-    private fun interrupt() {
-        if (!evalThread.isAlive) return
-        evalThread.interrupt()
+    internal fun interrupt() {
+        val thread = evalThread
+        if (!thread.isAlive) return
+        thread.interrupt()
         for (i in 1..5) {
-            if (!evalThread.isAlive) break
+            if (!thread.isAlive) break
             Thread.sleep(100)
         }
-        if (evalThread.isAlive) {
-            // NOTE: we cannot avoid thread killing here, because we're running arbitrary user code
-            // see also jshell implementation, it uses low-level JDI stuff but in fact the same approach
-            @Suppress("DEPRECATION")
-            evalThread.stop()
-        }
-        evalThread = EvalThread()
+        // Thread.stop is gone from modern JDKs, so code that ignores interruption is left running in the background
+        if (thread.isAlive) thread.abandoned = true
     }
 
     private fun isCommandMode(buffer: String): Boolean = incompleteLines.isEmpty()
@@ -248,23 +268,47 @@ open class Shell(val replConfiguration: ReplConfiguration,
 
     private fun nextLine(code: String) = code.toScriptSource("Line_${currentSnippetNo.incrementAndGet()}.${compilationConfiguration[ScriptCompilationConfiguration.fileExtension]}")
 
-    private fun tempLine(code: String) = code.toScriptSource("\$\$tempLine_${UUID.randomUUID()}.${compilationConfiguration[ScriptCompilationConfiguration.fileExtension]}")
+    private fun replState(): ReplState = replState ?: error("The engine is not initialized, call initEngine() first")
 
-    suspend fun compile(code: String) =
-            compiler.compile(nextLine(code), compilationConfiguration)
+    private fun createReplState(): ReplState {
+        val disposable = Disposer.newDisposable("KI REPL")
+        val replHostConfiguration = ScriptingHostConfiguration(hostConfiguration) {
+            repl {
+                firReplHistoryProvider(FirReplHistoryProviderImpl())
+                isReplSnippetSource { _, _ -> true }
+            }
+        }
+        val compilationState = K2ReplCompiler.createCompilationState(
+            ScriptDiagnosticsMessageCollector(null),
+            disposable,
+            compilationConfiguration,
+            replHostConfiguration
+        )
+        return ReplState(K2ReplCompiler(compilationState), K2ReplEvaluator(), disposable)
+    }
 
-    fun compile(code: SourceCode) = runBlocking { compiler.compile(code, compilationConfiguration) }
+    private fun snippetCompilationConfiguration(): ScriptCompilationConfiguration =
+        compilationConfiguration.with {
+            repl {
+                currentSnippetNo(this@Shell.currentSnippetNo.get())
+            }
+        }
 
-    fun analyze(code: String, pos: SourceCode.Position) = runBlocking { compiler.analyze(tempLine(code), pos, compilationConfiguration) }
+    suspend fun compile(code: String) = compile(nextLine(code))
+
+    fun compile(code: SourceCode): ResultWithDiagnostics<LinkedSnippet<CompiledSnippet>> =
+        replLock.withLock {
+            runBlocking { replState().compiler.compile(listOf(code), snippetCompilationConfiguration()) }
+        }
 
     fun eval(source: String): ResultWrapper {
         return if (settings.overrideSignals) {
-            evalThread.apply {
+            val thread = evalThread.apply {
                 evalBlock = { compileAndEval(source) }
                 start()
-                join()
             }
-            val result = evalThread.result
+            while (thread.isAlive && !thread.abandoned) thread.join(50)
+            val result = thread.result
             evalThread = EvalThread()
             result
         } else {
@@ -274,13 +318,13 @@ open class Shell(val replConfiguration: ReplConfiguration,
 
     fun compileAndEval(source: String): ResultWrapper =
         runBlocking {
-            val compileResult: ResultWithDiagnostics<LinkedSnippet<KJvmCompiledScript>> = compile(source)
+            val compileResult = compile(source)
             val res = when {
                 Thread.currentThread().isInterrupted ->
                     ResultWrapper(ResultWithDiagnostics.Failure("Interrupted".asErrorDiagnostics()), true)
                 compileResult is ResultWithDiagnostics.Success -> {
                     eventManager.emitEvent(OnCompile(compileResult.value))
-                    ResultWrapper(evaluator.eval(compileResult.value, evaluationConfiguration), true)
+                    ResultWrapper(replState().evaluator.eval(compileResult.value, evaluationConfiguration), true)
                 }
                 else -> ResultWrapper(compileResult, false)
             }
@@ -318,7 +362,9 @@ open class Shell(val replConfiguration: ReplConfiguration,
     }
 
     fun cleanUp() {
-        reader.history.save()
+        if (::reader.isInitialized) reader.history.save()
+        replState?.let { Disposer.dispose(it.disposable) }
+        replState = null
     }
 
     private fun sayHello() {
@@ -327,8 +373,8 @@ open class Shell(val replConfiguration: ReplConfiguration,
     }
 }
 
-class OnCompile(private val data: LinkedSnippet<KJvmCompiledScript>) : Event<LinkedSnippet<KJvmCompiledScript>> {
-    override fun data(): LinkedSnippet<KJvmCompiledScript> = data
+class OnCompile(private val data: LinkedSnippet<CompiledSnippet>) : Event<LinkedSnippet<CompiledSnippet>> {
+    override fun data(): LinkedSnippet<CompiledSnippet> = data
 }
 
 class OnEval(private val data: LinkedSnippet<KJvmEvaluatedSnippet>) : Event<LinkedSnippet<KJvmEvaluatedSnippet>> {
