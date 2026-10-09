@@ -15,12 +15,7 @@
     <dependency>
       <groupId>org.jline</groupId>
       <artifactId>jline</artifactId>
-      <version>3.24.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.fusesource.jansi</groupId>
-      <artifactId>jansi</artifactId>
-      <version>2.4.1</version>
+      <version>4.4.7</version>
     </dependency>
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
@@ -189,6 +184,9 @@
               <!-- addClasspath>true</addClasspath> -->
               <mainClass>org.jetbrains.kotlinx.ki.shell.KotlinShell</mainClass>
             </manifest>
+            <manifestEntries>
+              <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
+            </manifestEntries>
           </archive>
         </configuration>
       </plugin>
@@ -206,6 +204,15 @@
               <artifactSet>
                 <includes />
               </artifactSet>
+              <filters>
+                <!-- Jansi relocated into the compiler: its JNI part is affected by CVE-2026-8484, colors are optional -->
+                <filter>
+                  <artifact>org.jetbrains.kotlin:kotlin-compiler-embeddable</artifact>
+                  <excludes>
+                    <exclude>org/jetbrains/kotlin/org/fusesource/jansi/internal/native/**</exclude>
+                  </excludes>
+                </filter>
+              </filters>
               <outputFile>${project.parent.basedir}/lib/${project.artifactId}.jar</outputFile>
             </configuration>
           </execution>
