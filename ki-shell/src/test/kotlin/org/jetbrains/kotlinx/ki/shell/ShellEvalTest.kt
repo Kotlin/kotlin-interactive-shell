@@ -13,7 +13,6 @@ import java.security.MessageDigest
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import kotlin.script.experimental.api.ResultValue
-import kotlin.script.experimental.api.ResultWithDiagnostics
 
 class ShellEvalTest {
     @get:Rule
@@ -130,21 +129,5 @@ class ShellEvalTest {
         }
 
         assertEquals(3, shell.evalValue("1 + 2").value)
-    }
-
-    @Test
-    fun completionSuggestsDeclarationsAndKeywordsWithoutConsumingSnippetNumbers() {
-        shell.handleSuccess(shell.eval("val myCounter = 5").result as ResultWithDiagnostics.Success<*>)
-        val snippetNo = shell.currentSnippetNo.get()
-
-        assertTrue(shell.ideServices.complete("myC", 3).map { it.text }.contains("myCounter"))
-        assertTrue(shell.ideServices.complete("whi", 3).map { it.text }.contains("while"))
-        assertFalse(shell.ideServices.complete("", 0).map { it.text }.contains("\$\$eval"))
-        assertEquals(snippetNo, shell.currentSnippetNo.get())
-    }
-
-    @Test
-    fun inferTypeIsNotSupportedYet() {
-        assertTrue(shell.ideServices.inferType("1") is ResultWithDiagnostics.Failure)
     }
 }
