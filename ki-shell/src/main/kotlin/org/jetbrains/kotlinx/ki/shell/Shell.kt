@@ -21,6 +21,8 @@ import org.jline.reader.UserInterruptException
 import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
 import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 import java.io.PrintStream
 import java.lang.reflect.Modifier
 import java.util.concurrent.CopyOnWriteArrayList
@@ -29,8 +31,10 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.script.experimental.api.*
+import kotlin.script.experimental.host.FileScriptSource
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.toScriptSource
+import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.K2ReplEvaluator
 import kotlin.script.experimental.jvm.KJvmEvaluatedSnippet
 import kotlin.script.experimental.util.LinkedSnippet
@@ -116,6 +120,9 @@ open class Shell(val replConfiguration: ReplConfiguration,
 
     lateinit var settings: Settings
 
+    var isInteractive: Boolean = true
+        private set
+
     private class FakeQuit: BaseCommand() {
         override val name: String = "quit"
         override val short: String = "q"
@@ -141,14 +148,26 @@ open class Shell(val replConfiguration: ReplConfiguration,
         evaluationConfiguration = evaluationConfiguration.with(body)
     }
 
+    fun addClasspath(classpath: List<File>) {
+        if (classpath.isEmpty()) return
+        updateCompilationConfiguration {
+            dependencies.append(JvmDependency(classpath))
+        }
+    }
+
     fun listCommands(): Iterable<Command> = commands.asIterable()
 
-    fun initEngine() {
+    fun initEngine(interactive: Boolean = true) {
+        isInteractive = interactive
         replConfiguration.load()
 
         settings = Settings(replConfiguration)
 
-        val term = if (settings.overrideSignals) {
+        val term = if (!interactive) {
+            // Without an explicit type, JLine probes the capabilities of a real terminal by writing to its output
+            TerminalBuilder.builder().system(false).type(Terminal.TYPE_DUMB)
+                .streams(InputStream.nullInputStream(), OutputStream.nullOutputStream()).build()
+        } else if (settings.overrideSignals) {
             TerminalBuilder.builder().nativeSignals(true).signalHandler {
                 if (it == Terminal.Signal.INT) {
                     interrupt()
@@ -158,20 +177,24 @@ open class Shell(val replConfiguration: ReplConfiguration,
             TerminalBuilder.builder().build()
         }
 
-        readerBuilder =
-                LineReaderBuilder.builder()
-                        .terminal(term)
-                        .highlighter(highlighter)
-                        .parser(parser)
-                        .completer(completer)
-        reader = readerBuilder.build()
+        if (interactive) {
+            readerBuilder =
+                    LineReaderBuilder.builder()
+                            .terminal(term)
+                            .highlighter(highlighter)
+                            .parser(parser)
+                            .completer(completer)
+            reader = readerBuilder.build()
+        }
 
         replConfiguration.plugins().forEach { it.init(this, replConfiguration) }
 
-        reader.setVariable(LineReader.HISTORY_FILE, replConfiguration.get(LineReader.HISTORY_FILE,
-                System.getProperty("user.home") + File.separator + ".kshell_history"))
-        reader.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "")
-        reader.option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
+        if (interactive) {
+            reader.setVariable(LineReader.HISTORY_FILE, replConfiguration.get(LineReader.HISTORY_FILE,
+                    System.getProperty("user.home") + File.separator + ".kshell_history"))
+            reader.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "")
+            reader.option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
+        }
 
         // Created after the plugins have updated the configuration; the later changes reach the compiler per snippet
         replState?.let { Disposer.dispose(it.disposable) }
@@ -266,6 +289,22 @@ open class Shell(val replConfiguration: ReplConfiguration,
         cleanUp()
     }
 
+    // Runs the file as a single snippet without a terminal, and returns the process exit code
+    fun runScript(script: File): Int {
+        initEngine(interactive = false)
+        val result = compileAndEval(FileScriptSource(script))
+        result.result.reports.forEach {
+            System.err.println(it.render(withStackTrace = result.isCompiled && it.severity >= ScriptDiagnostic.Severity.ERROR))
+        }
+        if (result.getStatus() != ResultWrapper.Status.SUCCESS) return 1
+        val evalResultValue = evaluatedResult(result.result as ResultWithDiagnostics.Success<*>)
+        if (evalResultValue is ResultValue.Error) {
+            evalResultValue.renderError(System.err)
+            return 1
+        }
+        return 0
+    }
+
     fun registerCommand(command: Command) {
         commands.add(command)
     }
@@ -305,8 +344,6 @@ open class Shell(val replConfiguration: ReplConfiguration,
             }
         }
 
-    suspend fun compile(code: String) = compile(nextLine(code))
-
     // Incomplete input is compiled again with the next line added, so only complete snippets take a number
     fun compile(code: SourceCode): ResultWithDiagnostics<LinkedSnippet<CompiledSnippet>> =
         replLock.withLock {
@@ -344,7 +381,9 @@ open class Shell(val replConfiguration: ReplConfiguration,
         }
     }
 
-    fun compileAndEval(source: String): ResultWrapper =
+    fun compileAndEval(source: String): ResultWrapper = compileAndEval(nextLine(source))
+
+    fun compileAndEval(source: SourceCode): ResultWrapper =
         runBlocking {
             val compileResult = compile(source)
             val res = when {
@@ -369,11 +408,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
 
     fun handleSuccess(result: ResultWithDiagnostics.Success<*>) {
         printDiagnostics(result, true)
-        // TODO: avoid unchecked cast
-        val snippets = result.value as LinkedSnippet<KJvmEvaluatedSnippet>
-        eventManager.emitEvent(OnEval(snippets))
-        val evalResultValue = snippets.get().result
-        when (evalResultValue) {
+        when (val evalResultValue = evaluatedResult(result)) {
             is ResultValue.Value ->
                 println(renderResult(evalResultValue).bound(settings.maxResultLength))
             is ResultValue.Error -> {
@@ -381,6 +416,14 @@ open class Shell(val replConfiguration: ReplConfiguration,
             }
             else -> {}
         }
+    }
+
+    private fun evaluatedResult(result: ResultWithDiagnostics.Success<*>): ResultValue {
+        // TODO: avoid unchecked cast
+        @Suppress("UNCHECKED_CAST")
+        val snippets = result.value as LinkedSnippet<KJvmEvaluatedSnippet>
+        eventManager.emitEvent(OnEval(snippets))
+        return snippets.get().result
     }
 
     fun renderResultType(res: ResultValue.Value): String = ": " + renderKotlinType(res.type)
@@ -392,7 +435,7 @@ open class Shell(val replConfiguration: ReplConfiguration,
     }
 
     fun cleanUp() {
-        if (::reader.isInitialized) reader.history.save()
+        if (isInteractive && ::reader.isInitialized) reader.history.save()
         replState?.let { Disposer.dispose(it.disposable) }
         replState = null
     }

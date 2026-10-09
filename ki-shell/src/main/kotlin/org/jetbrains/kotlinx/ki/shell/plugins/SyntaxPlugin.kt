@@ -24,7 +24,7 @@ class SyntaxPlugin: Plugin {
         init {
             repl.highlighter.apply {
                 syntaxHighlighter = kotlinHighlighter
-                reader.option(LineReader.Option.DISABLE_HIGHLIGHTER, !on)
+                if (repl.isInteractive) reader.option(LineReader.Option.DISABLE_HIGHLIGHTER, !on)
             }
         }
 
@@ -57,10 +57,10 @@ class SyntaxPlugin: Plugin {
 
     override fun init(repl: Shell, config: ReplConfiguration) {
         this.repl = repl
-        this.reader = repl.reader
+        if (repl.isInteractive) this.reader = repl.reader
         kotlinHighlighter = KotlinHighlighter(HighlightStylesFromConfiguration(config))
 
-        repl.registerCommand(Syntax(config))
+        if (repl.isInteractive) repl.registerCommand(Syntax(config))
     }
 
     override fun cleanUp() { }

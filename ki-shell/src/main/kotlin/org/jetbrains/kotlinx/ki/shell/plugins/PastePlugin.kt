@@ -37,6 +37,7 @@ class PastePlugin : Plugin {
 
     override fun init(repl: Shell, config: ReplConfiguration) {
         this.repl = repl
+        if (!repl.isInteractive) return
         this.console = repl.reader
         this.pasteConsole = repl.readerBuilder.highlighter(console.highlighter).build()
 
