@@ -69,7 +69,7 @@
     </dependency>
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
-      <artifactId>kotlin-scripting-ide-services</artifactId>
+      <artifactId>kotlin-compiler-embeddable</artifactId>
       <version>${kotlin.version}</version>
     </dependency>
     <dependency>
@@ -210,6 +210,17 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.2</version>
+        <configuration>
+          <systemPropertyVariables>
+            <!-- Not the developer's ~/.ki-shell -->
+            <config.path>${project.build.directory}/no-ki-shell-config</config.path>
+          </systemPropertyVariables>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
