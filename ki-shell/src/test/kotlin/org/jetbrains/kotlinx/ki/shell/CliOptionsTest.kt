@@ -222,7 +222,8 @@ class CliOptionsTest {
         val compileError = tmp.newFile("error.kts").apply { writeText("val x: Int = \"s\"") }
         val output = runKi("-f", compileError.path)
         assertEquals(1, output.exitCode)
-        assertTrue(output.err, "Initializer type mismatch" in output.err && "(error.kts:1:" in output.err)
+        assertTrue(output.err, "Initializer type mismatch" in output.err)
+        assertTrue(output.err, Regex("""\((?:.*[/\\])?error\.kts:1:\d+\)""").containsMatchIn(output.err))
 
         val exception = tmp.newFile("exception.kts").apply { writeText("println(\"before\")\nerror(\"boom\")") }
         val exceptionOutput = runKi("-f", exception.path)
